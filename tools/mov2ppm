@@ -1,0 +1,3 @@
+#!/bin/sh
+
+ffmpeg -i $1 %d.ppm
