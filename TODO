@@ -1,0 +1,20 @@
+-- frame-by-frame compression (C0 XX YY as marker)
+
+-- start-of-frame marker
+	-- C0 00 00
+	-- insert 'whole' frames periodically in stream
+
+-- audio
+
+-- synchronization
+	-- vertical blank for frames
+	-- horizontal blank for audio
+
+-- palette change
+	-- video start
+	-- frame start
+
+-- preprocessing
+	-- brightness/contrast
+	-- palette selection
+	-- dithering
