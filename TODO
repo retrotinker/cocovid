@@ -2,7 +2,9 @@
 
 -- start-of-frame marker
 	-- C0 00 00
-	-- insert 'whole' frames periodically in stream
+	-- could enable variable data at end of frame
+		-- audio
+		-- palette
 
 -- audio
 
@@ -15,6 +17,7 @@
 	-- frame start
 
 -- preprocessing
+	-- insert 'whole' frames periodically in stream
 	-- brightness/contrast
 	-- palette selection
 	-- dithering
