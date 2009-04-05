@@ -145,7 +145,5 @@ int main(int argc, char *argv[])
 		perror("pixel write");
 #endif
 
-	rlecompress(&cocobuf[0][0], sizeof(cocobuf));
-
 	return 0;
 }

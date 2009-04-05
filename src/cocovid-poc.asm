@@ -10,6 +10,7 @@ LOAD	EQU	$0E00		Actual load address for binary
 
 VIDOFF	EQU	$FF90
 PALOFF	EQU	$FFB0
+SAMR1ST	EQU	$FFD9
 
 	ORG	LOAD
 
@@ -25,6 +26,9 @@ PALINIT	FCB	$00,$08,$10,$18,$20,$28,$30,$38
 ENDPINT	EQU	*
 
 EXEC	EQU	*
+
+* High-speed poke...definitely...
+	STA	SAMR1ST
 
 	LDX	#VIDINIT
 	LDY	#VIDOFF
