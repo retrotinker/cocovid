@@ -3,16 +3,20 @@
 
 LOAD	EQU	$0E00		Actual load address for binary
 IRQADR	EQU	$5F66
+SAMR1ST	EQU	$FFD9
 
-LINESKP	EQU	$01
+TIMEVAL	EQU	648
 
 	ORG	LOAD
 
 * Disable IRQ and FIRQ
-	ORCC	#$50
+EXEC	ORCC	#$50
+
+* High-speed poke...definitely...
+	STA	SAMR1ST
 
 * Select DAC sound output
-EXEC	LDA	$FF01
+	LDA	$FF01
 	ANDA	#$C7
 	ORA	#$30
 	STA	$FF01
@@ -25,14 +29,18 @@ EXEC	LDA	$FF01
 	ANDA	#$C7
 	ORA	#$38
 	STA	$FF23
-* Init horizontal sync interrupt generation
-	LDA	$FF01
-	ANDA	#$FC
-	ORA	#$01
-	STA	$FF01
-* Setup line skip
-	LDA	#LINESKP
-	STA	>SKIPCNT
+* Init timer interrupt generation
+	LDD	TIMEVAL
+	STD	$FF94
+	LDA	$FF91
+	ORA	#$20
+	STA	$FF91
+	LDA	$FF92
+	ORA	#$20
+	STA	$FF92
+	LDA	$FF90
+	ORA	#$20
+	STA	$FF90
 * Enable IRQ handling
 	LDD	#SNDISR
 	STD	IRQADR
@@ -47,18 +55,13 @@ INLOOP	JSR	[$A000]
 EXIT	JMP	[$FFFE]
 
 * Read samples and stuff them into the DAC
-SNDISR	DEC	>SKIPCNT
-	BNE	SNDISR1
-	LDX	#$FFE0
+SNDISR	LDX	#$FFE0
 	LDA	1,X
 	BEQ	SNDISR1
 	LDA	,X
 	STA	$FF20
-* Reset line skip
-	LDA	#LINESKP
-	STA	>SKIPCNT
-* Clear horizontal sync pulse interrupt
-SNDISR1	LDB	$FF00
+* Clear timer interrupt
+SNDISR1	LDB	$FF92
 	RTI
 
 SKIPCNT	RMB	1
