@@ -1,5 +1,6 @@
 all: cocovid.bin cocovid.s19 cocovid-raw.bin cocovid-raw.s19 \
-	cocovid-poc.bin cocovid-poc.s19
+	cocovid-poc.bin cocovid-poc.s19 \
+	cocoaud.bin cocoaud.s19
 
 cocovid.bin: cocovid.asm
 	mamou -mb -tb -l -ococovid.bin cocovid.asm
@@ -18,3 +19,9 @@ cocovid-poc.bin: cocovid-poc.asm
 
 cocovid-poc.s19: cocovid-poc.asm
 	mamou -mb -ts -l -ococovid-poc.s19 cocovid-poc.asm
+
+cocoaud.bin: cocoaud.asm
+	mamou -mb -tb -l -ococoaud.bin cocoaud.asm
+
+cocoaud.s19: cocoaud.asm
+	mamou -mb -ts -l -ococoaud.s19 cocoaud.asm

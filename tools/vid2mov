@@ -1,3 +1,21 @@
 #!/bin/sh
 
-ffmpeg -i $1 -r 30 -ac 1 -acodec pcm_u8 -ar 11520 -ab 128000 -b 200000 -s sqcif -f mov $2
+#
+# Old stuff, kept here for now out of superstition...
+#
+#ffmpeg -i "$1" -r 30 -ac 1 -acodec pcm_u8 -ar 11025 -ab 128000 -b 200000 -s sqcif -f mov "$2"
+#ffmpeg -i "$1" -r 30 -ac 1 -acodec pcm_u8 -ar 88200 -ab 128000 -b 200000 -s sqcif -f mov "$2"
+#ffmpeg -i "$1" -ac 1 -acodec pcm_u8 -ar 88200 -ab 128000 -b 200000 -s sqcif -f mov "$2"
+#ffmpeg -i "$2" -vn -acodec copy "$3"
+
+ffmpeg -i "$1" -an -b 200000 -s sqcif -f mov "$2"
+
+#
+# 15748 is approx horizontal sync rate
+# 31496 is 2x that because ffmpeg seems to base audio bit-rate on the
+# input rather than the output...?
+#
+#ffmpeg -i "$1" -vn -acodec pcm_u8 -ar 31496 -ac 1 "$3"
+
+# Above is BS...?
+ffmpeg -i "$1" -vn -acodec pcm_u8 -ar 15478 -ac 1 "$3"
