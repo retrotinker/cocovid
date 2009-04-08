@@ -2,15 +2,26 @@
 	TTL	Audio player for CoCo
 
 LOAD	EQU	$0E00		Actual load address for binary
+
 IRQADR	EQU	$5F66
 SAMR1ST	EQU	$FFD9
 
-TIMEVAL	EQU	648
+TIMEVAL	EQU	324
 
 	ORG	LOAD
 
 * Disable IRQ and FIRQ
 EXEC	ORCC	#$50
+* Disable PIA IRQ generation
+	LDX	#$FF00
+	LDA	1,X
+	ANDA	#$3E
+	STA	1,X
+	LDA	,X
+	LDA	3,X
+	ANDA	#$3E
+	STA	3,X
+	LDA	2,X
 
 * High-speed poke...definitely...
 	STA	SAMR1ST
@@ -30,7 +41,7 @@ EXEC	ORCC	#$50
 	ORA	#$38
 	STA	$FF23
 * Init timer interrupt generation
-	LDD	TIMEVAL
+	LDD	#TIMEVAL
 	STD	$FF94
 	LDA	$FF91
 	ORA	#$20
