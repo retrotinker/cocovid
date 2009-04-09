@@ -9,7 +9,7 @@ PALOFF	EQU	$FFB0
 SAMR1ST	EQU	$FFD9
 
 * Frame step value should be 2x actual frame step for 30fps source video
-FRAMSTP	EQU	6
+FRAMSTP	EQU	8
 
 	ORG	LOAD
 
@@ -55,9 +55,10 @@ PINTLOP	LDA	,X+
 	CMPX	#ENDPINT
 	BNE	PINTLOP
 
-* Init frame skip
+* Init frame step
 	LDA	#FRAMSTP
 	STA	>STEPCNT
+	CLR	>AUDFRM
 
 * Init Vsync interrupt generation
 	LDA	$FF92
@@ -93,10 +94,32 @@ INLOP2	LDA	$FFE0
 	STA	,X+
 INLOP3	CMPX	#$3800
 	BNE	INLOP1
+* Audio data movement goes here
+	LDB	>AUDFRM
+	BEQ	INLOP4
+	TFR	X,D
+	LDA	#$40
+	TFR	D,X
+INLOP4	LDA	$FFE1
+* Check for character available
+	BNE	INLOP5
+* Check for user stop request
+	JSR	[$A000]
+	BEQ	INLOP4
+	CMPA	#$03
+	BEQ	EXIT
+	BRA	INLOP4
+INLOP5	LDA	$FFE0
+	STA	,X+
+	TFR	X,D
+	ANDA	#$07
+	CMPD	#$05BE
+	BNE	INLOP4
+* Synchronize!
 	LDA	#FRAMSTP
 * Wait for STEPCNT to reset
-INLOP4	CMPA	>STEPCNT
-	BNE	INLOP4
+INLOP6	CMPA	>STEPCNT
+	BNE	INLOP6
 	BRA	INLOOP
 
 EXIT	JMP	[$FFFE]
@@ -133,5 +156,6 @@ PALINIT	FCB	$00,$08,$10,$18,$20,$28,$30,$38
 ENDPINT	EQU	*
 
 STEPCNT	RMB	1
+AUDFRM	RMB	1
 
 	END	EXEC
