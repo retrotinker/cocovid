@@ -8,12 +8,8 @@ VIDOFF	EQU	$FF90
 PALOFF	EQU	$FFB0
 SAMR1ST	EQU	$FFD9
 
-* TIMEVAL	EQU	262
-TIMEVAL	EQU	1575
 * Frame step value should be 2x actual frame step for 30fps source video
-FRAMSTP	EQU	1
-* Vsync timing seems to be wrong in MESS...
-* FRAMSTP	EQU	3
+FRAMSTP	EQU	6
 
 	ORG	LOAD
 
@@ -63,21 +59,9 @@ PINTLOP	LDA	,X+
 	LDA	#FRAMSTP
 	STA	>STEPCNT
 
-** Init Vsync interrupt generation
-*	LDA	$FF92
-*	ORA	#$08
-*	STA	$FF92
-*	LDA	$FF90
-*	ORA	#$20
-*	STA	$FF90
-* Init timer interrupt generation
-	LDD	#TIMEVAL
-	STD	$FF94
-	LDA	$FF91
-	ANDA	#$DF
-	STA	$FF91
+* Init Vsync interrupt generation
 	LDA	$FF92
-	ORA	#$20
+	ORA	#$08
 	STA	$FF92
 	LDA	$FF90
 	ORA	#$20
@@ -88,36 +72,34 @@ PINTLOP	LDA	,X+
 	STD	IRQADR
 	ANDCC	#$EF
 
-INLOOP	JSR	[$A000]
-	BEQ	INLOOP
+INLOOP	EQU *
+* Data movement goes here
+	LDX	#$2000
+INLOP1	LDA	$FFE1
+* Check for character available
+	BNE	INLOP2
+* Check for user stop request
+	JSR	[$A000]
+	BEQ	INLOP1
 	CMPA	#$03
 	BEQ	EXIT
-	BRA	INLOOP
-
-EXIT	JMP	[$FFFE]
-
-* Clear Vsync interrupt
-VIDISR	LDB	$FF92
-* Account for frame timing
-	DEC	>STEPCNT
-	BNE	VIDISR3
-	LDX	#$2000
-VIDISR1	LDA	$FFE1
-* For now, loop on no char...
-	BEQ	VIDISR1
-	LDA	$FFE0
+	BRA	INLOP1
+INLOP2	LDA	$FFE0
 * check for escape char
 	TFR	A,B
 	ANDB	#$C0
 	CMPB	#$C0
 	BEQ	PIXMWR
 	STA	,X+
-VIDISR2	CMPX	#$3800
-	BNE	VIDISR1
-* Reset frame skip count
+INLOP3	CMPX	#$3800
+	BNE	INLOP1
 	LDA	#FRAMSTP
-	STA	>STEPCNT
-VIDISR3	RTI
+* Wait for STEPCNT to reset
+INLOP4	CMPA	>STEPCNT
+	BNE	INLOP4
+	BRA	INLOOP
+
+EXIT	JMP	[$FFFE]
 
 PIXMWR	TFR	A,B
 	ANDB	#$3F
@@ -127,7 +109,17 @@ PIXMWR1	LDA	$FFE1
 PIXMWR2	STA	,X+
 	DECB
 	BNE	PIXMWR2
-	JMP	VIDISR2
+	JMP	INLOP3
+
+* Clear Vsync interrupt
+VIDISR	LDB	$FF92
+* Account for frame timing
+	DEC	>STEPCNT
+	BNE	VIDISR1
+* Reset frame skip count
+	LDA	#FRAMSTP
+	STA	>STEPCNT
+VIDISR1	RTI
 
 * Init for video mode, set video buffer to $2000
 * (Assumes default MMU setup...)
