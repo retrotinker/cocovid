@@ -91,5 +91,8 @@ int main(int argc, char *argv[])
 	if (write(outfd, &outbuf, outsize) != outsize)
 		perror("pixel write");
 
+	close(infd);
+	close(outfd);
+
 	return 0;
 }

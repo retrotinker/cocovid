@@ -8,11 +8,13 @@ FRAMES=$(ls ../rle/"$1" | wc -l)
 for i in $(seq 1 $FRAMESKIP $FRAMES)
 do
 	cat ../rle/"$1"/$i.rle
-	PCM=../pcm/"$1"/*.$((${i}/$FRAMESKIP))
-	if [ -f $PCM ]
+	CLW=../clw/"$1"/*.$((${i}/$FRAMESKIP))
+	if [ -f $CLW ]
 	then
-		cat $PCM
+		cat $CLW
 	else
+		# This actually holds DAC at lowest value...
+		# ...should output 0x88 ("CoCo Law" virtual zero) instead?
 		dd if=/dev/zero bs=$SAMPLES count=1 2>/dev/null
 	fi
 done > "$2"

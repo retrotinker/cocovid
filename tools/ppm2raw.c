@@ -145,5 +145,8 @@ int main(int argc, char *argv[])
 		perror("pixel write");
 #endif
 
+	close(infd);
+	close(outfd);
+
 	return 0;
 }
