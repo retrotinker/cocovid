@@ -20,5 +20,5 @@
 # Above is BS...?
 #ffmpeg -i "$1" -vn -acodec pcm_u8 -ar 22050 -ac 1 "$3"
 
-ffmpeg -i "$1" -ar 22050 -ac 1 -s sqcif -b 200000 -f mov -y "$2"
+ffmpeg -i "$1" -ar 11025 -ac 1 -s sqcif -b 200000 -f mov -y "$2"
 ffmpeg -i "$2" -vn -acodec pcm_u8 -y "$3"

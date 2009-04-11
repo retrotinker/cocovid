@@ -1,0 +1,18 @@
+#!/bin/sh
+
+FRAMESKIP=4
+SAMPLES=368
+
+FRAMES=$(ls ../rle/"$1" | wc -l)
+
+for i in $(seq 1 $FRAMESKIP $FRAMES)
+do
+	cat ../rle/"$1"/$i.rle
+	PCM=../pcm/"$1"/*.$((${i}/$FRAMESKIP))
+	if [ -f $PCM ]
+	then
+		cat $PCM
+	else
+		dd if=/dev/zero bs=$SAMPLES count=1 2>/dev/null
+	fi
+done > "$2"
