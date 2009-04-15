@@ -1,6 +1,8 @@
 ppm2raw
 raw2rle
 rle2raw
+raw2drw
+drw2drl
 wav2pcm
 pcm2clw
 clw2pcm

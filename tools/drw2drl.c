@@ -6,12 +6,14 @@
 #include <sys/stat.h>
 #include <fcntl.h>
 #include <unistd.h>
+#include <errno.h>
 
 #define RAW_HORIZ_PIXELS	128
 #define RAW_VERT_PIXELS		96
 
-unsigned char inbuf[RAW_VERT_PIXELS][RAW_HORIZ_PIXELS/2];
-unsigned char outbuf[RAW_VERT_PIXELS][RAW_HORIZ_PIXELS/2][2];
+unsigned char inbuf[RAW_VERT_PIXELS * RAW_HORIZ_PIXELS/2];
+unsigned char tmpbuf[RAW_VERT_PIXELS * RAW_HORIZ_PIXELS/2];
+unsigned char outbuf[RAW_VERT_PIXELS * RAW_HORIZ_PIXELS/2 * 2];
 
 void usage(char *prg)
 {
@@ -69,7 +71,9 @@ int rlecompress(unsigned char *inbuf, unsigned char *outbuf, int bufsize)
 int main(int argc, char *argv[])
 {
 	int infd, outfd;
-	int outsize;
+	int outsize, insize = 0;
+	unsigned char *inptr, *tmpptr, *outptr;
+	int rc;
 
 	if (argc < 3) {
 		usage(argv[0]);
@@ -83,10 +87,38 @@ int main(int argc, char *argv[])
 	outfd = open(argv[2], O_WRONLY | O_CREAT | O_TRUNC,
 			S_IRUSR | S_IWUSR | S_IRGRP | S_IROTH);
 
-	if (read(infd, &inbuf, sizeof(inbuf)) != sizeof(inbuf))
-		perror("pixel read");
+	do {
+		rc = read(infd, inbuf, sizeof(inbuf));
+		if (rc < 0 && rc != EINTR) {
+			perror("pixel read");
+			exit(EXIT_FAILURE);
+		}
+		if (rc != EINTR)
+			insize += rc;
+	} while (rc != 0);
 
-	outsize = rlecompress(&inbuf[0][0], &outbuf[0][0][0], sizeof(inbuf));
+	inptr = inbuf;
+	tmpptr = tmpbuf;
+	outptr = outbuf;
+
+	while (inptr < inbuf + insize) {
+		if (*inptr == 0xc0) {
+			outptr += rlecompress(tmpbuf, outptr, tmpptr - tmpbuf);
+			tmpptr = tmpbuf;
+			*outptr++ = *inptr++;
+			*outptr++ = *inptr++;
+			*outptr++ = *inptr++;
+		} else {
+			if (*inptr == 0xc1) {
+				*tmpptr++ = *(inptr + 1);
+				inptr += 2;
+			} else {
+				*tmpptr++ = *inptr++;
+			}
+		}
+	}
+	outptr += rlecompress(tmpptr, outptr, tmpptr - tmpbuf);
+	outsize = outptr - outbuf;
 
 	if (write(outfd, &outbuf, outsize) != outsize)
 		perror("pixel write");
