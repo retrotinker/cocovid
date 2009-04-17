@@ -3,6 +3,7 @@ raw2rle
 rle2raw
 raw2drw
 drw2drl
+drl2raw
 wav2pcm
 pcm2clw
 clw2pcm

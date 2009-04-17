@@ -117,7 +117,7 @@ int main(int argc, char *argv[])
 			}
 		}
 	}
-	outptr += rlecompress(tmpptr, outptr, tmpptr - tmpbuf);
+	outptr += rlecompress(tmpbuf, outptr, tmpptr - tmpbuf);
 	outsize = outptr - outbuf;
 
 	if (write(outfd, &outbuf, outsize) != outsize)
