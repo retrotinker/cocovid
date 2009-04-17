@@ -1,12 +1,4 @@
--- frame-by-frame compression (C0 XX YY as marker)
-
--- start-of-frame marker
-	-- C0 00 00
-	-- could enable variable data at end of frame
-		-- audio
-		-- palette
-
--- end-of-video marker (C0 FF FF)
+-- end-of-video marker? (C0 FF FF)
 
 -- palette change
 	-- video start
@@ -21,3 +13,7 @@
 			-- RG/GB for virtual 64 colors
 			-- RG/GB/RB for virtual 4096 colors?
 	-- dithering(?)
+
+-- conversion tools
+	-- enforce max data rate
+	-- split rle files to comply w/ above
