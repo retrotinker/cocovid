@@ -14,7 +14,7 @@ SAMR1ST	EQU	$FFD9
 FRAMSTP	EQU	8
 
 * 324 for 11025Hz...
-TIMEVAL	EQU	1296
+TIMEVAL	EQU	648
 
 	ORG	LOAD
 
@@ -99,6 +99,9 @@ CLRAUD	STA	,X+
 	CLR	>AUDFRM
 	LDD	#$4000
 	STD	>AUDPTR
+	TFR	D,Y
+	LDD	#$42E0
+	STD	>AUDSTP
 
 * Init Vsync interrupt generation
 	LDA	$FF92
@@ -133,19 +136,13 @@ INLOOP	EQU *
 	LDX	#$2000
 INLOP1	LDA	$FFE1
 * Check for character available
-	BNE	INLOP2
-* Check for user stop request
-	JSR	[$A000]
 	BEQ	INLOP1
-	CMPA	#$03
-	BEQ	EXIT
-	BRA	INLOP1
 INLOP2	LDA	$FFE0
 * Check for escape char
 	TFR	A,B
 	ANDB	#$C0
 	CMPB	#$C0
-	BEQ	ESCAPE
+	BEQ	PIXESC
 * Store data in video buffer
 	STA	,X+
 INLOP3	CMPX	#$3800
@@ -159,19 +156,13 @@ INLOP3	CMPX	#$3800
 	TFR	D,X
 INLOP4	LDA	$FFE1
 * Check for character available
-	BNE	INLOP5
-* Check for user stop request
-	JSR	[$A000]
 	BEQ	INLOP4
-	CMPA	#$03
-	BEQ	EXIT
-	BRA	INLOP4
 INLOP5	LDA	$FFE0
 * Store data in audio buffer
 	STA	,X+
 	TFR	X,D
 	ANDA	#$07
-	CMPD	#$0170
+	CMPD	#$02E0
 	BLT	INLOP4
 * Synchronize!
 	LDA	#FRAMSTP
@@ -184,22 +175,23 @@ INLOP8	CMPA	>STEPCNT
 	EORA	#$78
 	CLRB
 	STD	>AUDPTR
+	TFR	D,Y
+	ADDD	#$02E0
+	STD	>AUDSTP
 	BRA	INLOOP
 
 * Execute reset vector
 EXIT	JMP	[$FFFE]
 
-ESCAPE	CMPA	#$C0
+PIXESC	CMPA	#$C0
 	BNE	PIXMWR
-	TFR	X,D
-	ANDA	#$38
-	CLRB
-	TFR	D,X
-ESCAPE1	LDA	$FFE1
-	BEQ	ESCAPE1
+PIXJMP	EQU	*
+	LDX	#$2000
+PIXJMP1	LDA	$FFE1
+	BEQ	PIXJMP1
 	LDA	$FFE0
-ESCAPE2	LDB	$FFE1
-	BEQ	ESCAPE2
+PIXJMP2	LDB	$FFE1
+	BEQ	PIXJMP2
 	LDB	$FFE0
 	LEAX	D,X
 	JMP	INLOP3
@@ -222,26 +214,29 @@ VIDISR	LDB	$FF92
 * Reset frame skip count
 	LDA	#FRAMSTP
 	STA	>STEPCNT
+* Check for user stop request
+	JSR	[$A000]
+	BEQ	VIDISR1
+	CMPA	#$03
+	BEQ	EXIT
 VIDISR1	RTI
 
 * Read samples and stuff them into the DAC
-SNDISR	PSHS	A,B,X
+SNDISR	EQU	*
+	PSHS	A
 * Clear timer interrupt
 	LDA	$FF93
 * Load and play sample
-	LDX	>AUDPTR
-	LDA	,X+
+	LDA	,Y+
 	STA	$FF20
-	TFR	X,D
-	ANDA	#$07
-	CMPD	#$0170
-	BLT	SNDISR2
-	CLRA
-	BRA	SNDISR3
+	CMPY	>AUDSTP
+	BGE	SNDISR3
 SNDISR2 EQU	*
-	STX	>AUDPTR
+	PULS	A
+	RTI
 SNDISR3 EQU	*
-	PULS	A,B,X
+	LEAY	-1,Y
+	PULS	A
 	RTI
 
 * Init for video mode, set video buffer to $2000
@@ -258,5 +253,6 @@ ENDPINT	EQU	*
 STEPCNT	RMB	1
 AUDFRM	RMB	1
 AUDPTR	RMB	2
+AUDSTP	RMB	2
 
 	END	EXEC
