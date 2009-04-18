@@ -131,16 +131,25 @@ STRTWT	JSR	[$A000]
 	BEQ	STRTWT
 	CLR	>FRAMCNT
 
-* Enable IRQ and FIRQ handling
+* Enable IRQ handling
 	LDD	#VIDISR
 	STD	IRQADR
-	LDD	#SNDISR
-	STD	FIRQADR
-	ANDCC	#$AF
+	ANDCC	#$EF
 
 * Data movement goes here
 INLOOP	LDX	#$2000
-INLOP1	LDA	$FFE1
+INLOP1	EQU	*
+* Check timer interrupt
+	LDA	$FF93
+	BEQ	INLOP01
+* Load and play sample
+	LDA	,Y+
+	STA	$FF20
+	CMPY	>AUDRSTP
+	BLT	INLOP01
+	LEAY	-1,Y
+INLOP01	EQU	*
+	LDA	$FFE1
 * Check for character available
 	BEQ	INLOP1
 INLOP2	LDA	$FFE0
@@ -154,7 +163,18 @@ INLOP2	LDA	$FFE0
 INLOP3	CMPX	#$3800
 	BLT	INLOP1
 * Audio data movement goes here
-INLOP4	LDA	$FFE1
+INLOP4	EQU	*
+* Check timer interrupt
+	LDA	$FF93
+	BEQ	INLOP02
+* Load and play sample
+	LDA	,Y+
+	STA	$FF20
+	CMPY	>AUDRSTP
+	BLT	INLOP02
+	LEAY	-1,Y
+INLOP02	EQU	*
+	LDA	$FFE1
 * Check for character available
 	BEQ	INLOP4
 INLOP5	LDA	$FFE0
@@ -163,7 +183,18 @@ INLOP5	LDA	$FFE0
 	CMPU	>AUDWSTP
 	BLT	INLOP4
 * Synchronize!
-SYNCLOP	LDA	>FRAMCNT
+SYNCLOP	EQU	*
+* Check timer interrupt
+	LDA	$FF93
+	BEQ	INLOP6
+* Load and play sample
+	LDA	,Y+
+	STA	$FF20
+	CMPY	>AUDRSTP
+	BLT	INLOP6
+	LEAY	-1,Y
+INLOP6	EQU	*
+	LDA	>FRAMCNT
 	BEQ	SYNCLOP
 	DEC	>FRAMCNT
 * Switch to next audio frame
@@ -176,15 +207,14 @@ SYNCLOP	LDA	>FRAMCNT
 	ANDA	#$78
 	EORA	#$78
 	CLRB
-	ORCC	#$40
 	TFR	D,Y
 	ADDD	#$02E0
 	STD	>AUDRSTP
-	ANDCC	#$BF
-	BRA	INLOOP
+	LBRA	INLOOP
 
 * Execute reset vector
-EXIT	JMP	[$FFFE]
+EXIT	ANDCC	#$BF
+	JMP	[$FFFE]
 
 PIXESC	CMPA	#$C0
 	BNE	PIXMWR
@@ -224,21 +254,6 @@ VIDISR	LDB	$FF92
 	CMPA	#$03
 	BEQ	EXIT
 VIDISR1	RTI
-
-* Read samples and stuff them into the DAC
-SNDISR	PSHS	A
-* Clear timer interrupt
-	LDA	$FF93
-* Load and play sample
-	LDA	,Y+
-	STA	$FF20
-	CMPY	>AUDRSTP
-	BGE	SNDISR3
-SNDISR2 PULS	A
-	RTI
-SNDISR3 LEAY	-1,Y
-	PULS	A
-	RTI
 
 * Init for video mode, set video buffer to $2000
 * (Assumes default MMU setup...)
