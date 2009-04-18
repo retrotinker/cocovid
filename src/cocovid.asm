@@ -126,6 +126,11 @@ CLRAUD	STA	,X+
 	ORA	#$10
 	STA	$FF90
 
+* Wait for user input to start
+STRTWT	JSR	[$A000]
+	BEQ	STRTWT
+	CLR	>FRAMCNT
+
 * Enable IRQ and FIRQ handling
 	LDD	#VIDISR
 	STD	IRQADR
@@ -133,9 +138,8 @@ CLRAUD	STA	,X+
 	STD	FIRQADR
 	ANDCC	#$AF
 
-INLOOP	EQU *
 * Data movement goes here
-	LDX	#$2000
+INLOOP	LDX	#$2000
 INLOP1	LDA	$FFE1
 * Check for character available
 	BEQ	INLOP1
@@ -159,12 +163,9 @@ INLOP5	LDA	$FFE0
 	CMPU	>AUDWSTP
 	BLT	INLOP4
 * Synchronize!
-	CLRA
-	COMA
-	STA	>WAIT
-* Wait for STEPCNT to reset
-INLOP8	LDA	>WAIT
-	BNE	INLOP8
+SYNCLOP	LDA	>FRAMCNT
+	BEQ	SYNCLOP
+	DEC	>FRAMCNT
 * Switch to next audio frame
 	TFR	Y,D
 	ANDA	#$78
@@ -216,7 +217,7 @@ VIDISR	LDB	$FF92
 	LDA	#FRAMSTP
 	STA	>STEPCNT
 * Unblock data pump
-	CLR	>WAIT
+	INC	>FRAMCNT
 * Check for user stop request
 	JSR	[$A000]
 	BEQ	VIDISR1
@@ -251,7 +252,7 @@ PALINIT	FCB	$00,$08,$10,$18,$20,$28,$30,$38
 ENDPINT	EQU	*
 
 STEPCNT	RMB	1
-WAIT	RMB	1
+FRAMCNT	RMB	1
 
 AUDRSTP	RMB	2
 AUDWSTP	RMB	2
