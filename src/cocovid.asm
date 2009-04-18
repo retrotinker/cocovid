@@ -11,7 +11,7 @@ PALOFF	EQU	$FFB0
 SAMR1ST	EQU	$FFD9
 
 * Frame step value should be 2x actual frame step for 30fps source video
-FRAMSTP	EQU	8
+FRAMSTP	EQU	6
 
 * 324 for 11025Hz...
 TIMEVAL	EQU	648
@@ -98,11 +98,11 @@ CLRAUD	STA	,X+
 	STA	>STEPCNT
 	LDD	#$4000
 	TFR	D,Y
-	ADDD	#$02E0
+	ADDD	#$0228
 	STD	>AUDRSTP
 	LDD	#$3800
 	TFR	D,U
-	ADDD	#$02E0
+	ADDD	#$0228
 	STD	>AUDWSTP
 
 * Init Vsync interrupt generation
@@ -202,18 +202,18 @@ INLOP6	EQU	*
 	ANDA	#$78
 	CLRB
 	TFR	D,U
-	ADDD	#$02E0
+	ADDD	#$0228
 	STD	>AUDWSTP
 	ANDA	#$78
 	EORA	#$78
 	CLRB
 	TFR	D,Y
-	ADDD	#$02E0
+	ADDD	#$0228
 	STD	>AUDRSTP
 	LBRA	INLOOP
 
 * Execute reset vector
-EXIT	ANDCC	#$BF
+EXIT	LDA	$FF93
 	JMP	[$FFFE]
 
 PIXESC	CMPA	#$C0
