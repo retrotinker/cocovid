@@ -96,12 +96,14 @@ CLRAUD	STA	,X+
 * Init audio buffer switching and video frame step
 	LDA	#FRAMSTP
 	STA	>STEPCNT
-	CLR	>AUDFRM
 	LDD	#$4000
-	STD	>AUDPTR
 	TFR	D,Y
-	LDD	#$42E0
-	STD	>AUDSTP
+	ADDD	#$02E0
+	STD	>AUDRSTP
+	LDD	#$3800
+	TFR	D,U
+	ADDD	#$02E0
+	STD	>AUDWSTP
 
 * Init Vsync interrupt generation
 	LDA	$FF92
@@ -148,36 +150,36 @@ INLOP2	LDA	$FFE0
 INLOP3	CMPX	#$3800
 	BLT	INLOP1
 * Audio data movement goes here
-* Point at next audio frame
-	LDD	>AUDPTR
-	ANDA	#$78
-	EORA	#$78
-	CLRB
-	TFR	D,X
 INLOP4	LDA	$FFE1
 * Check for character available
 	BEQ	INLOP4
 INLOP5	LDA	$FFE0
 * Store data in audio buffer
-	STA	,X+
-	TFR	X,D
-	ANDA	#$07
-	CMPD	#$02E0
+	STA	,U+
+	CMPU	>AUDWSTP
 	BLT	INLOP4
 * Synchronize!
-	LDA	#FRAMSTP
+	CLRA
+	COMA
+	STA	>WAIT
 * Wait for STEPCNT to reset
-INLOP8	CMPA	>STEPCNT
+INLOP8	LDA	>WAIT
 	BNE	INLOP8
 * Switch to next audio frame
-	LDD	>AUDPTR
+	TFR	Y,D
+	ANDA	#$78
+	CLRB
+	TFR	D,U
+	ADDD	#$02E0
+	STD	>AUDWSTP
 	ANDA	#$78
 	EORA	#$78
 	CLRB
-	STD	>AUDPTR
+	ORCC	#$40
 	TFR	D,Y
 	ADDD	#$02E0
-	STD	>AUDSTP
+	STD	>AUDRSTP
+	ANDCC	#$BF
 	BRA	INLOOP
 
 * Execute reset vector
@@ -185,8 +187,7 @@ EXIT	JMP	[$FFFE]
 
 PIXESC	CMPA	#$C0
 	BNE	PIXMWR
-PIXJMP	EQU	*
-	LDX	#$2000
+PIXJMP	LDX	#$2000
 PIXJMP1	LDA	$FFE1
 	BEQ	PIXJMP1
 	LDA	$FFE0
@@ -214,6 +215,8 @@ VIDISR	LDB	$FF92
 * Reset frame skip count
 	LDA	#FRAMSTP
 	STA	>STEPCNT
+* Unblock data pump
+	CLR	>WAIT
 * Check for user stop request
 	JSR	[$A000]
 	BEQ	VIDISR1
@@ -222,20 +225,17 @@ VIDISR	LDB	$FF92
 VIDISR1	RTI
 
 * Read samples and stuff them into the DAC
-SNDISR	EQU	*
-	PSHS	A
+SNDISR	PSHS	A
 * Clear timer interrupt
 	LDA	$FF93
 * Load and play sample
 	LDA	,Y+
 	STA	$FF20
-	CMPY	>AUDSTP
+	CMPY	>AUDRSTP
 	BGE	SNDISR3
-SNDISR2 EQU	*
-	PULS	A
+SNDISR2 PULS	A
 	RTI
-SNDISR3 EQU	*
-	LEAY	-1,Y
+SNDISR3 LEAY	-1,Y
 	PULS	A
 	RTI
 
@@ -251,8 +251,9 @@ PALINIT	FCB	$00,$08,$10,$18,$20,$28,$30,$38
 ENDPINT	EQU	*
 
 STEPCNT	RMB	1
-AUDFRM	RMB	1
-AUDPTR	RMB	2
-AUDSTP	RMB	2
+WAIT	RMB	1
+
+AUDRSTP	RMB	2
+AUDWSTP	RMB	2
 
 	END	EXEC
