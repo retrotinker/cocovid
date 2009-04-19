@@ -246,8 +246,11 @@ VIDISR	LDB	$FF92
 * Reset frame skip count
 	LDA	#FRAMSTP
 	STA	>STEPCNT
-* Unblock data pump
-	INC	>FRAMCNT
+* Unblock data pump -- limit FRAMCNT to prevent catch-up silliness
+	LDA	>FRAMCNT
+	INCA
+	ANDA	#$03
+	STA	>FRAMCNT
 * Check for user stop request
 	JSR	[$A000]
 	BEQ	VIDISR1
