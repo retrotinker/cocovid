@@ -1,14 +1,138 @@
 #!/bin/sh
 
-FRAMESKIP=4
-SAMPLES=368
+PPM=0
+RAW=0
+RLE=0
+DRW=0
+DRL=0
+PCM=0
 
-FRAMES=$(ls ../rle/"$1" | wc -l)
+FRAMESKIP=3
+SAMPLES=552
+PCMFACTOR=2
+MAXRLEFRM=2560
+MAXDRLFRM=3584
 
-for i in $(seq 1 $FRAMESKIP $FRAMES)
+MOV2PPM=~/git/cocovid/tools/mov2ppm
+PPM2RAW=~/git/cocovid/tools/ppm2raw
+RAW2RLE=~/git/cocovid/tools/raw2rle
+RAW2DRW=~/git/cocovid/tools/raw2drw
+DRW2DRL=~/git/cocovid/tools/drw2drl
+WAV2PCM=~/git/cocovid/tools/wav2pcm
+SPLITPCM=~/git/cocovid/tools/splitpcm
+
+if [ $PPM -ne 0 ]
+then
+	echo Converting .mov file to a sequence of .ppm files...
+	mkdir -p ../ppm/"$1"
+	cd ../ppm/"$1"
+	rm -f *
+	$MOV2PPM ../../mov/"$1".mov >/dev/null 2>&1
+	FRAMES=$(ls | wc -l)
+	cd - >/dev/null
+else
+	cd ../ppm/"$1"
+	FRAMES=$(ls | wc -l)
+	cd - >/dev/null
+fi
+
+if [ $RAW -ne 0 ]
+then
+	echo Converting .ppm files to .raw files...
+	mkdir -p ../raw/"$1"
+	cd ../raw/"$1"
+	rm -f *
+	for i in ../../ppm/"$1"/*
+	do
+	$PPM2RAW $i $(echo $(basename $i) | sed -e 's/ppm$/raw/')
+	done
+	cd - >/dev/null
+fi
+
+if [ $RLE -ne 0 ]
+then
+	echo Converting .raw files to .rle files...
+	mkdir -p ../rle/"$1"
+	cd ../rle/"$1"
+	rm -f *
+	for i in ../../raw/"$1"/*
+	do
+	$RAW2RLE $i $(echo $(basename $i) | sed -e 's/raw$/rle/')
+	done
+	cd - >/dev/null
+fi
+
+if [ $DRW -ne 0 ]
+then
+	echo Converting selected .raw files to .drw files...
+	mkdir -p ../drw/"$1"
+	cd ../drw/"$1"
+	rm -f *
+	for i in $(seq $(($FRAMESKIP + 1)) $FRAMESKIP $FRAMES)
+	do
+		$RAW2DRW ../../raw/"$1"/$((i-$FRAMESKIP)).raw \
+			../../raw/"$1"/${i}.raw ${i}.drw
+	done
+	cd - >/dev/null
+fi
+
+if [ $DRL -ne 0 ]
+then
+	echo Converting .drw files to .drl files...
+	mkdir -p ../drl/"$1"
+	cd ../drl/"$1"
+	rm -f *
+	for i in $(seq $(($FRAMESKIP + 1)) $FRAMESKIP $FRAMES)
+	do
+		$DRW2DRL ../../drw/"$1"/${i}.drw ${i}.drl
+	done
+	cd - >/dev/null
+fi
+
+if [ $PCM -ne 0 ]
+then
+	echo Converting .wav file to .pcm file and split into appropriately sized chunks...
+	mkdir -p ../pcm/"$1"
+	cd ../pcm/"$1"
+	rm -f *
+	$WAV2PCM ../../mov/"$1".wav "$1".pcm $PCMFACTOR
+	$SPLITPCM "$1".pcm "$1". $SAMPLES 2>/dev/null
+	cd - >/dev/null
+fi
+
+echo Building final output file...
+cp ../rle/"$1"/1.rle "$2"
+cat ../pcm/"$1"/*.0 >> "$2"
+
+DROP=0
+DROPPED=0
+for i in $(seq $(($FRAMESKIP + 1)) $FRAMESKIP $FRAMES)
 do
-	cat ../rle/"$1"/$i.rle
+	RLE=../rle/"$1"/$i.rle
+	DRL=../drl/"$1"/$i.drl
 	PCM=../pcm/"$1"/*.$((${i}/$FRAMESKIP))
+
+	RLESIZE=$(stat -c '%s' $RLE)
+	DRLSIZE=$(stat -c '%s' $DRL)
+
+	if [ $RLESIZE -gt $MAXRLEFRM -a $DRLSIZE -gt $MAXDRLFRM ]
+	then
+		xxd -r <<EMPTY
+00000000: c018 00                                  ...
+EMPTY
+		DROP=1
+		DROPPED=$(($DROPPED + 1))
+	elif [ $DROP -eq 1 -a $RLESIZE -lt $MAXRLEFRM ]
+	then
+		cat $RLE
+		DROP=0
+	elif [ $RLESIZE -lt $DRLSIZE ]
+	then
+		cat $RLE
+		DROP=0
+	else
+		cat $DRL
+	fi
 	if [ -f $PCM ]
 	then
 		cat $PCM
@@ -17,4 +141,6 @@ do
 		# ...should output 0x88 ("CoCo Law" virtual zero) instead?
 		dd if=/dev/zero bs=$SAMPLES count=1 2>/dev/null
 	fi
-done > "$2"
+done >> "$2"
+
+echo Done!  \(Dropped $DROPPED of $FRAMES frames\)

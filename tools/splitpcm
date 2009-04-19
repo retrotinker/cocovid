@@ -1,6 +1,6 @@
 #!/bin/sh
 
-split -d -b 552 -a 10 "$1" "$2"
+split -d -b $3 -a 10 "$1" "$2"
 
 for i in *.000000000*; do mv $i $(echo $i | sed -e 's/000000000\(.\)$/\1/'); done
 for i in *.00000000*; do mv $i $(echo $i | sed -e 's/00000000\(..\)$/\1/'); done
