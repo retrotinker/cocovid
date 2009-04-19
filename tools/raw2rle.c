@@ -6,6 +6,7 @@
 #include <sys/stat.h>
 #include <fcntl.h>
 #include <unistd.h>
+#include <errno.h>
 
 #define RAW_HORIZ_PIXELS	128
 #define RAW_VERT_PIXELS		96
@@ -69,7 +70,8 @@ int rlecompress(unsigned char *inbuf, unsigned char *outbuf, int bufsize)
 int main(int argc, char *argv[])
 {
 	int infd, outfd;
-	int outsize;
+	int outsize, insize = 0;
+	int rc;
 
 	if (argc < 3) {
 		usage(argv[0]);
@@ -83,10 +85,17 @@ int main(int argc, char *argv[])
 	outfd = open(argv[2], O_WRONLY | O_CREAT | O_TRUNC,
 			S_IRUSR | S_IWUSR | S_IRGRP | S_IROTH);
 
-	if (read(infd, &inbuf, sizeof(inbuf)) != sizeof(inbuf))
-		perror("pixel read");
+	do {
+		rc = read(infd, inbuf, sizeof(inbuf));
+		if (rc < 0 && rc != EINTR) {
+			perror("pixel read");
+			exit(EXIT_FAILURE);
+		}
+		if (rc != EINTR)
+			insize += rc;
+	} while (rc != 0);
 
-	outsize = rlecompress(&inbuf[0][0], &outbuf[0][0][0], sizeof(inbuf));
+	outsize = rlecompress(&inbuf[0][0], &outbuf[0][0][0], insize);
 
 	if (write(outfd, &outbuf, outsize) != outsize)
 		perror("pixel write");
