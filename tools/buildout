@@ -104,32 +104,32 @@ echo Building final output file...
 cp ../rle/"$1"/1.rle "$2"
 cat ../pcm/"$1"/*.0 >> "$2"
 
-DROP=0
 DROPPED=0
+NEXTFRAME=0
+NEXTOFF=0
 for i in $(seq $(($FRAMESKIP + 1)) $FRAMESKIP $FRAMES)
 do
 	RLE=../rle/"$1"/$i.rle
+	RL3BASE=../rl3/"$1"
 	DRL=../drl/"$1"/$i.drl
 	PCM=../pcm/"$1"/*.$((${i}/$FRAMESKIP))
 
 	RLESIZE=$(stat -c '%s' $RLE)
 	DRLSIZE=$(stat -c '%s' $DRL)
 
-	if [ $RLESIZE -gt $MAXRLEFRM -a $DRLSIZE -gt $MAXDRLFRM ]
+	if [ $i -lt $NEXTFRAME ]
 	then
-		xxd -r <<EMPTY
-00000000: c018 00                                  ...
-EMPTY
-		DROP=1
-		DROPPED=$(($DROPPED + 1))
-	elif [ $DROP -eq 1 -a $RLESIZE -lt $MAXRLEFRM ]
+		cat ${RL3BASE}/${NEXTFRAME}-${NEXTOFF}.rl3
+		NEXTOFF=$(($NEXTOFF + 1))
+	elif [ $RLESIZE -gt $MAXRLEFRM -a $DRLSIZE -gt $MAXDRLFRM ]
 	then
-		cat $RLE
-		DROP=0
+		NEXTFRAME=$(($i + 3 * $FRAMESKIP))
+		cat ${RL3BASE}/${NEXTFRAME}-1.rl3
+		NEXTOFF=2
+		DROPPED=$(($DROPPED + 2))
 	elif [ $RLESIZE -lt $DRLSIZE ]
 	then
 		cat $RLE
-		DROP=0
 	else
 		cat $DRL
 	fi
