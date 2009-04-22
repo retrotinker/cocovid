@@ -1,10 +1,13 @@
-all: ppm2raw raw2rle rle2raw raw2drw drw2drl drl2raw wav2pcm pcm2clw clw2pcm
+all: ppm2raw raw2rle raw2rl3 rle2raw raw2drw drw2drl drl2raw wav2pcm pcm2clw clw2pcm
 
 ppm2raw: ppm2raw.c
 	gcc -o ppm2raw ppm2raw.c
 
 raw2rle: raw2rle.c
 	gcc -o raw2rle raw2rle.c
+
+raw2rl3: raw2rl3.c
+	gcc -o raw2rl3 raw2rl3.c
 
 rle2raw: rle2raw.c
 	gcc -o rle2raw rle2raw.c
