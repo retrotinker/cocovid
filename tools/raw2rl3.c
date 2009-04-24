@@ -112,12 +112,12 @@ int main(int argc, char *argv[])
 			outsize += 3;
 		}
 		output = rlecompress(inptr, outptr, RAW_HORIZ_PIXELS/2);
-		inptr += RAW_HORIZ_PIXELS/2 * 3;
-		insize -= RAW_HORIZ_PIXELS/2 * 3;
+		inptr += RAW_HORIZ_PIXELS/2 * 2;
+		insize -= RAW_HORIZ_PIXELS/2 * 2;
 		outptr += output;
 		outsize += output;
 	}
-	if (inptr != (inbuf + sizeof(inbuf) +  RAW_HORIZ_PIXELS/2 * 2)) {
+	if (inptr != (inbuf + sizeof(inbuf) +  RAW_HORIZ_PIXELS/2 * 1)) {
 		*outptr++ = 0xc0;
 		*outptr++ = 0x18;
 		*outptr++ = 0x00;
