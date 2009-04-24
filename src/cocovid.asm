@@ -14,7 +14,7 @@ SAMR1ST	EQU	$FFD9
 FRAMSTP	EQU	6
 
 * 324 for 11025Hz...
-TIMEVAL	EQU	648
+TIMEVAL	EQU	324
 
 	ORG	LOAD
 
@@ -98,11 +98,11 @@ CLRAUD	STA	,X+
 	STA	>STEPCNT
 	LDD	#$4000
 	TFR	D,Y
-	ADDD	#$0228
+	ADDD	#$044F
 	STD	>AUDRSTP
 	LDD	#$3800
 	TFR	D,U
-	ADDD	#$0228
+	ADDD	#$044F
 	STD	>AUDWSTP
 
 * Init Vsync interrupt generation
@@ -202,13 +202,13 @@ INLOP6	EQU	*
 	ANDA	#$78
 	CLRB
 	TFR	D,U
-	ADDD	#$0228
+	ADDD	#$044F
 	STD	>AUDWSTP
 	ANDA	#$78
 	EORA	#$78
 	CLRB
 	TFR	D,Y
-	ADDD	#$0228
+	ADDD	#$044F
 	STD	>AUDRSTP
 	LBRA	INLOOP
 
@@ -249,7 +249,7 @@ VIDISR	LDB	$FF92
 * Unblock data pump -- limit FRAMCNT to prevent catch-up silliness
 	LDA	>FRAMCNT
 	INCA
-	ANDA	#$03
+	ANDA	#$07
 	STA	>FRAMCNT
 * Check for user stop request
 	JSR	[$A000]
