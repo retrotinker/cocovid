@@ -10,17 +10,23 @@ PCM=0
 FRAMESKIP=3
 SAMPLES=1103
 PCMFACTOR=1
+ILFACTOR=2
 #MAXRLEFRM=2048
-#MAXDRLFRM=3072
-MAXRLEFRM=2048
-MAXDRLFRM=3264
-#MAXRLEFRM=0
-#MAXDRLFRM=0
+#MAXDRLFRM=3264
+#MAXRLEFRM=1792
+#MAXDRLFRM=2560
+#MAXRLEFRM=1280
+#MAXDRLFRM=1920
+MAXRLEFRM=1792
+MAXDRLFRM=2304
+# These are good for Fresh Hare
+#MAXRLEFRM=1280
+#MAXDRLFRM=2048
 
 MOV2PPM=~/git/cocovid/tools/mov2ppm
 PPM2RAW=~/git/cocovid/tools/ppm2raw
 RAW2RLE=~/git/cocovid/tools/raw2rle
-RAW2RL3=~/git/cocovid/tools/raw2rl3
+RAW2RLI=~/git/cocovid/tools/raw2rli
 RAW2DRW=~/git/cocovid/tools/raw2drw
 DRW2DRL=~/git/cocovid/tools/drw2drl
 DRL2RAW=~/git/cocovid/tools/drl2raw
@@ -110,64 +116,71 @@ echo Building final output file...
 cp ../rle/"$1"/1.rle "$2"
 cat ../pcm/"$1"/*.0 >> "$2"
 
-mkdir -p ../rl3/"$1"
-cd ../rl3/"$1"
+mkdir -p ../rli/"$1"
+cd ../rli/"$1"
 rm -f *
 cd - >/dev/null
 
+# This bit and all the cp commands in the loop below are really just
+# for debugging and can be removed later...
 mkdir -p "$1"
 rm -f "$1"/*
 
-DROPPED=0
-NEXTFRAME=0
+INTERLACE=0
+INTERLACED=0
 NEXTSEQ=0
 for i in $(seq $(($FRAMESKIP + 1)) $FRAMESKIP $FRAMES)
 do
 	RAW=../rle/"$1"/$i.raw
 	RLE=../rle/"$1"/$i.rle
 	RAWBASE=../raw/"$1"
-	RL3BASE=../rl3/"$1"
+	RLIBASE=../rli/"$1"
 	DRWBASE=../drw/"$1"
 	DRL=../drl/"$1"/$i.drl
 	DRLBASE=../drl/"$1"
-	PCM=../pcm/"$1"/*.$((${i}/$FRAMESKIP))
+	PCMFILE=../pcm/"$1"/*.$((${i}/$FRAMESKIP))
 
 	RLESIZE=$(stat -c '%s' $RLE)
 	DRLSIZE=$(stat -c '%s' $DRL)
 
-	if [ $i -le $NEXTFRAME ]
+	if [ $INTERLACE -ne 0 ]
 	then
-		$RAW2DRW ${RAWBASE}/current.raw ${RAWBASE}/${NEXTFRAME}.raw ${DRWBASE}/current.drw
+		$RAW2DRW ${RAWBASE}/current.raw ${RAWBASE}/${i}.raw ${DRWBASE}/current.drw
 		$DRW2DRL ${DRWBASE}/current.drw ${DRLBASE}/current.drl
 		if [ $(stat -c '%s' ${DRLBASE}/current.drl) -lt $MAXDRLFRM ]
 		then
 			cat ${DRLBASE}/current.drl
 			cp ${DRLBASE}/current.drl "$1"/${i}-current.drl
-			$DRL2RAW ${RAWBASE}/current.raw ${DRLBASE}/current.drl ${RAWBASE}/tmp.raw
-			mv ${RAWBASE}/tmp.raw ${RAWBASE}/current.raw
+			INTERLACE=0
 		else
-			$RAW2RL3 ${RAWBASE}/${NEXTFRAME}.raw ${RL3BASE}/${NEXTFRAME}-${NEXTSEQ}.rl3 $NEXTSEQ
-			cat ${RL3BASE}/${NEXTFRAME}-${NEXTSEQ}.rl3
-			cp ${RL3BASE}/${NEXTFRAME}-${NEXTSEQ}.rl3 "$1"/
-			$DRL2RAW ${RAWBASE}/current.raw ${RL3BASE}/${NEXTFRAME}-${NEXTSEQ}.rl3 ${RAWBASE}/tmp.raw
+			$RAW2RLI ${RAWBASE}/${i}.raw ${RLIBASE}/${i}-${NEXTSEQ}.rli $ILFACTOR $NEXTSEQ
+			cat ${RLIBASE}/${i}-${NEXTSEQ}.rli
+			cp ${RLIBASE}/${i}-${NEXTSEQ}.rli "$1"/
+			$DRL2RAW ${RAWBASE}/current.raw ${RLIBASE}/${i}-${NEXTSEQ}.rli ${RAWBASE}/tmp.raw
 			mv ${RAWBASE}/tmp.raw ${RAWBASE}/current.raw
-			NEXTSEQ=$(($NEXTSEQ + 1))
+			if [ $NEXTSEQ -lt $ILFACTOR ]
+			then
+				NEXTSEQ=$(($NEXTSEQ + 1))
+			else
+				NEXTSEQ=1
+			fi
+			INTERLACED=$(($INTERLACED + 1))
 		fi
 	elif [ $RLESIZE -gt $MAXRLEFRM -a $DRLSIZE -gt $MAXDRLFRM ]
 	then
-		NEXTFRAME=$(($i + 2 * $FRAMESKIP))
-		$RAW2RL3 ${RAWBASE}/${NEXTFRAME}.raw ${RL3BASE}/${NEXTFRAME}-1.rl3 1
-		cat ${RL3BASE}/${NEXTFRAME}-1.rl3
-		cp ${RL3BASE}/${NEXTFRAME}-1.rl3 "$1"/
+		$RAW2RLI ${RAWBASE}/${i}.raw ${RLIBASE}/${i}-1.rli 2 1
+		cat ${RLIBASE}/${i}-1.rli
+		cp ${RLIBASE}/${i}-1.rli "$1"/
 		NEXTSEQ=2
-		DROPPED=$(($DROPPED + 1))
+		INTERLACED=$(($INTERLACED + 1))
 		if [ $i -eq 1 ]
 		then
 			LASTFRAME=1
 		else
 			LASTFRAME=$(($i - $FRAMESKIP))
 		fi
-		$DRL2RAW ${RAWBASE}/${LASTFRAME}.raw ${RL3BASE}/${NEXTFRAME}-1.rl3 ${RAWBASE}/current.raw
+		$DRL2RAW ${RAWBASE}/${LASTFRAME}.raw ${RLIBASE}/${i}-1.rli ${RAWBASE}/current.raw
+		INTERLACE=1
 	elif [ $RLESIZE -le $MAXRLEFRM -a $RLESIZE -lt $DRLSIZE ]
 	then
 		cat $RLE
@@ -176,10 +189,16 @@ do
 		cat $DRL
 		cp $DRL "$1"/
 	fi
-	if [ -f $PCM ]
+	if [ -f $PCMFILE ]
 	then
-		cat $PCM
-		cp $PCM "$1"/
+		cat $PCMFILE
+		cp $PCMFILE "$1"/
+		PCMSIZE=$(stat -c '%s' $PCMFILE)
+		if [ $PCMSIZE -lt $SAMPLES ]
+		then
+			dd if=/dev/zero bs=$(($SAMPLES - $PCMSIZE)) count=1 2>/dev/null
+			dd of="$1"/${i}-extra.pcm if=/dev/zero bs=$(($SAMPLES - $PCMSIZE)) count=1 2>/dev/null
+		fi
 	else
 		# This actually holds DAC at lowest value...
 		# ...should output 0x88 ("CoCo Law" virtual zero) instead?
@@ -188,4 +207,4 @@ do
 	fi
 done >> "$2"
 
-echo Done!  \(Dropped $DROPPED of $(($FRAMES / $FRAMESKIP)) frames\)
+echo Done!  \(Interlaced $INTERLACED of $(($FRAMES / $FRAMESKIP)) frames\)

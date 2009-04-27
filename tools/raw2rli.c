@@ -70,17 +70,22 @@ int rlecompress(unsigned char *inbuf, unsigned char *outbuf, int bufsize)
 int main(int argc, char *argv[])
 {
 	int infd, outfd;
-	int sequence;
+	int interleave, sequence;
 	int output, outsize = 0, insize = 0;
 	unsigned char *inptr, *outptr;
 	int rc;
 
-	if (argc < 4) {
+	if (argc < 5) {
 		usage(argv[0]);
 		exit(EXIT_FAILURE);
 	}
 
-	if (sscanf(argv[3], "%d", &sequence) < 0) {
+	if (sscanf(argv[3], "%d", &interleave) < 0) {
+		perror("sscanf interleave");
+		exit(EXIT_FAILURE);
+	}
+
+	if (sscanf(argv[4], "%d", &sequence) < 0) {
 		perror("sscanf sequence");
 		exit(EXIT_FAILURE);
 	}
@@ -112,12 +117,12 @@ int main(int argc, char *argv[])
 			outsize += 3;
 		}
 		output = rlecompress(inptr, outptr, RAW_HORIZ_PIXELS/2);
-		inptr += RAW_HORIZ_PIXELS/2 * 2;
-		insize -= RAW_HORIZ_PIXELS/2 * 2;
+		inptr += RAW_HORIZ_PIXELS/2 * interleave;
+		insize -= RAW_HORIZ_PIXELS/2 * interleave;
 		outptr += output;
 		outsize += output;
 	}
-	if (inptr != (inbuf + sizeof(inbuf) +  RAW_HORIZ_PIXELS/2 * 1)) {
+	if (inptr != (inbuf + sizeof(inbuf) +  RAW_HORIZ_PIXELS/2 * (interleave - 1))) {
 		*outptr++ = 0xc0;
 		*outptr++ = 0x18;
 		*outptr++ = 0x00;
