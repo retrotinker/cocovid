@@ -1,4 +1,5 @@
-all: ppm2raw raw2rle raw2rli rle2raw raw2drw drw2drl drl2raw wav2pcm pcm2clw clw2pcm
+all: ppm2raw raw2rle raw2rli rle2raw raw2drw drw2drl drl2raw wav2pcm \
+	pcm2clw clw2pcm drlscore
 
 ppm2raw: ppm2raw.c
 	gcc -o ppm2raw ppm2raw.c
@@ -29,3 +30,6 @@ pcm2clw: pcm2clw.c
 
 clw2pcm: clw2pcm.c
 	gcc -o clw2pcm clw2pcm.c
+
+drlscore: drlscore.c
+	gcc -o drlscore drlscore.c

@@ -10,18 +10,8 @@ PCM=0
 FRAMESKIP=3
 SAMPLES=1103
 PCMFACTOR=1
-ILFACTOR=2
-#MAXRLEFRM=2048
-#MAXDRLFRM=3264
-#MAXRLEFRM=1792
-#MAXDRLFRM=2560
-#MAXRLEFRM=1280
-#MAXDRLFRM=1920
-MAXRLEFRM=1792
-MAXDRLFRM=2304
-# These are good for Fresh Hare
-#MAXRLEFRM=1280
-#MAXDRLFRM=2048
+
+MAXSCORE=4608
 
 MOV2PPM=~/git/cocovid/tools/mov2ppm
 PPM2RAW=~/git/cocovid/tools/ppm2raw
@@ -32,6 +22,7 @@ DRW2DRL=~/git/cocovid/tools/drw2drl
 DRL2RAW=~/git/cocovid/tools/drl2raw
 WAV2PCM=~/git/cocovid/tools/wav2pcm
 SPLITPCM=~/git/cocovid/tools/splitpcm
+DRLSCORE=~/git/cocovid/tools/drlscore
 
 if [ $PPM -ne 0 ]
 then
@@ -128,6 +119,7 @@ rm -f "$1"/*
 
 INTERLACE=0
 INTERLACED=0
+ILFACTOR=0
 NEXTSEQ=0
 for i in $(seq $(($FRAMESKIP + 1)) $FRAMESKIP $FRAMES)
 do
@@ -140,20 +132,32 @@ do
 	DRLBASE=../drl/"$1"
 	PCMFILE=../pcm/"$1"/*.$((${i}/$FRAMESKIP))
 
-	RLESIZE=$(stat -c '%s' $RLE)
-	DRLSIZE=$(stat -c '%s' $DRL)
+	RLEWEIGHT=$($DRLSCORE $RLE)
+	DRLWEIGHT=$($DRLSCORE $DRL)
 
 	if [ $INTERLACE -ne 0 ]
 	then
 		$RAW2DRW ${RAWBASE}/current.raw ${RAWBASE}/${i}.raw ${DRWBASE}/current.drw
 		$DRW2DRL ${DRWBASE}/current.drw ${DRLBASE}/current.drl
-		if [ $(stat -c '%s' ${DRLBASE}/current.drl) -lt $MAXDRLFRM ]
+		if [ $($DRLSCORE ${DRLBASE}/current.drl) -lt $MAXSCORE ]
 		then
 			cat ${DRLBASE}/current.drl
 			cp ${DRLBASE}/current.drl "$1"/${i}-current.drl
 			INTERLACE=0
 		else
-			$RAW2RLI ${RAWBASE}/${i}.raw ${RLIBASE}/${i}-${NEXTSEQ}.rli $ILFACTOR $NEXTSEQ
+			if [ $NEXTSEQ -eq 1 ]
+			then
+				for ILFACTOR in $(seq 2 95)
+				do
+					$RAW2RLI ${RAWBASE}/${i}.raw ${RLIBASE}/${i}-1.rli $ILFACTOR 1
+					if [ $($DRLSCORE ${RLIBASE}/${i}-1.rli) -le $MAXSCORE ]
+					then
+						break
+					fi
+				done
+			else
+				$RAW2RLI ${RAWBASE}/${i}.raw ${RLIBASE}/${i}-${NEXTSEQ}.rli $ILFACTOR $NEXTSEQ
+			fi
 			cat ${RLIBASE}/${i}-${NEXTSEQ}.rli
 			cp ${RLIBASE}/${i}-${NEXTSEQ}.rli "$1"/
 			$DRL2RAW ${RAWBASE}/current.raw ${RLIBASE}/${i}-${NEXTSEQ}.rli ${RAWBASE}/tmp.raw
@@ -166,9 +170,16 @@ do
 			fi
 			INTERLACED=$(($INTERLACED + 1))
 		fi
-	elif [ $RLESIZE -gt $MAXRLEFRM -a $DRLSIZE -gt $MAXDRLFRM ]
+	elif [ $RLEWEIGHT -gt $MAXSCORE -a $DRLWEIGHT -gt $MAXSCORE ]
 	then
-		$RAW2RLI ${RAWBASE}/${i}.raw ${RLIBASE}/${i}-1.rli 2 1
+		for ILFACTOR in $(seq 2 95)
+		do
+			$RAW2RLI ${RAWBASE}/${i}.raw ${RLIBASE}/${i}-1.rli $ILFACTOR 1
+			if [ $($DRLSCORE ${RLIBASE}/${i}-1.rli) -le $MAXSCORE ]
+			then
+				break
+			fi
+		done
 		cat ${RLIBASE}/${i}-1.rli
 		cp ${RLIBASE}/${i}-1.rli "$1"/
 		NEXTSEQ=2
@@ -181,7 +192,7 @@ do
 		fi
 		$DRL2RAW ${RAWBASE}/${LASTFRAME}.raw ${RLIBASE}/${i}-1.rli ${RAWBASE}/current.raw
 		INTERLACE=1
-	elif [ $RLESIZE -le $MAXRLEFRM -a $RLESIZE -lt $DRLSIZE ]
+	elif [ $RLEWEIGHT -le $MAXSCORE -a $RLEWEIGHT -lt $DRLWEIGHT ]
 	then
 		cat $RLE
 		cp $RLE "$1"/
