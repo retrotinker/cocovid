@@ -105,7 +105,7 @@ int rleprune(struct rlerun *run, int maxscore)
 int main(int argc, char *argv[])
 {
 	int infd, outfd;
-	int curoff = 0, insize = 0, outsize = 0;
+	int insize = 0, outsize = 0;
 	int maxscore, curscore = 0;
 	int i, j, rc;
 
@@ -193,14 +193,12 @@ int main(int argc, char *argv[])
 				outbuf[outsize++] = runpool[i].start[j];
 			}
 			curscore += runpool[i].score;
-			curoff = runpool[i].offset + runpool[i].vidlen;
 
 			/* mark this run as used */
 			runpool[i].offset = 0xffff;
 		}
 	}
 
-#if 0
 	/*
 	 * "Corporate" budgeting (i.e. use it or lose it)
 	 * 	-- check for left-over budget
@@ -224,11 +222,8 @@ int main(int argc, char *argv[])
 				outbuf[outsize++] = runpool[i].start[j];
 			}
 			curscore += runpool[i].score; /* not really needed here */
-			curoff = runpool[i].offset +
-					rlevidlen(runpool[i].start, prunelen);
 		}
 	}
-#endif
 
 	outbuf[outsize++] = 0xc0;
 	outbuf[outsize++] = 0xff;
