@@ -1,4 +1,4 @@
--- end-of-video marker? (C0 FF FF)
+-- need explicit end of frame marker (C0 FF FF)
 
 -- palette change
 	-- video start
@@ -12,8 +12,7 @@
 		-- palette "flipping" for more virtual colors
 			-- RG/GB for virtual 64 colors
 			-- RG/GB/RB for virtual 4096 colors?
+		-- Chris Lomont's single palette 2x+y scheme?
 	-- dithering(?)
 
--- conversion tools
-	-- enforce max data rate
-	-- split rle files to comply w/ above
+-- limit length of runs in drlprune, splitting as necessary
