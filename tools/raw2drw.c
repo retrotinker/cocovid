@@ -14,7 +14,7 @@ unsigned char prevbuf[RAW_VERT_PIXELS][RAW_HORIZ_PIXELS/2];
 unsigned char curbuf[RAW_VERT_PIXELS][RAW_HORIZ_PIXELS/2];
 
 /* Quintuple the output buffer in case of degenerate worst case */
-unsigned char outbuf[RAW_VERT_PIXELS*(RAW_HORIZ_PIXELS/2)*5];
+unsigned char outbuf[RAW_VERT_PIXELS*(RAW_HORIZ_PIXELS/2)*5 + 3];
 
 void usage(char *prg)
 {
@@ -87,12 +87,10 @@ int main(int argc, char *argv[])
 			}
 		}
 
-	/* Always have at least a frame delimeter...? */
-	if (matching) {
-		outbuf[outsize++] = 0xc0;
-		outbuf[outsize++] = 0x18;
-		outbuf[outsize++] = 0x00;
-	}
+	/* Always have at least a frame delimeter... */
+	outbuf[outsize++] = 0xc0;
+	outbuf[outsize++] = 0xff;
+	outbuf[outsize++] = 0xff;
 
 	if (write(outfd, &outbuf, outsize) != outsize)
 		perror("pixel write");

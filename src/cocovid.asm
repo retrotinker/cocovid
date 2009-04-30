@@ -157,26 +157,27 @@ INLOP2	LDA	$FFE1
 	BEQ	PIXESC
 * Store data in video buffer
 	STA	,X+
-INLOP3	CMPX	#$3800
-	BLT	INLOP1
+	BRA	INLOP1
+
 * Audio data movement goes here
 * Check timer interrupt
-INLOP4	LDA	$FF93
-	BEQ	INLOP5
+INLOP3	LDA	$FF93
+	BEQ	INLOP4
 * Load and play sample
 	LDA	,Y+
 	STA	$FF20
 	CMPY	>AUDRSTP
-	BLT	INLOP5
+	BLT	INLOP4
 	LEAY	-1,Y
-INLOP5	LDA	$FFE1
+INLOP4	LDA	$FFE1
 * Check for character available
-	BEQ	INLOP4
+	BEQ	INLOP3
 	LDA	$FFE0
 * Store data in audio buffer
 	STA	,U+
 	CMPU	>AUDWSTP
-	BLT	INLOP4
+	BLT	INLOP3
+
 * Synchronize!
 * Check timer interrupt
 SYNCLOP	LDA	$FF93
@@ -236,8 +237,10 @@ PIXJMP3	LDB	$FF93
 PIXJMP4	LDB	$FFE1
 	BEQ	PIXJMP3
 	LDB	$FFE0
+	CMPD	#$FFFF
+	LBEQ	INLOP3
 	LEAX	D,X
-	JMP	INLOP3
+	JMP	INLOP1
 
 PIXMWR	TFR	A,B
 	ANDB	#$3F
@@ -267,7 +270,7 @@ PIXMWR4	PULS	A
 PIXMWR5	STA	,X+
 	DECB
 	BNE	PIXMWR3
-	JMP	INLOP3
+	JMP	INLOP1
 
 * Clear Vsync interrupt
 VIDISR	LDB	$FF92

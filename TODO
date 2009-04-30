@@ -1,5 +1,3 @@
--- need explicit end of frame marker (C0 FF FF)
-
 -- palette change
 	-- video start
 	-- frame start

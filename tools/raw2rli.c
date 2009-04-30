@@ -12,7 +12,7 @@
 #define RAW_VERT_PIXELS		96
 
 unsigned char inbuf[RAW_VERT_PIXELS * RAW_HORIZ_PIXELS/2];
-unsigned char outbuf[RAW_VERT_PIXELS * RAW_HORIZ_PIXELS/2 * 2];
+unsigned char outbuf[RAW_VERT_PIXELS * RAW_HORIZ_PIXELS/2 * 2 + 3];
 
 void usage(char *prg)
 {
@@ -122,12 +122,11 @@ int main(int argc, char *argv[])
 		outptr += output;
 		outsize += output;
 	}
-	if (inptr != (inbuf + sizeof(inbuf) +  RAW_HORIZ_PIXELS/2 * (interleave - 1))) {
-		*outptr++ = 0xc0;
-		*outptr++ = 0x18;
-		*outptr++ = 0x00;
-		outsize += 3;
-	}
+
+	*outptr++ = 0xc0;
+	*outptr++ = 0xff;
+	*outptr++ = 0xff;
+	outsize += 3;
 
 	if (write(outfd, &outbuf, outsize) != outsize)
 		perror("pixel write");

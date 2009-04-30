@@ -18,8 +18,8 @@ struct rlerun {
 	unsigned int score;
 };
 
-unsigned char inbuf[RAW_VERT_PIXELS * RAW_HORIZ_PIXELS/2];
-unsigned char outbuf[RAW_VERT_PIXELS * RAW_HORIZ_PIXELS/2 * 5];
+unsigned char inbuf[RAW_VERT_PIXELS * RAW_HORIZ_PIXELS/2 + 3];
+unsigned char outbuf[RAW_VERT_PIXELS * RAW_HORIZ_PIXELS/2 * 5 + 3];
 
 /* Assume we won't have separate runs that are physically adjacent... */
 struct rlerun runpool[RAW_VERT_PIXELS * RAW_HORIZ_PIXELS/2 / 2];
@@ -32,12 +32,6 @@ int cmprlerun(const void *run1, const void *run2)
 
 	r1 = run1;
 	r2 = run2;
-
-	/* cheat to put these last in the list... */
-	if (r1->offset + r1->vidlen >= 0x1800)
-		return 1;
-	else if (r2->offset + r2->vidlen >= 0x1800)
-		return -1;
 
 	if (r1->vidlen > r2->vidlen)
 		return -1;
@@ -142,6 +136,9 @@ int main(int argc, char *argv[])
 			insize += rc;
 	} while (rc != 0);
 
+	/* strip end of frame marker */
+	insize -= 3;
+
 	i=0;
 	if (inbuf[i] != 0xc0) {
 		runpool[0].start = inbuf;
@@ -233,11 +230,9 @@ int main(int argc, char *argv[])
 	}
 #endif
 
-	if (curoff < 0x1800) {
-		outbuf[outsize++] = 0xc0;
-		outbuf[outsize++] = 0x18;
-		outbuf[outsize++] = 0x00;
-	}
+	outbuf[outsize++] = 0xc0;
+	outbuf[outsize++] = 0xff;
+	outbuf[outsize++] = 0xff;
 
 	if (write(outfd, &outbuf, outsize) != outsize)
 		perror("pixel write");

@@ -11,7 +11,7 @@
 #define RAW_HORIZ_PIXELS	128
 #define RAW_VERT_PIXELS		96
 
-unsigned char inbuf[RAW_VERT_PIXELS * RAW_HORIZ_PIXELS/2 * 5];
+unsigned char inbuf[RAW_VERT_PIXELS * RAW_HORIZ_PIXELS/2 * 5 + 3];
 unsigned char outbuf[RAW_VERT_PIXELS * RAW_HORIZ_PIXELS/2];
 
 void usage(char *prg)
@@ -98,9 +98,16 @@ int main(int argc, char *argv[])
 				runsize +=2;
 				continue;
 			} else {
-				rledecompress(runstart, outptr, runsize);
-				outptr = outbuf +
-					(*(inptr + 1) << 8) + *(inptr + 2);
+				if (*(inptr + 1) == 0xff &&
+				    *(inptr + 2) == 0xff) {
+					outptr = outbuf + 0x1800;
+				} else {
+					rledecompress(runstart, outptr,
+							runsize);
+					outptr = outbuf +
+						(*(inptr + 1) << 8) +
+						 *(inptr + 2);
+				}
 				inptr += 2;
 				runstart = inptr + 1;
 				runsize = 0;

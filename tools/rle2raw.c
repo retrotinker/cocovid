@@ -11,7 +11,7 @@
 #define RAW_HORIZ_PIXELS	128
 #define RAW_VERT_PIXELS		96
 
-unsigned char inbuf[RAW_VERT_PIXELS][RAW_HORIZ_PIXELS/2];
+unsigned char inbuf[RAW_VERT_PIXELS][RAW_HORIZ_PIXELS/2 + 3];
 unsigned char outbuf[RAW_VERT_PIXELS][RAW_HORIZ_PIXELS/2];
 
 void usage(char *prg)
@@ -78,7 +78,7 @@ int main(int argc, char *argv[])
 			insize += rc;
 	} while (rc != 0);
 
-	outsize = rledecompress(&inbuf[0][0], &outbuf[0][0], insize);
+	outsize = rledecompress(&inbuf[0][0], &outbuf[0][0], insize - 3);
 
 	if (write(outfd, &outbuf, outsize) != outsize)
 		perror("pixel write");
