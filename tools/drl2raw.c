@@ -86,6 +86,9 @@ int main(int argc, char *argv[])
 			insize += rc;
 	} while (rc != 0);
 
+	/* strip end of frame marker */
+	insize -= 3;
+
 	inptr = inbuf;
 	outptr = outbuf;
 	runsize = 0;
@@ -98,16 +101,9 @@ int main(int argc, char *argv[])
 				runsize +=2;
 				continue;
 			} else {
-				if (*(inptr + 1) == 0xff &&
-				    *(inptr + 2) == 0xff) {
-					outptr = outbuf + 0x1800;
-				} else {
-					rledecompress(runstart, outptr,
-							runsize);
-					outptr = outbuf +
-						(*(inptr + 1) << 8) +
-						 *(inptr + 2);
-				}
+				rledecompress(runstart, outptr, runsize);
+				outptr = outbuf +
+					(*(inptr + 1) << 8) + *(inptr + 2);
 				inptr += 2;
 				runstart = inptr + 1;
 				runsize = 0;
@@ -118,15 +114,9 @@ int main(int argc, char *argv[])
 	}
 
 	outptr += rledecompress(runstart, outptr, runsize);
-	outsize = outptr - outbuf;
 
-	if (write(outfd, outbuf, outptr - outbuf) != outsize)
+	if (write(outfd, outbuf, sizeof(outbuf)) != sizeof(outbuf))
 		perror("pixel write");
-
-	if (outsize != sizeof(outbuf)) {
-		printf("%s decompressed to wrong size! (%d)\n", argv[2], outsize);
-		exit(EXIT_FAILURE);
-	}
 
 	close(prevfd);
 	close(curfd);

@@ -8,6 +8,8 @@
 #include <unistd.h>
 #include <errno.h>
 
+#define MAXRUNLEN 256
+
 #define RAW_HORIZ_PIXELS	128
 #define RAW_VERT_PIXELS		96
 
@@ -68,6 +70,17 @@ int rlevidlen(unsigned char *inbuf, int bufsize)
 	return vidlen;
 }
 
+int rleshorten(struct rlerun *run, int maxlen)
+{
+	int len;
+
+	len = run->runlen;
+	while (rlevidlen(run->start, len) > maxlen)
+		len--;
+
+	return len;
+}
+
 int rlescore(unsigned char *inbuf, int bufsize)
 {
 	int i, skip = 0, score = 0;
@@ -107,6 +120,7 @@ int main(int argc, char *argv[])
 	int infd, outfd;
 	int insize = 0, outsize = 0;
 	int maxscore, curscore = 0;
+	int shortrun, newrun;
 	int i, j, rc;
 
 	if (argc < 4) {
@@ -151,27 +165,66 @@ int main(int argc, char *argv[])
 		}
 		runpool[0].runlen = j - i;
 		runpool[0].vidlen = rlevidlen(&inbuf[i], runpool[0].runlen);
-		runpool[0].score = 3 + rlescore(&inbuf[i], runpool[0].runlen);
-		numrleruns = 1;
-		i = j;
+		while (runpool[numrleruns].vidlen > MAXRUNLEN) {
+			shortrun = rleshorten(&runpool[numrleruns], MAXRUNLEN);
+			newrun = runpool[numrleruns].runlen - shortrun;
+			runpool[numrleruns].runlen = shortrun;
+			runpool[numrleruns].vidlen =
+				rlevidlen(&inbuf[i], runpool[numrleruns].runlen);
+			runpool[numrleruns].score = 3 +
+				rlescore(&inbuf[i], runpool[numrleruns].runlen);
+			i += runpool[numrleruns].runlen;
+			numrleruns++;
+			runpool[numrleruns].start = inbuf + i;
+			runpool[numrleruns].offset =
+				runpool[numrleruns - 1].offset +
+				runpool[numrleruns - 1].vidlen;
+			runpool[numrleruns].runlen = newrun;
+			runpool[numrleruns].vidlen =
+				rlevidlen(&inbuf[i],
+					runpool[numrleruns].runlen);
+		}
+		runpool[numrleruns].score = 3 +
+			rlescore(&inbuf[i], runpool[numrleruns].runlen);
+		i += runpool[numrleruns].runlen;
+		numrleruns += 1;
 	}
 	while (i < insize) {
 		runpool[numrleruns].start = inbuf + i + 3;
 		runpool[numrleruns].offset = (inbuf[i + 1] << 8) + inbuf[i + 2];
-		for (j=i+3; j<insize; j++)
+		i += 3;
+		for (j=i; j<insize; j++)
 			if (((inbuf[j] & 0xc0) == 0xc0) && (inbuf[j] != 0xc0))
 				j += 1;
 			else if (inbuf[j] == 0xc0)
 				break;
-		if (runpool[numrleruns].offset == 0x1800) {
-			i = j;
-			break;
+		runpool[numrleruns].runlen = j - i;
+		runpool[numrleruns].vidlen =
+			rlevidlen(&inbuf[i], runpool[numrleruns].runlen);
+		while (runpool[numrleruns].vidlen > MAXRUNLEN) {
+			shortrun = rleshorten(&runpool[numrleruns], MAXRUNLEN);
+			newrun = runpool[numrleruns].runlen - shortrun;
+			runpool[numrleruns].runlen = shortrun;
+			runpool[numrleruns].vidlen =
+					rlevidlen(&inbuf[i],
+						runpool[numrleruns].runlen);
+			runpool[numrleruns].score = 3 +
+				rlescore(&inbuf[i], runpool[numrleruns].runlen);
+			i += runpool[numrleruns].runlen;
+			numrleruns++;
+			runpool[numrleruns].start = inbuf + i;
+			runpool[numrleruns].offset =
+				runpool[numrleruns - 1].offset +
+				runpool[numrleruns - 1].vidlen;
+			runpool[numrleruns].runlen = newrun;
+			runpool[numrleruns].vidlen =
+				rlevidlen(&inbuf[i],
+					runpool[numrleruns].runlen);
 		}
-		runpool[numrleruns].runlen = j - i - 3;
-		runpool[numrleruns].vidlen = rlevidlen(&inbuf[i+3], runpool[numrleruns].runlen);
-		runpool[numrleruns].score = 3 + rlescore(&inbuf[i+3], runpool[numrleruns].runlen);
+		runpool[numrleruns].score = 3 +
+			rlescore(&inbuf[i], runpool[numrleruns].runlen);
+		i += runpool[numrleruns].runlen;
 		numrleruns += 1;
-		i = j;
 	}
 
 	qsort(runpool, numrleruns, sizeof(struct rlerun), cmprlerun);
