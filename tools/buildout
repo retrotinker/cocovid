@@ -4,11 +4,12 @@ PPM=1
 RAW=1
 PCM=1
 
-FRAMESKIP=3
-SAMPLES=1103
+FRAMESTEP=2
+SAMPLES=735
 PCMFACTOR=1
 
-MAXSCORE=3712
+#MAXSCORE=3712
+MAXSCORE=2560
 
 MOV2PPM=~/git/cocovid/tools/mov2ppm
 PPM2RAW=~/git/cocovid/tools/ppm2raw
@@ -465,13 +466,13 @@ $RAW2RLE $CURRAW ${RAWBASE}/first.rle
 cat ${RAWBASE}/first.rle > "$2"
 dd if=/dev/zero bs=$SAMPLES count=1 2>/dev/null >> "$2"
 
-for i in $(seq 1 $FRAMESKIP $FRAMES)
+for i in $(seq 1 $FRAMESTEP $FRAMES)
 do
 	RAW=${RAWBASE}/$i.raw
 	DRW=${DRWBASE}/${i}-cur.drw
 	DRL=${DRLBASE}/${i}-cur.drl
 	DRLOUT=${DRLBASE}/${i}-out.drl
-	PCMFILE=${PCMBASE}/*.$((${i}/$FRAMESKIP))
+	PCMFILE=${PCMBASE}/*.$((${i}/$FRAMESTEP))
 
 	$RAW2DRW $CURRAW $RAW $DRW
 	$DRW2DRL $DRW $DRL
