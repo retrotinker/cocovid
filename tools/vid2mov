@@ -1,4 +1,4 @@
 #!/bin/sh
 
-ffmpeg -i "$1" -r 30 -ar 11025 -ac 1 -s sqcif -b 200000 -f mov -y "$2"
+ffmpeg -i "$1" -r 30 -ar 11025 -ac 1 -s sqcif -b 200000 -acodec pcm_u8 -f mov -y "$2"
 ffmpeg -i "$2" -vn -acodec pcm_u8 -y "$3"

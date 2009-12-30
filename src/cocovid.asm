@@ -12,8 +12,8 @@ SAMR1ST	EQU	$FFD9
 * Frame step value should be 2x actual frame step for 30fps source video
 FRAMSTP	EQU	4
 
-* 324 for 11025Hz...
-TIMEVAL	EQU	324
+* 324.625 for 11025Hz...
+TIMEVAL	EQU	325
 
 	ORG	LOAD
 
