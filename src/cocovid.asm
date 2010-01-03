@@ -130,40 +130,42 @@ CLRAUD	STA	,X+
 	STA	$FF90
 
 * Init IDE drive
+	ldu	#$ff50
+	clrb
 * Clear pending data transfers
-ideclr	lda	$ff57
+ideclr	lda	7,u
 	anda	#$08
 	beq	idecal
-	lda	$ff50
-	lda	$ff58
+	lda	,u
+	lda	8,u
 	bra	ideclr
 * Issue recalibrate command
-idecal	clr	$ff51
-	clr	$ff52
-	clr	$ff53
-	clr	$ff54
-	clr	$ff55
+idecal	clr	1,u
+	clr	2,u
+	clr	3,u
+	clr	4,u
+	clr	5,u
 	lda	#$a0
-	sta	$ff56
+	sta	6,u
 	lda	#$10	
-	sta	$ff57
-iderec1	lda	$ff57
+	sta	7,u
+iderec1	lda	7,u
 	anda	#$80
 	bne	iderec1
 * Assume it worked -- what else would we do?
 
 * Now issue first read command
-	clr	$ff51
+	clr	1,u
 	lda	#$80
-	sta	$ff52
-	clr	$ff53
-	clr	$ff54
-	clr	$ff55
+	sta	2,u
+	clr	3,u
+	clr	4,u
+	clr	5,u
 	lda	#$e0
-	sta	$ff56
+	sta	6,u
 	lda	#$20	
-	sta	$ff57
-ideread	lda	$ff57
+	sta	7,u
+ideread	lda	7,u
 	anda	#$80
 	bne	ideread
 
@@ -318,53 +320,51 @@ PIXMWR4	STA	,X+
 	leas	1,s
 	JMP	INLOP1
 
-DATREAD	lda	>DATFLAG
+DATREAD	tstb
 	bne	DATNEXT
-	inca
-	sta	>DATFLAG
-	lda	$ff50
+	ldb	#$08
+	lda	,u
 	rts
-DATNEXT	clr	>DATFLAG
-	lda	$ff58
-	pshs	a
+DATNEXT lda	8,u
 * Check if more data available for next round
-	lda	$ff57
-	anda	#$08
+	bitb	7,u
 	beq	DATREQ
-	puls	a
+	clrb
 	rts
 * Increment LBA and request next sector
-DATREQ	lda	#$80
-	sta	$ff52
-	adda	$ff53
-	sta	$ff53
+DATREQ	ldb	#$80
+	stb	2,u
+	addb	3,u
+	stb	3,u
 	bne	DATCMD
-	inc	$ff54
+	inc	4,u
 	bne	DATCMD
-	inc	$ff55
+	inc	5,u
 	bne	DATCMD
-	lda	$ff56
-	inca
-	anda	#$0f
-	ora	#$e0
-	sta	$ff56
-DATCMD	lda	#$20
-	sta	$ff57
-DATWAIT lda	$ff57
-	anda	#$80
+	ldb	6,u
+	incb
+	andb	#$0f
+	orb	#$e0
+	stb	6,u
+DATCMD	ldb	#$20
+	stb	7,u
+DATWAIT ldb	7,u
+	andb	#$80
 	bne	DATWAIT
 * Check UART for activity
-DATWAI1	lda	$ff69
-	bita	#$08
+DATWAI1	ldb	$ff69
+	bitb	#$08
 	beq	DATWAI2
-	lda	$ff68
+	ldb	$ff68
 	lbra	EXIT
 * Check for user stop request
-DATWAI2	JSR	[$A000]
+DATWAI2	pshs	a
+	JSR	[$A000]
 	BEQ	DATWAI3
-	CMPA	#$03
+	cmpa	#$03
 	LBEQ	EXIT
 DATWAI3	puls	a
+	clrb
 	rts
 
 * Clear Vsync interrupt

@@ -1,12 +1,4 @@
 -- performance
-	-- access IDE data using sequence like this:
-			lda	#$08
-			bita	7,u
-			bne	read
-			bsr	DATREQ
-			* hack depends on data rdy val matching odd data off
-		read	eorb	a
-			lda	b,u
 	-- reorder code to reduce number of long branches
 		
 -- palette change (?)
