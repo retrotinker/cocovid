@@ -1,5 +1,4 @@
 -- performance
-	-- eliminate use of u register (or save/restore)
 	-- access IDE data using sequence like this:
 			lda	#$08
 			bita	7,u

@@ -104,7 +104,7 @@ CLRAUD	STA	,X+
 	ADDD	#AUBUFSZ
 	STD	>AUDRSTP
 	LDD	#$3800
-	TFR	D,U
+	STD	>AUDWPTR
 	ADDD	#AUBUFSZ
 	STD	>AUDWSTP
 
@@ -195,23 +195,24 @@ INLOP3	lbsr	DATREAD
 
 * Audio data movement goes here
 * Check timer interrupt
-INLOP4	LDA	$FF93
-	BEQ	INLOP6
+AUDIN	LDX	>AUDWPTR
+AUDIN1	LDA	$FF93
+	BEQ	AUDIN3
 * Load and play sample
 	LDA	,Y+
 	sta	$ff20
 	sta	$ff7a
 	CMPY	>AUDRSTP
-	BLT	INLOP5
+	BLT	AUDIN2
 	LEAY	-1,Y
-INLOP5	lda	$ff92
-	beq	INLOP6
+AUDIN2	lda	$ff92
+	beq	AUDIN3
 	lbsr	VIDTMR
-INLOP6	lbsr	DATREAD
+AUDIN3	lbsr	DATREAD
 * Store data in audio buffer
-	STA	,U+
-	CMPU	>AUDWSTP
-	BLT	INLOP4
+	STA	,X+
+	CMPX	>AUDWSTP
+	BLT	AUDIN1
 
 * Synchronize!
 * Check timer interrupt
@@ -235,7 +236,7 @@ SYNCLP2 LDA	>FRAMCNT
 	TFR	Y,D
 	ANDA	#$78
 	CLRB
-	TFR	D,U
+	STD	>AUDWPTR
 	ADDD	#AUBUFSZ
 	STD	>AUDWSTP
 	ANDA	#$78
@@ -294,7 +295,7 @@ PIXJMP3	LEAX	D,X
 	JMP	INLOP1
 PIXJMP4	puls	b
 	leas	1,s
-	lbra	INLOP4
+	lbra	AUDIN
 
 PIXMWR	anda	#$3f
 	pshs	a
@@ -402,6 +403,7 @@ STEPCNT	RMB	1
 FRAMCNT	RMB	1
 
 AUDRSTP	RMB	2
+AUDWPTR	RMB	2
 AUDWSTP	RMB	2
 
 	END	EXEC
