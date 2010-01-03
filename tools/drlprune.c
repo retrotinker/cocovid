@@ -8,7 +8,7 @@
 #include <unistd.h>
 #include <errno.h>
 
-#define MAXRUNLEN 256
+#define MAXRUNLEN 64
 
 #define RAW_HORIZ_PIXELS	128
 #define RAW_VERT_PIXELS		96

@@ -1,0 +1,3 @@
+#!/bin/sh
+
+mencoder tv:// -tv driver=v4l2:norm=NTSC:device=/dev/video1:mjpeg:decimation=4:forceaudio=1:adevice=/dev/dsp1 -oac copy -ovc copy -endpos "$2" -o "$1"

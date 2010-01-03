@@ -1,16 +1,32 @@
--- palette change
+-- performance
+	-- eliminate use of b register (or save/restore)
+	-- eliminate use of u register (or save/restore)
+	-- access IDE data using sequence like this:
+			lda	#$08
+			bita	7,u
+			bne	read
+			bsr	DATREQ
+			* hack depends on data rdy val matching odd data off
+		read	eorb	a
+			lda	b,u
+		
+-- palette change (?)
 	-- video start
 	-- frame start
 
 -- preprocessing
+	-- use RGB lookup table for selecting colors instead of algorithm
+	-- sort drl segments by total color distance rather than length of run
 	-- insert 'whole' frames periodically in stream
 	-- brightness/contrast
-	-- palette selection
+	-- palette selection (?)
 		-- "perfect" palette
 		-- palette "flipping" for more virtual colors
 			-- RG/GB for virtual 64 colors
 			-- RG/GB/RB for virtual 4096 colors?
 		-- Chris Lomont's single palette 2x+y scheme?
-	-- dithering(?)
+	-- dithering (?)
+	-- scoring based strictly on size of input + output bitstreams
+	-- use fewer tmp files (i.e. more piping) to improve conversion time
 
 -- limit length of runs in drlprune, splitting as necessary

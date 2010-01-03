@@ -1,5 +1,5 @@
 	NAM	CoCoAud
-	TTL	Audio player for CoCo
+	TTL	Audio player for CoCo3
 
 LOAD	EQU	$0E00		Actual load address for binary
 
