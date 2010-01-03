@@ -1,5 +1,4 @@
 -- performance
-	-- eliminate use of b register (or save/restore)
 	-- eliminate use of u register (or save/restore)
 	-- access IDE data using sequence like this:
 			lda	#$08
@@ -9,6 +8,7 @@
 			* hack depends on data rdy val matching odd data off
 		read	eorb	a
 			lda	b,u
+	-- reorder code to reduce number of long branches
 		
 -- palette change (?)
 	-- video start

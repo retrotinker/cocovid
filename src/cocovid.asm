@@ -176,7 +176,6 @@ INLOP1	LDA	$FF93
 	LDA	,Y+
 	sta	$ff20
 	sta	$ff7a
-	sta	$ff7b
 	CMPY	>AUDRSTP
 	BLT	INLOP2
 	LEAY	-1,Y
@@ -185,10 +184,11 @@ INLOP2	lda	$ff92
 	lbsr	VIDTMR
 INLOP3	lbsr	DATREAD
 * Check for escape char
-	TFR	A,B
-	ANDB	#$C0
-	CMPB	#$C0
+	pshs	a
+	anda	#$C0
+	cmpa	#$C0
 	LBEQ	PIXESC
+	puls	a
 * Store data in video buffer
 	STA	,X+
 	BRA	INLOP1
@@ -201,7 +201,6 @@ INLOP4	LDA	$FF93
 	LDA	,Y+
 	sta	$ff20
 	sta	$ff7a
-	sta	$ff7b
 	CMPY	>AUDRSTP
 	BLT	INLOP5
 	LEAY	-1,Y
@@ -222,7 +221,6 @@ SYNCLOP	LDA	$FF93
 	LDA	,Y+
 	sta	$ff20
 	sta	$ff7a
-	sta	$ff7b
 	CMPY	>AUDRSTP
 	BLT	SYNCLP1
 	LEAY	-1,Y
@@ -233,6 +231,7 @@ SYNCLP2 LDA	>FRAMCNT
 	BEQ	SYNCLOP
 	DEC	>FRAMCNT
 * Switch to next audio frame
+	pshs	b
 	TFR	Y,D
 	ANDA	#$78
 	CLRB
@@ -245,6 +244,7 @@ SYNCLP2 LDA	>FRAMCNT
 	TFR	D,Y
 	ADDD	#AUBUFSZ
 	STD	>AUDRSTP
+	puls	b
 	LBRA	INLOOP
 
 * Execute reset vector
@@ -266,7 +266,8 @@ EXIT	clr	$ff90
 	clr	$ff9f
 	JMP	[RSTVEC]
 
-PIXESC	CMPA	#$C0
+PIXESC	puls	a
+	CMPA	#$C0
 	BNE	PIXMWR
 PIXJMP	LDX	#$2000
 * Check timer interrupt
@@ -276,21 +277,27 @@ PIXJMP1	LDA	$FF93
 	LDA	,Y+
 	sta	$ff20
 	sta	$ff7a
-	sta	$ff7b
 	CMPY	>AUDRSTP
 	BLT	PIXJMP2
 	LEAY	-1,Y
 PIXJMP2	bsr	DATREAD
-	exg	a,b
+	pshs	a
 	bsr	DATREAD
-	exg	a,b
+	pshs	b
+	tfr	a,b
+	lda	1,s
 	CMPD	#$FFFF
-	LBEQ	INLOP4
-	LEAX	D,X
+	beq	PIXJMP4
+PIXJMP3	LEAX	D,X
+	puls	b
+	leas	1,s
 	JMP	INLOP1
+PIXJMP4	puls	b
+	leas	1,s
+	lbra	INLOP4
 
-PIXMWR	TFR	A,B
-	ANDB	#$3F
+PIXMWR	anda	#$3f
+	pshs	a
 	bsr	DATREAD
 * Check timer interrupt
 PIXMWR2	TST	$FF93
@@ -300,14 +307,14 @@ PIXMWR2	TST	$FF93
 	LDA	,Y+
 	sta	$ff20
 	sta	$ff7a
-	sta	$ff7b
 	CMPY	>AUDRSTP
 	BLT	PIXMWR3
 	LEAY	-1,Y
 PIXMWR3	PULS	A
 PIXMWR4	STA	,X+
-	DECB
+	dec	,s
 	BNE	PIXMWR2
+	leas	1,s
 	JMP	INLOP1
 
 DATREAD	lda	>DATFLAG
