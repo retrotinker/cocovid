@@ -184,16 +184,173 @@ INLOP1	LDA	$FF93
 INLOP2	lda	$ff92
 	beq	INLOP3
 	lbsr	VIDTMR
-INLOP3	lbsr	DATREAD
+INLOP3
+* Here to DATGT1 is for reading next byte from ide
+	tstb
+	beq	DATNX1
+	lda	8,u
+* Check if more data available for next round
+	bitb	7,u
+	bne	DATRD1
+	lbsr	DATREQ
+	bra	DATRD1
+DATNX1	ldb	#$08
+	lda	,u
+	bra	DATGT1
+DATRD1	clrb
+DATGT1
 * Check for escape char
 	pshs	a
 	anda	#$C0
 	cmpa	#$C0
-	LBEQ	PIXESC
+	beq	PIXESC
 	puls	a
 * Store data in video buffer
 	STA	,X+
 	BRA	INLOP1
+
+PIXESC	puls	a
+	CMPA	#$C0
+	BNE	PIXMWR
+PIXJMP	LDX	#$2000
+* Check timer interrupt
+PIXJMP1	LDA	$FF93
+	BEQ	PIXJMP2
+* Load and play sample
+	LDA	,Y+
+	sta	$ff20
+	sta	$ff7a
+	CMPY	>AUDRSTP
+	BLT	PIXJMP2
+	LEAY	-1,Y
+PIXJMP2
+* Here to DATGT3 is for reading next byte from ide
+	tstb
+	beq	DATNX3
+	lda	8,u
+* Check if more data available for next round
+	bitb	7,u
+	bne	DATRD3
+	lbsr	DATREQ
+	bra	DATRD3
+DATNX3	ldb	#$08
+	lda	,u
+	bra	DATGT3
+DATRD3	clrb
+DATGT3
+	pshs	a
+* Here to DATGT4 is for reading next byte from ide
+	tstb
+	beq	DATNX4
+	lda	8,u
+* Check if more data available for next round
+	bitb	7,u
+	bne	DATRD4
+	bsr	DATREQ
+	bra	DATRD4
+DATNX4	ldb	#$08
+	lda	,u
+	bra	DATGT4
+DATRD4	clrb
+DATGT4
+	pshs	b
+	tfr	a,b
+	lda	1,s
+	CMPD	#$FFFF
+	beq	PIXJMP4
+PIXJMP3	LEAX	D,X
+	puls	b
+	leas	1,s
+	JMP	INLOP1
+PIXJMP4	puls	b
+	leas	1,s
+	lbra	AUDIN
+
+PIXMWR	anda	#$3f
+	pshs	a
+* Here to DATGT5 is for reading next byte from ide
+	tstb
+	beq	DATNX5
+	lda	8,u
+* Check if more data available for next round
+	bitb	7,u
+	bne	DATRD5
+	bsr	DATREQ
+	bra	DATRD5
+DATNX5	ldb	#$08
+	lda	,u
+	bra	DATGT5
+DATRD5	clrb
+DATGT5
+* Check timer interrupt
+PIXMWR2	TST	$FF93
+	BEQ	PIXMWR4
+	PSHS	A
+* Load and play sample
+	LDA	,Y+
+	sta	$ff20
+	sta	$ff7a
+	CMPY	>AUDRSTP
+	BLT	PIXMWR3
+	LEAY	-1,Y
+PIXMWR3	PULS	A
+PIXMWR4	STA	,X+
+	dec	,s
+	BNE	PIXMWR2
+	leas	1,s
+	JMP	INLOP1
+
+* Clear Vsync interrupt
+VIDTMR	pshs	a
+* Account for frame timing
+	DEC	>STEPCNT
+	BNE	VIDTMR2
+* Unblock data pump -- limit FRAMCNT to prevent catch-up silliness
+	LDA	>FRAMCNT
+	INCA
+	ANDA	#$07
+	STA	>FRAMCNT
+* Reset frame skip count
+	LDA	#FRAMSTP
+	STA	>STEPCNT
+VIDTMR2 puls	a
+	RTS
+
+* Increment LBA and request next sector
+DATREQ	ldb	#$80
+	stb	2,u
+	addb	3,u
+	stb	3,u
+	bne	DATCMD
+	inc	4,u
+	bne	DATCMD
+	inc	5,u
+	bne	DATCMD
+	ldb	6,u
+	incb
+	andb	#$0f
+	orb	#$e0
+	stb	6,u
+DATCMD	ldb	#$20
+	stb	7,u
+DATWAIT ldb	7,u
+	andb	#$80
+	bne	DATWAIT
+* Check UART for activity
+DATWAI1	ldb	$ff69
+	bitb	#$08
+	beq	DATWAI2
+	ldb	$ff68
+	lbra	EXIT
+* Check for user stop request
+DATWAI2	pshs	a
+	JSR	[$A000]
+	BEQ	DATWAI3
+	cmpa	#$03
+	LBEQ	EXIT
+DATWAI3	puls	a
+	clrb
+	rts
 
 * Audio data movement goes here
 * Check timer interrupt
@@ -209,8 +366,22 @@ AUDIN1	LDA	$FF93
 	LEAY	-1,Y
 AUDIN2	lda	$ff92
 	beq	AUDIN3
-	lbsr	VIDTMR
-AUDIN3	lbsr	DATREAD
+	bsr	VIDTMR
+AUDIN3
+* Here to DATGT2 is for reading next byte from ide
+	tstb
+	beq	DATNX2
+	lda	8,u
+* Check if more data available for next round
+	bitb	7,u
+	bne	DATRD2
+	bsr	DATREQ
+	bra	DATRD2
+DATNX2	ldb	#$08
+	lda	,u
+	bra	DATGT2
+DATRD2	clrb
+DATGT2
 * Store data in audio buffer
 	STA	,X+
 	CMPX	>AUDWSTP
@@ -268,120 +439,6 @@ EXIT	clr	$ff90
 	clr	$ff9e
 	clr	$ff9f
 	JMP	[RSTVEC]
-
-PIXESC	puls	a
-	CMPA	#$C0
-	BNE	PIXMWR
-PIXJMP	LDX	#$2000
-* Check timer interrupt
-PIXJMP1	LDA	$FF93
-	BEQ	PIXJMP2
-* Load and play sample
-	LDA	,Y+
-	sta	$ff20
-	sta	$ff7a
-	CMPY	>AUDRSTP
-	BLT	PIXJMP2
-	LEAY	-1,Y
-PIXJMP2	bsr	DATREAD
-	pshs	a
-	bsr	DATREAD
-	pshs	b
-	tfr	a,b
-	lda	1,s
-	CMPD	#$FFFF
-	beq	PIXJMP4
-PIXJMP3	LEAX	D,X
-	puls	b
-	leas	1,s
-	JMP	INLOP1
-PIXJMP4	puls	b
-	leas	1,s
-	lbra	AUDIN
-
-PIXMWR	anda	#$3f
-	pshs	a
-	bsr	DATREAD
-* Check timer interrupt
-PIXMWR2	TST	$FF93
-	BEQ	PIXMWR4
-	PSHS	A
-* Load and play sample
-	LDA	,Y+
-	sta	$ff20
-	sta	$ff7a
-	CMPY	>AUDRSTP
-	BLT	PIXMWR3
-	LEAY	-1,Y
-PIXMWR3	PULS	A
-PIXMWR4	STA	,X+
-	dec	,s
-	BNE	PIXMWR2
-	leas	1,s
-	JMP	INLOP1
-
-DATREAD	tstb
-	bne	DATNEXT
-	ldb	#$08
-	lda	,u
-	rts
-DATNEXT lda	8,u
-* Check if more data available for next round
-	bitb	7,u
-	beq	DATREQ
-	clrb
-	rts
-* Increment LBA and request next sector
-DATREQ	ldb	#$80
-	stb	2,u
-	addb	3,u
-	stb	3,u
-	bne	DATCMD
-	inc	4,u
-	bne	DATCMD
-	inc	5,u
-	bne	DATCMD
-	ldb	6,u
-	incb
-	andb	#$0f
-	orb	#$e0
-	stb	6,u
-DATCMD	ldb	#$20
-	stb	7,u
-DATWAIT ldb	7,u
-	andb	#$80
-	bne	DATWAIT
-* Check UART for activity
-DATWAI1	ldb	$ff69
-	bitb	#$08
-	beq	DATWAI2
-	ldb	$ff68
-	lbra	EXIT
-* Check for user stop request
-DATWAI2	pshs	a
-	JSR	[$A000]
-	BEQ	DATWAI3
-	cmpa	#$03
-	LBEQ	EXIT
-DATWAI3	puls	a
-	clrb
-	rts
-
-* Clear Vsync interrupt
-VIDTMR	pshs	a
-* Account for frame timing
-	DEC	>STEPCNT
-	BNE	VIDTMR2
-* Unblock data pump -- limit FRAMCNT to prevent catch-up silliness
-	LDA	>FRAMCNT
-	INCA
-	ANDA	#$07
-	STA	>FRAMCNT
-* Reset frame skip count
-	LDA	#FRAMSTP
-	STA	>STEPCNT
-VIDTMR2 puls	a
-	RTS
 
 * Init for video mode, set video buffer to $2000
 * (Assumes default MMU setup...)

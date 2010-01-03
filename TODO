@@ -1,6 +1,3 @@
--- performance
-	-- reorder code to reduce number of long branches
-		
 -- palette change (?)
 	-- video start
 	-- frame start
