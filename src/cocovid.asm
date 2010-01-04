@@ -156,8 +156,7 @@ iderec1	lda	7,u
 
 * Now issue first read command
 	clr	1,u
-	lda	#$80
-	sta	2,u
+	clr	2,u
 	clr	3,u
 	clr	4,u
 	clr	5,u
@@ -177,7 +176,6 @@ INLOP1	LDA	$FF93
 * Load and play sample
 	LDA	,Y+
 	sta	$ff20
-	sta	$ff7a
 	CMPY	>AUDRSTP
 	BLT	INLOP2
 	LEAY	-1,Y
@@ -219,7 +217,6 @@ PIXJMP1	LDA	$FF93
 * Load and play sample
 	LDA	,Y+
 	sta	$ff20
-	sta	$ff7a
 	CMPY	>AUDRSTP
 	BLT	PIXJMP2
 	LEAY	-1,Y
@@ -289,7 +286,6 @@ PIXMWR2	TST	$FF93
 * Load and play sample
 	LDA	,Y+
 	sta	$ff20
-	sta	$ff7a
 	CMPY	>AUDRSTP
 	BLT	PIXMWR3
 	LEAY	-1,Y
@@ -317,11 +313,8 @@ VIDTMR2 puls	a
 	RTS
 
 * Increment LBA and request next sector
-DATREQ	ldb	#$80
-	stb	2,u
-	addb	3,u
-	stb	3,u
-	bne	DATCMD
+DATREQ	clr	2,u
+	clr	3,u
 	inc	4,u
 	bne	DATCMD
 	inc	5,u
@@ -360,7 +353,6 @@ AUDIN1	LDA	$FF93
 * Load and play sample
 	LDA	,Y+
 	sta	$ff20
-	sta	$ff7a
 	CMPY	>AUDRSTP
 	BLT	AUDIN2
 	LEAY	-1,Y
@@ -394,7 +386,6 @@ SYNCLOP	LDA	$FF93
 * Load and play sample
 	LDA	,Y+
 	sta	$ff20
-	sta	$ff7a
 	CMPY	>AUDRSTP
 	BLT	SYNCLP1
 	LEAY	-1,Y
