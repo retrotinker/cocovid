@@ -168,6 +168,10 @@ ideread	lda	7,u
 	anda	#$80
 	bne	ideread
 
+* Wait for keyboard input
+START	JSR	[$A000]
+	BEQ	START
+
 * Data movement goes here
 INLOOP	LDX	#$2000
 * Check timer interrupt
@@ -254,12 +258,12 @@ DATGT4
 	tfr	a,b
 	lda	1,s
 	CMPD	#$FFFF
-	beq	PIXJMP4
-PIXJMP3	LEAX	D,X
+	beq	PIXJMP3
+	LEAX	D,X
 	puls	b
 	leas	1,s
 	JMP	INLOP1
-PIXJMP4	puls	b
+PIXJMP3	puls	b
 	leas	1,s
 	lbra	AUDIN
 
@@ -290,6 +294,9 @@ PIXMWR2	TST	$FF93
 	BLT	PIXMWR3
 	LEAY	-1,Y
 PIXMWR3	PULS	A
+	tst	$ff92
+	beq	PIXMWR4
+	bsr	VIDTMR
 PIXMWR4	STA	,X+
 	dec	,s
 	BNE	PIXMWR2
