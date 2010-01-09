@@ -1,4 +1,7 @@
+gencolors
+colors.h
 ppm2raw
+raw2ppm
 raw2rle
 raw2rli
 rle2raw

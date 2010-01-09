@@ -1,5 +1,4 @@
 -- preprocessing
-	-- use RGB lookup table for selecting colors instead of algorithm
 	-- dithering
 	-- sort drl segments by total color distance rather than length of run
 	-- select proper aspect ratio
@@ -8,5 +7,5 @@
 	-- scoring based strictly on size of input + output bitstreams
 	-- use fewer tmp files (i.e. more piping) to improve conversion time
 
--- transition to single integrate utility for generating movie from
+-- transition to single integrated utility for generating movie from
    ppm/pcm data
