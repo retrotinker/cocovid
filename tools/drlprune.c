@@ -20,11 +20,10 @@ struct rlerun {
 	unsigned int score;
 };
 
-unsigned char inbuf[RAW_VERT_PIXELS * RAW_HORIZ_PIXELS/2 + 3];
+unsigned char inbuf[RAW_VERT_PIXELS * RAW_HORIZ_PIXELS/2 * 5 + 3];
 unsigned char outbuf[RAW_VERT_PIXELS * RAW_HORIZ_PIXELS/2 * 5 + 3];
 
-/* Assume we won't have separate runs that are physically adjacent... */
-struct rlerun runpool[RAW_VERT_PIXELS * RAW_HORIZ_PIXELS/2 / 2];
+struct rlerun runpool[RAW_VERT_PIXELS * RAW_HORIZ_PIXELS/2];
 
 int numrleruns = 0;
 
@@ -252,6 +251,7 @@ int main(int argc, char *argv[])
 		}
 	}
 
+#if 0
 	/*
 	 * "Corporate" budgeting (i.e. use it or lose it)
 	 * 	-- check for left-over budget
@@ -277,6 +277,7 @@ int main(int argc, char *argv[])
 			curscore += runpool[i].score; /* not really needed here */
 		}
 	}
+#endif
 
 	outbuf[outsize++] = 0xc0;
 	outbuf[outsize++] = 0xff;
