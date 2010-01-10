@@ -1,8 +1,7 @@
 -- preprocessing
-	-- dithering
 	-- sort drl segments by total color distance rather than length of run
 	-- select proper aspect ratio
-	-- insert 'whole' frames periodically in stream
+	-- insert 'whole' frames periodically in stream (?)
 	-- brightness/contrast
 	-- scoring based strictly on size of input + output bitstreams
 	-- use fewer tmp files (i.e. more piping) to improve conversion time

@@ -8,9 +8,9 @@
 #include <unistd.h>
 #include <stdint.h>
 
+#include "palette.h"
 #include "colors.h"
 
-#define PPM_PIXEL_OFFSET	0xE
 #define PPM_HORIZ_PIXELS	128
 #define PPM_VERT_PIXELS		96
 
@@ -31,10 +31,78 @@ void usage(char *prg)
 	printf("Usage: %s infile outfile\n", prg);
 }
 
+inline uint8_t add_clamp(uint8_t a, int16_t b)
+{
+	int16_t tmp = a + b;
+
+	if (tmp < 0)
+		return 0;
+
+	if (tmp > 255)
+		return 255;
+
+	return tmp;
+}
+
+void dither(int h, int v, uint8_t color)
+{
+	int16_t r_error, g_error, b_error;
+
+	/* Floyd–Steinberg dithering */
+	r_error = inmap.pixel[v][h].r -
+			palette[color].r;
+	g_error = inmap.pixel[v][h].g -
+			palette[color].g;
+	b_error = inmap.pixel[v][h].b -
+			palette[color].b;
+
+	if (h < PPM_HORIZ_PIXELS-1) {
+		inmap.pixel[v][h+1].r =
+			add_clamp(inmap.pixel[v][h+1].r, ((7 * r_error) / 16));
+		inmap.pixel[v][h+1].g =
+			add_clamp(inmap.pixel[v][h+1].g, ((7 * g_error) / 16));
+		inmap.pixel[v][h+1].b =
+			add_clamp(inmap.pixel[v][h+1].b, ((7 * b_error) / 16));
+	}
+
+	if (v < PPM_VERT_PIXELS-1) {
+		if (h > 0) {
+			inmap.pixel[v+1][h-1].r =
+				add_clamp(inmap.pixel[v+1][h-1].r,
+						((3 * r_error) / 16));
+			inmap.pixel[v+1][h-1].g =
+				add_clamp(inmap.pixel[v+1][h-1].g,
+						((3 * g_error) / 16));
+			inmap.pixel[v+1][h-1].b =
+				add_clamp(inmap.pixel[v+1][h-1].b,
+						((3 * b_error) / 16));
+		}
+	
+		inmap.pixel[v+1][h].r =
+			add_clamp(inmap.pixel[v+1][h].r, ((5 * r_error) / 16));
+		inmap.pixel[v+1][h].g =
+			add_clamp(inmap.pixel[v+1][h].g, ((5 * g_error) / 16));
+		inmap.pixel[v+1][h].b =
+			add_clamp(inmap.pixel[v+1][h].b, ((5 * b_error) / 16));
+	
+		if (h < PPM_HORIZ_PIXELS-1) {
+			inmap.pixel[v+1][h+1].r =
+				add_clamp(inmap.pixel[v+1][h+1].r,
+						((1 * r_error) / 16));
+			inmap.pixel[v+1][h+1].g =
+				add_clamp(inmap.pixel[v+1][h+1].g,
+						((1 * g_error) / 16));
+			inmap.pixel[v+1][h+1].b =
+				add_clamp(inmap.pixel[v+1][h+1].b,
+						((1 * b_error) / 16));
+		}
+	}
+}
+
 int main(int argc, char *argv[])
 {
 	int infd, outfd;
-	char hdbuf[PPM_PIXEL_OFFSET];
+	char hdbuf;
 	int i, j;
 	int whitecount = 0;
 
@@ -51,17 +119,17 @@ int main(int argc, char *argv[])
 			S_IRUSR | S_IWUSR | S_IRGRP | S_IROTH);
 
 	while (whitecount < 4) {
-		if (read(infd, hdbuf, 1) != 1)
+		if (read(infd, &hdbuf, 1) != 1)
 			perror("head read");
-		if (hdbuf[0] == '\n' || isblank(hdbuf[0])) {
+		if (hdbuf == '\n' || isblank(hdbuf)) {
 			whitecount++;
 			while (whitecount < 4 &&
-				hdbuf[0] == '\n' || isblank(hdbuf[0])) {
-				if (read(infd, hdbuf, 1) != 1)
+				hdbuf == '\n' || isblank(hdbuf)) {
+				if (read(infd, &hdbuf, 1) != 1)
 					perror("head read");
-				if (hdbuf[0] == '#')
-					while (hdbuf[0] != '\n') {
-						if (read(infd, hdbuf, 1) != 1)
+				if (hdbuf == '#')
+					while (hdbuf != '\n') {
+						if (read(infd, &hdbuf, 1) != 1)
 							perror("head read");
 					}
 			}
@@ -78,10 +146,12 @@ int main(int argc, char *argv[])
 			val = color[RGB(inmap.pixel[j][2*i].r,
 					inmap.pixel[j][2*i].g,
 					inmap.pixel[j][2*i].b)];
+			dither(2*i, j, val);
 			val <<= 4;
 			val |= color[RGB(inmap.pixel[j][2*i+1].r,
 					 inmap.pixel[j][2*i+1].g,
 					 inmap.pixel[j][2*i+1].b)];
+			dither(2*i + 1, j, val & 0xf);
 
 			cocobuf[j][i] = val;
 		}
