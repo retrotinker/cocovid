@@ -8,6 +8,8 @@
 #include <unistd.h>
 #include <errno.h>
 
+#include <stdint.h>
+
 #define RAW_HORIZ_PIXELS	128
 #define RAW_VERT_PIXELS		96
 
@@ -19,43 +21,19 @@ void usage(char *prg)
 	printf("Usage: %s inraw indrl outfile\n", prg);
 }
 
-int rledecompress(unsigned char *inbuf, unsigned char *outbuf, int bufsize)
+void writerun(unsigned char buffer[], unsigned char val, int len)
 {
-	int i, j, count = 0, size = 0;
-	unsigned char cur, prev = 0;
+	int i;
 
-	if (bufsize < 1)
-		return 0;
-
-	cur = inbuf[0];
-	for (i=1; i<bufsize; i++) {
-		if ((prev & 0xc0) == 0xc0) {
-			prev = 0;
-			cur = inbuf[i];
-			continue;
-		}
-		if ((cur & 0xc0) == 0xc0) {
-			count = cur & 0x3f;
-			for (j=0; j<count; j++)
-				outbuf[size++] = inbuf[i];
-		} else {
-			outbuf[size++] = cur;
-		}
-		prev = cur;
-		cur = inbuf[i];
-	}
-	if ((prev & 0xc0) != 0xc0)
-		outbuf[size++] = cur;
-
-	return size;
+	for (i=0; i<len; i++)
+		buffer[i] = val;
 }
 
 int main(int argc, char *argv[])
 {
 	int prevfd, curfd, outfd;
-	unsigned char *inptr, *outptr, *runstart;
-	int outsize, runsize;
-	int insize = 0;
+	unsigned char *inptr, *outptr;
+	int insize, runsize;
 	int rc;
 
 	if (argc < 4) {
@@ -73,11 +51,20 @@ int main(int argc, char *argv[])
 	outfd = open(argv[3], O_WRONLY | O_CREAT | O_TRUNC,
 			S_IRUSR | S_IWUSR | S_IRGRP | S_IROTH);
 
-	if (read(prevfd, &outbuf, sizeof(outbuf)) != sizeof(outbuf))
-		perror("prev read");
-
+	insize = 0;
 	do {
-		rc = read(curfd, inbuf, sizeof(inbuf));
+		rc = read(prevfd, outbuf+insize, sizeof(outbuf)-insize);
+		if (rc < 0 && rc != EINTR) {
+			perror("current read");
+			exit(EXIT_FAILURE);
+		}
+		if (rc != EINTR)
+			insize += rc;
+	} while (rc != 0);
+
+	insize = 0;
+	do {
+		rc = read(curfd, inbuf+insize, sizeof(inbuf)-insize);
 		if (rc < 0 && rc != EINTR) {
 			perror("current read");
 			exit(EXIT_FAILURE);
@@ -91,29 +78,27 @@ int main(int argc, char *argv[])
 
 	inptr = inbuf;
 	outptr = outbuf;
-	runsize = 0;
-	runstart = inptr;
 
 	for (inptr = inbuf; inptr < inbuf + insize; inptr++) {
-		if ((*inptr & 0xc0) == 0xc0) {
-			if (*inptr != 0xc0) {
-				inptr += 1;
-				runsize +=2;
-				continue;
-			} else {
-				rledecompress(runstart, outptr, runsize);
-				outptr = outbuf +
-					(*(inptr + 1) << 8) + *(inptr + 2);
-				inptr += 2;
-				runstart = inptr + 1;
-				runsize = 0;
-				continue;
-			}
+		if (outptr - outbuf > sizeof(outbuf)) {
+			printf("Frame offset out of bounds: %s %d\n",
+				argv[2], outptr - outbuf);
+			break;
 		}
-		runsize++;
+		if (*inptr == 0xc0) {
+			outptr = &outbuf[(*(inptr + 1) << 8) + *(inptr + 2)];
+			inptr += 2;
+			continue;
+		}
+		if ((*inptr & 0xc0) == 0xc0) {
+			runsize = *inptr & 0x3f;
+			writerun(outptr, *(inptr + 1), runsize);
+			inptr += 1;
+			outptr += runsize;
+			continue;
+		}
+		*outptr++ = *inptr;
 	}
-
-	outptr += rledecompress(runstart, outptr, runsize);
 
 	if (write(outfd, outbuf, sizeof(outbuf)) != sizeof(outbuf))
 		perror("pixel write");

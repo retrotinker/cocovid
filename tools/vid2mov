@@ -1,12 +1,12 @@
 #!/bin/sh
 
-if [ "$4" -eq "letterbox" ]
+if [ "$4" = "letterbox" ]
 then
 	SIZEOPTS="-s 128x72 -padtop 12 -padbottom 12 -padcolor 000000"
 else
 	SIZEOPTS="-s sqcif"
 fi
 
-ffmpeg -i "$1" -r 30 -ar 11025 -ac 1 $SIZEOPTS -b 200000 -acodec pcm_u8 -f mov -y "$2"
+ffmpeg -i "$1" -r 30 -ar 11025 -ac 1 $SIZEOPTS -b 200000 -acodec pcm_u8 -aspect 5:3 -f mov -y "$2"
 ffmpeg -i "$2" -vn -acodec pcm_u8 -y "$3"
 normalize "$3"
