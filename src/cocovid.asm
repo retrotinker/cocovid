@@ -168,9 +168,9 @@ ideread	lda	7,u
 	anda	#$80
 	bne	ideread
 
-* Wait for keyboard input
-START	JSR	[$A000]
-	BEQ	START
+** Wait for keyboard input
+*START	JSR	[$A000]
+*	BEQ	START
 
 * Data movement goes here
 INLOOP	LDX	#$2000
@@ -247,7 +247,7 @@ DATGT3
 * Check if more data available for next round
 	bitb	7,u
 	bne	DATRD4
-	bsr	DATREQ
+	lbsr	DATREQ
 	bra	DATRD4
 DATNX4	ldb	#$08
 	lda	,u
@@ -257,13 +257,15 @@ DATGT4
 	pshs	b
 	tfr	a,b
 	lda	1,s
-	CMPD	#$FFFF
+	cmpa	#$ff
 	beq	PIXJMP3
 	LEAX	D,X
 	puls	b
 	leas	1,s
 	JMP	INLOP1
-PIXJMP3	puls	b
+PIXJMP3	cmpb	#$ff
+	lbne	EXIT
+PIXJMP4	puls	b
 	leas	1,s
 	lbra	AUDIN
 
