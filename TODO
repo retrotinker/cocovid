@@ -1,8 +1,6 @@
 -- preprocessing
-	-- select proper aspect ratio
 	-- use fewer tmp files (i.e. more piping) to improve conversion time
-	-- sort drl segments by total color distance rather than length of run
-	-- scoring based strictly on size of input + output bitstreams
+	-- account for number of adjacent runs in sort comparison
 	-- insert 'whole' frames periodically in stream (?)
 	-- brightness/contrast (?)
 	-- quadrant dithering (?)
@@ -15,7 +13,6 @@
 -- player
 	-- loadable from DECB
 	-- space to pause, break to end
-	-- end of video marker
 	-- frame number marker (?)
 	-- display message (possibly frame number) while paused
 	-- video header to select parameters (colors, fps, etc)
