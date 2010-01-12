@@ -8,37 +8,48 @@
 #include <unistd.h>
 #include <errno.h>
 
-#define MAXRUNLEN 64
+#include "distance.h"
+
+/* Account for run data plus 3-byte run header... */
+/* Try shorter runs -- 16?? */
+#define MAXRUNLEN		48
 
 #define RAW_HORIZ_PIXELS	128
 #define RAW_VERT_PIXELS		96
 
-struct rlerun {
-	unsigned char *start;
+struct vidrun {
+	unsigned char *data;
+	unsigned int rasterlen;
+	unsigned int datalen;
 	unsigned int offset;
-	unsigned int runlen, vidlen;
-	unsigned int score;
+	unsigned int colordiff;
 };
 
+unsigned char prevbuf[RAW_VERT_PIXELS * RAW_HORIZ_PIXELS/2];
 unsigned char inbuf[RAW_VERT_PIXELS * RAW_HORIZ_PIXELS/2 * 5 + 3];
 unsigned char outbuf[RAW_VERT_PIXELS * RAW_HORIZ_PIXELS/2 * 5 + 3];
 
-struct rlerun runpool[RAW_VERT_PIXELS * RAW_HORIZ_PIXELS/2];
+struct vidrun runpool[RAW_VERT_PIXELS * RAW_HORIZ_PIXELS/2];
 
-int numrleruns = 0;
-
-int cmprlerun(const void *run1, const void *run2)
+int compare_vidruns(const void *run1, const void *run2)
 {
-	const struct rlerun *r1, *r2;
+	const struct vidrun *r1, *r2;
 
 	r1 = run1;
 	r2 = run2;
 
-	if (r1->vidlen > r2->vidlen)
+	if (r1->colordiff > r2->colordiff)
 		return -1;
-	else if (r1->vidlen == r2->vidlen && r1->score < r2->score)
+	else if (r1->colordiff == r2->colordiff &&
+			r1->rasterlen > r2->rasterlen)
 		return -1;
-	else if (r1->vidlen == r2->vidlen && r1->score == r2->score)
+	else if (r1->colordiff == r2->colordiff &&
+			r1->rasterlen == r2->rasterlen &&
+			r1->datalen < r2->datalen)
+		return -1;
+	else if (r1->colordiff == r2->colordiff &&
+			r1->rasterlen == r2->rasterlen &&
+			r1->datalen == r2->datalen)
 		return 0;
 	else
 		return 1;
@@ -46,101 +57,50 @@ int cmprlerun(const void *run1, const void *run2)
 
 void usage(char *prg)
 {
-	printf("Usage: %s indrl outdrl score\n", prg);
-}
-
-int rlevidlen(unsigned char *inbuf, int bufsize)
-{
-	int i, skip = 0, vidlen = 0;
-
-	for (i=0; i<bufsize; i++) {
-		if (skip) {
-			skip--;
-			continue;
-		}
-		if ((inbuf[i] & 0xc0) == 0xc0) {
-			vidlen += (inbuf[i] & 0x3f);
-			skip += 1;
-		} else {
-			vidlen += 1;
-		}
-	}
-
-	return vidlen;
-}
-
-int rleshorten(struct rlerun *run, int maxlen)
-{
-	int len;
-
-	len = run->runlen;
-	while (rlevidlen(run->start, len) > maxlen)
-		len--;
-
-	return len;
-}
-
-int rlescore(unsigned char *inbuf, int bufsize)
-{
-	int i, skip = 0, score = 0;
-
-	for (i=0; i<bufsize; i++) {
-		if (skip) {
-			skip--;
-			continue;
-		}
-		if (inbuf[i] == 0xc0) {
-			score += 3;
-			skip += 2;
-		} else if ((inbuf[i] & 0xc0) == 0xc0) {
-			score += (2 + (inbuf[i] & 0x3f));
-			skip += 1;
-		} else {
-			score += 2;
-		}
-	}
-
-	return score;
-}
-
-int rleprune(struct rlerun *run, int maxscore)
-{
-	int len;
-
-	len = run->runlen;
-	while (rlescore(run->start, len) > maxscore)
-		len--;
-
-	return len;
+	printf("Usage: %s prevraw indrl outdrl score\n", prg);
 }
 
 int main(int argc, char *argv[])
 {
-	int infd, outfd;
-	int insize = 0, outsize = 0;
+	int prevfd, infd, outfd;
+	int insize, outsize = 0;
 	int maxscore, curscore = 0;
-	int shortrun, newrun;
+	int current, offset = 0;
 	int i, j, rc;
 
-	if (argc < 4) {
+	if (argc < 5) {
 		usage(argv[0]);
 		exit(EXIT_FAILURE);
 	}
 
 	/* open previous file */
-	infd = open(argv[1], O_RDONLY);
+	prevfd = open(argv[1], O_RDONLY);
+
+	infd = open(argv[2], O_RDONLY);
 
 	/* open output file */
-	outfd = open(argv[2], O_WRONLY | O_CREAT | O_TRUNC,
+	outfd = open(argv[3], O_WRONLY | O_CREAT | O_TRUNC,
 			S_IRUSR | S_IWUSR | S_IRGRP | S_IROTH);
 
-	if (sscanf(argv[3], "%d", &maxscore) < 0) {
+	if (sscanf(argv[4], "%d", &maxscore) < 0) {
 		perror("sscanf maxscore");
 		exit(EXIT_FAILURE);
 	}
 
+	insize = 0;
 	do {
-		rc = read(infd, inbuf, sizeof(inbuf));
+		rc = read(prevfd, prevbuf, sizeof(prevbuf) - insize);
+		if (rc < 0 && rc != EINTR) {
+			perror("prev read");
+			exit(EXIT_FAILURE);
+		}
+		if (rc != EINTR)
+			insize += rc;
+	} while (rc != 0);
+
+	insize = 0;
+	do {
+		rc = read(infd, inbuf, sizeof(inbuf) - insize);
 		if (rc < 0 && rc != EINTR) {
 			perror("current read");
 			exit(EXIT_FAILURE);
@@ -152,133 +112,88 @@ int main(int argc, char *argv[])
 	/* strip end of frame marker */
 	insize -= 3;
 
-	i=0;
-	if (inbuf[i] != 0xc0) {
-		runpool[0].start = inbuf;
+	/* hack to correctly allocate first run */
+	if (inbuf[0] == 0xc0)
+		current = -1;
+	else {
+		current = 0;
+		runpool[0].data = &inbuf[0];
 		runpool[0].offset = 0;
-		for (j=i; j<insize; j++) {
-			if (((inbuf[j] & 0xc0) == 0xc0) && (inbuf[j] != 0xc0))
-				j += 1;
-			else if (inbuf[j] == 0xc0)
-				break;
-		}
-		runpool[0].runlen = j - i;
-		runpool[0].vidlen = rlevidlen(&inbuf[i], runpool[0].runlen);
-		while (runpool[numrleruns].vidlen > MAXRUNLEN) {
-			shortrun = rleshorten(&runpool[numrleruns], MAXRUNLEN);
-			newrun = runpool[numrleruns].runlen - shortrun;
-			runpool[numrleruns].runlen = shortrun;
-			runpool[numrleruns].vidlen =
-				rlevidlen(&inbuf[i], runpool[numrleruns].runlen);
-			runpool[numrleruns].score = 3 +
-				rlescore(&inbuf[i], runpool[numrleruns].runlen);
-			i += runpool[numrleruns].runlen;
-			numrleruns++;
-			runpool[numrleruns].start = inbuf + i;
-			runpool[numrleruns].offset =
-				runpool[numrleruns - 1].offset +
-				runpool[numrleruns - 1].vidlen;
-			runpool[numrleruns].runlen = newrun;
-			runpool[numrleruns].vidlen =
-				rlevidlen(&inbuf[i],
-					runpool[numrleruns].runlen);
-		}
-		runpool[numrleruns].score = 3 +
-			rlescore(&inbuf[i], runpool[numrleruns].runlen);
-		i += runpool[numrleruns].runlen;
-		numrleruns += 1;
-	}
-	while (i < insize) {
-		runpool[numrleruns].start = inbuf + i + 3;
-		runpool[numrleruns].offset = (inbuf[i + 1] << 8) + inbuf[i + 2];
-		i += 3;
-		for (j=i; j<insize; j++)
-			if (((inbuf[j] & 0xc0) == 0xc0) && (inbuf[j] != 0xc0))
-				j += 1;
-			else if (inbuf[j] == 0xc0)
-				break;
-		runpool[numrleruns].runlen = j - i;
-		runpool[numrleruns].vidlen =
-			rlevidlen(&inbuf[i], runpool[numrleruns].runlen);
-		while (runpool[numrleruns].vidlen > MAXRUNLEN) {
-			shortrun = rleshorten(&runpool[numrleruns], MAXRUNLEN);
-			newrun = runpool[numrleruns].runlen - shortrun;
-			runpool[numrleruns].runlen = shortrun;
-			runpool[numrleruns].vidlen =
-					rlevidlen(&inbuf[i],
-						runpool[numrleruns].runlen);
-			runpool[numrleruns].score = 3 +
-				rlescore(&inbuf[i], runpool[numrleruns].runlen);
-			i += runpool[numrleruns].runlen;
-			numrleruns++;
-			runpool[numrleruns].start = inbuf + i;
-			runpool[numrleruns].offset =
-				runpool[numrleruns - 1].offset +
-				runpool[numrleruns - 1].vidlen;
-			runpool[numrleruns].runlen = newrun;
-			runpool[numrleruns].vidlen =
-				rlevidlen(&inbuf[i],
-					runpool[numrleruns].runlen);
-		}
-		runpool[numrleruns].score = 3 +
-			rlescore(&inbuf[i], runpool[numrleruns].runlen);
-		i += runpool[numrleruns].runlen;
-		numrleruns += 1;
+		runpool[0].rasterlen = 0;
+		runpool[0].datalen = 3;
 	}
 
-	qsort(runpool, numrleruns, sizeof(struct rlerun), cmprlerun);
+	/* Scan input to identify runs... */
+	for (i = 0; i < insize; i++) {
+		if (inbuf[i] == 0xc0) {
+			/* start new run */
+			current++;
+			offset = (inbuf[i+1] << 8) + inbuf[i+2];
+			runpool[current].data = &inbuf[i+3];
+			runpool[current].offset = offset;
+			runpool[current].datalen = 3;
+			i += 2;
+			continue;
+		}
+		if (runpool[current].datalen > MAXRUNLEN ||
+		    ((inbuf[i] & 0xc0) == 0xc0 &&
+		     runpool[current].datalen + inbuf[i] & 0x3f > MAXRUNLEN)) {
+			/* artificially start new run */
+			current++;
+			runpool[current].data = &inbuf[i];
+			runpool[current].offset = offset;
+			runpool[current].datalen = 3;
+		}
+		/* Split RLE runs if longer than MAXRUNLEN?? */
+		if ((inbuf[i] & 0xc0) == 0xc0) {
+			runpool[current].rasterlen += inbuf[i] & 0x3f;
+			runpool[current].datalen += 2;
 
-#ifdef DUMPRUNS
-	for (i=0; i<numrleruns; i++) {
-		printf("%4d: %04x %04x %04x %5d %5d\n",
-			i, runpool[i].start - inbuf, runpool[i].offset,
-			runpool[i].runlen, runpool[i].vidlen, runpool[i].score);
+			/* compute color difference for RLE run */
+			for (j = 0; j < (inbuf[i] & 0x3f); j++) {
+				runpool[current].colordiff +=
+					distance[inbuf[i+1] >> 8][prevbuf[offset+j] >> 8];
+				runpool[current].colordiff +=
+					distance[inbuf[i+1] & 0x0f][prevbuf[offset+j] & 0x0f];
+			}
+
+			offset += inbuf[i] & 0x3f;
+			i += 1;
+			continue;
+		}
+		runpool[current].rasterlen++;
+		runpool[current].datalen++;
+		runpool[current].colordiff +=
+			distance[inbuf[i] >> 8][prevbuf[offset] >> 8];
+		runpool[current].colordiff +=
+			distance[inbuf[i] & 0x0f][prevbuf[offset] & 0x0f];
+		offset++;
 	}
-#endif
 
-	for (i=0; i<numrleruns; i++) {
-		if (curscore + runpool[i].score < maxscore - 3) {
+	/* Sort according to above... */
+	qsort(runpool, current + 1, sizeof(runpool[0]), compare_vidruns);
+
+	/* Emit runs in sorted order until quota is fulfilled... */
+	for (i = 0; i < current + 1; i++) {
+		if (curscore + runpool[i].datalen < maxscore - 3) {
 			outbuf[outsize++] = 0xc0;
 			outbuf[outsize++] = (runpool[i].offset & 0xff00) >> 8;
 			outbuf[outsize++] = runpool[i].offset & 0x00ff;
-			for (j=0; j<runpool[i].runlen; j++) {
-				outbuf[outsize++] = runpool[i].start[j];
+			for (j=0; j<runpool[i].datalen - 3; j++) {
+				outbuf[outsize++] = runpool[i].data[j];
 			}
-			curscore += runpool[i].score;
-
-			/* mark this run as used */
-			runpool[i].offset = 0xffff;
+			curscore += runpool[i].datalen;
 		}
+		/* Stop packing the frame??
+		else
+			break;
+		*/
+		/* Need room for EOF and minimum run or no point continuing */
+		if (curscore >= maxscore - 7)
+			break;
 	}
 
-#if 0
-	/*
-	 * "Corporate" budgeting (i.e. use it or lose it)
-	 * 	-- check for left-over budget
-	 *	-- find largest unused run (guaranteed too big)
-	 *	-- use rleprune to determine shorter length
-	 *	-- copy start of run to output
-	 */
-	if (maxscore - curscore >= 8) {
-		int prunelen;
-
-		for (i=0; i<numrleruns; i++)
-			if (runpool[i].offset != 0xffff)
-				break;
-
-		prunelen = rleprune(&runpool[i], maxscore - curscore);
-		if (prunelen) {
-			outbuf[outsize++] = 0xc0;
-			outbuf[outsize++] = (runpool[i].offset & 0xff00) >> 8;
-			outbuf[outsize++] = runpool[i].offset & 0x00ff;
-			for (j=0; j<prunelen; j++) {
-				outbuf[outsize++] = runpool[i].start[j];
-			}
-			curscore += runpool[i].score; /* not really needed here */
-		}
-	}
-#endif
-
+	/* Always emit end of frame marker... */
 	outbuf[outsize++] = 0xc0;
 	outbuf[outsize++] = 0xff;
 	outbuf[outsize++] = 0xff;
@@ -286,6 +201,7 @@ int main(int argc, char *argv[])
 	if (write(outfd, &outbuf, outsize) != outsize)
 		perror("pixel write");
 
+	close(prevfd);
 	close(infd);
 	close(outfd);
 

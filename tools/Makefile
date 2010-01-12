@@ -9,6 +9,9 @@ gencolors: gencolors.c palette.h
 colors.h: gencolors
 	./gencolors > $@
 
+distance.h: gencolors
+	./gencolors -d > $@
+
 ppm2raw: ppm2raw.c colors.h
 	$(CC) -o ppm2raw ppm2raw.c
 
@@ -45,5 +48,5 @@ clw2pcm: clw2pcm.c
 drlscore: drlscore.c
 	$(CC) -o drlscore drlscore.c
 
-drlprune: drlprune.c
+drlprune: drlprune.c distance.h
 	$(CC) -o drlprune drlprune.c

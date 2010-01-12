@@ -3,9 +3,9 @@
 
 #include "palette.h"
 
-#define MAXR	64
-#define MAXG	64
-#define MAXB	64
+#define MAXR	8
+#define MAXG	8
+#define MAXB	8
 
 #define RGB(r, g, b)	((r * MAXG * MAXB) + (g * MAXB) + b)
 
@@ -14,6 +14,12 @@
  * initialized) returns closest known cmp256 value.
  */
 uint8_t color_table[MAXR * MAXG * MAXB];
+
+/*
+ * distance_table is indexed by two palette colors and
+ * returns the distance between them in the RGB cube.
+ */
+uint16_t distance_table[16][16];
 
 float rgb_distance(struct rgb c1, struct rgb c2)
 {
@@ -74,7 +80,19 @@ void show_matches()
 	}
 }
 
-void gen_header()
+void init_distance()
+{
+	int i, j;
+
+	for (i = 0; i < 16; i++)
+		for (j = 0; j < 16; j++) {
+			distance_table[i][j] =
+				(uint16_t)(rgb_distance(palette[i],
+							palette[j]) + 0.5);
+		}
+}
+
+void gen_colors()
 {
 	int i;
 
@@ -87,9 +105,18 @@ void gen_header()
 	printf("#define MAXG\t%d\n", MAXG);
 	printf("#define MAXB\t%d\n", MAXB);
 	printf("\n");
-	printf("#define RGB(r, g, b)\t((((r * MAXR) / 256) * MAXG * MAXB) + \\\n");
-	printf("\t\t\t (((g * MAXG) / 256) * MAXB) + \\\n");
-	printf("\t\t\t  ((b * MAXB) / 256))\n");
+	printf("#define MASKR\t(256 - (256 / MAXR))\n");
+	printf("#define MASKG\t(256 - (256 / MAXG))\n");
+	printf("#define MASKB\t(256 - (256 / MAXB))\n");
+	printf("\n");
+	printf("#define MIN(a, b)\t(a < b ? a : b)\n");
+	printf("\n");
+	printf("#define RGB(r, g, b)\t(((((MIN(255, (r + (256 / MAXR / 2))) & MASKR) \\\n");
+	printf("\t\t\t\t* MAXR) / 256) * MAXG * MAXB) + \\\n");
+	printf("\t\t\t ((((MIN(255, (g + (256 / MAXR / 2))) & MASKG) \\\n");
+	printf("\t\t\t\t* MAXG) / 256) * MAXB) + \\\n");
+	printf("\t\t\t  (((MIN(255, (b + (256 / MAXR / 2))) & MASKB) \\\n");
+	printf("\t\t\t\t* MAXB) / 256))\n");
 	printf("\n");
 	printf("uint8_t color[] = {\n");
 
@@ -107,13 +134,46 @@ void gen_header()
 	printf("#endif /* _COLORS_H_ */\n");
 }
 
+void gen_distance()
+{
+	int i, j;
+
+	printf("#ifndef _DISTANCE_H_\n");
+	printf("#define _DISTANCE_H_\n");
+	printf("\n");
+	printf("#include <stdint.h>\n");
+	printf("\n");
+	printf("uint16_t distance[16][16] = {\n");
+
+
+	for (i = 0; i < 16; i++)
+		for (j = 0; j < 16; j++) {
+			if (j % 8 == 0)
+				printf("\t0x%04x,", distance_table[i][j]);
+			else
+				printf(" 0x%04x,", distance_table[i][j]);
+			if (j % 8 == 7)
+				printf("\n");
+		}
+
+	printf("};\n");
+	printf("\n");
+	printf("#endif /* _DISTANCE_H_ */\n");
+}
+
 int main(int argc, char *argv[])
 {
 	init_colors();
 	/*
 	 * show_matches();
 	 */
-	gen_header();
+	init_distance();
+
+	/* Could do a better job of checking args... */
+	if (argc < 2)
+		gen_colors();
+	else 
+		gen_distance();
 
 	return 0;
 }
