@@ -41,8 +41,8 @@ int main(int argc, char *argv[])
 	while (rc = read(infd, &clwbuf, sizeof(clwbuf)) == sizeof(clwbuf)) {
 		while (clwidx < sizeof(clwbuf)) {
 			val = clwbuf[clwidx++];
-			outbuf[outidx++] = pcmtbl[(val & 0xf0) >> 4];
-			outbuf[outidx++] = pcmtbl[val & 0x0f];
+			outbuf[outidx++] = pcmtbl[(val & 0xf0) >> 4] & 0xfc;
+			outbuf[outidx++] = pcmtbl[val & 0x0f] & 0xfc;
 		}
 		if (write(outfd, outbuf, sizeof(outbuf)) != sizeof(outbuf))
 			perror("clw write");
@@ -55,8 +55,8 @@ int main(int argc, char *argv[])
 	else {
 		while (clwidx < rc) {
 			val = clwbuf[clwidx++];
-			outbuf[outidx++] = pcmtbl[(val & 0xf0) >> 4];
-			outbuf[outidx++] = pcmtbl[val & 0x0f];
+			outbuf[outidx++] = pcmtbl[(val & 0xf0) >> 4] & 0xfc;
+			outbuf[outidx++] = pcmtbl[val & 0x0f] & 0xfc;
 		}
 		if (write(outfd, outbuf, outidx) != outidx)
 				perror("clw write");
