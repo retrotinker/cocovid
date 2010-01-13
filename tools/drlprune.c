@@ -11,8 +11,7 @@
 #include "distance.h"
 
 /* Account for run data plus 3-byte run header... */
-/* Try shorter runs -- 16?? */
-#define MAXRUNLEN		48
+#define MAXRUNLEN		16
 
 #define RAW_HORIZ_PIXELS	128
 #define RAW_VERT_PIXELS		96
@@ -24,6 +23,12 @@ struct vidrun {
 	unsigned int offset;
 	unsigned int colordiff;
 };
+
+struct splitrun {
+	struct splitrun *next;
+	unsigned char data[2];
+};
+struct splitrun *splitrun_head = NULL;
 
 unsigned char prevbuf[RAW_VERT_PIXELS * RAW_HORIZ_PIXELS/2];
 unsigned char inbuf[RAW_VERT_PIXELS * RAW_HORIZ_PIXELS/2 * 5 + 3];
@@ -144,8 +149,50 @@ int main(int argc, char *argv[])
 			runpool[current].offset = offset;
 			runpool[current].datalen = 3;
 		}
-		/* Split RLE runs if longer than MAXRUNLEN?? */
 		if ((inbuf[i] & 0xc0) == 0xc0) {
+			/* Split RLE runs if longer than MAXRUNLEN... */
+			while ((inbuf[i] & 0x3f) > MAXRUNLEN) {
+				uint8_t oldlen, len;
+				struct splitrun *run;
+				unsigned char *buf;
+
+				run = malloc(sizeof(struct splitrun));
+				if (!run) {
+					perror("malloc");
+					exit(EXIT_FAILURE);
+				} else {
+					run->next = splitrun_head;
+					splitrun_head = run;
+					buf = &run->data[0];
+				}
+
+				oldlen = inbuf[i] & 0x3f;
+				len = oldlen < MAXRUNLEN*2 ?
+					oldlen / 2 : MAXRUNLEN;
+				inbuf[i] -= len;
+
+				buf[0] = 0xc0 | len;
+				buf[1] = inbuf[i + 1];
+
+				runpool[current].data = buf;
+				runpool[current].rasterlen = len;
+				runpool[current].datalen = 5;
+
+				/* compute color difference for RLE run */
+				for (j = 0; j < len; j++) {
+					runpool[current].colordiff +=
+						distance[inbuf[i+1] >> 8][prevbuf[offset+j] >> 8];
+					runpool[current].colordiff +=
+						distance[inbuf[i+1] & 0x0f][prevbuf[offset+j] & 0x0f];
+				}
+
+				/* start another new run */
+				offset += len;
+				current++;
+				runpool[current].data = &inbuf[i];
+				runpool[current].offset = offset;
+				runpool[current].datalen = 3;
+			}
 			runpool[current].rasterlen += inbuf[i] & 0x3f;
 			runpool[current].datalen += 2;
 
@@ -184,10 +231,6 @@ int main(int argc, char *argv[])
 			}
 			curscore += runpool[i].datalen;
 		}
-		/* Stop packing the frame??
-		else
-			break;
-		*/
 		/* Need room for EOF and minimum run or no point continuing */
 		if (curscore >= maxscore - 7)
 			break;
@@ -204,6 +247,14 @@ int main(int argc, char *argv[])
 	close(prevfd);
 	close(infd);
 	close(outfd);
+
+	while (splitrun_head) {
+		struct splitrun *tmp;
+
+		tmp = splitrun_head;
+		splitrun_head = tmp->next;
+		free(tmp);
+	}
 
 	return 0;
 }
