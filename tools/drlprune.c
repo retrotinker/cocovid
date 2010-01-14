@@ -13,7 +13,7 @@
 /* Account for run data plus 3-byte run header... */
 #define MAXRUNLEN		16
 
-#define RAW_HORIZ_PIXELS	128
+#define RAW_HORIZ_PIXELS	256
 #define RAW_VERT_PIXELS		96
 
 struct vidrun {

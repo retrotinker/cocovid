@@ -6,12 +6,13 @@
 #include <sys/stat.h>
 #include <fcntl.h>
 #include <unistd.h>
+#include <errno.h>
 #include <stdint.h>
 
 #include "palette.h"
 #include "colors.h"
 
-#define PPM_HORIZ_PIXELS	128
+#define PPM_HORIZ_PIXELS	256
 #define PPM_VERT_PIXELS		96
 
 struct rgb24 {
@@ -104,7 +105,8 @@ int main(int argc, char *argv[])
 	int infd, outfd;
 	char hdbuf;
 	int i, j;
-	int whitecount = 0;
+	int insize, whitecount = 0;
+	int rc;
 
 	if (argc < 3) {
 		usage(argv[0]);
@@ -136,8 +138,17 @@ int main(int argc, char *argv[])
 		}
 	}
 
-	if (read(infd, &inmap, sizeof(inmap)) != sizeof(inmap))
-		perror("pixel read");
+	insize = 0;
+	do {
+		rc = read(infd, (char *)&inmap+insize, sizeof(inmap)-insize);
+		if (rc < 0 && rc != EINTR) {
+			perror("pixel read");
+			exit(EXIT_FAILURE);
+		}
+		if (rc != EINTR)
+			insize += rc;
+	} while (rc != 0);
+
 
 	for (j=0; j<PPM_VERT_PIXELS; j++)
 		for (i=0; i<PPM_HORIZ_PIXELS/2; i++) {

@@ -7,7 +7,7 @@
 #include <fcntl.h>
 #include <unistd.h>
 
-#define RAW_HORIZ_PIXELS	128
+#define RAW_HORIZ_PIXELS	256
 #define RAW_VERT_PIXELS		96
 
 unsigned char prevbuf[RAW_VERT_PIXELS][RAW_HORIZ_PIXELS/2];

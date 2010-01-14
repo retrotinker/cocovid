@@ -8,7 +8,7 @@
 #include <unistd.h>
 #include <errno.h>
 
-#define RAW_HORIZ_PIXELS	128
+#define RAW_HORIZ_PIXELS	256
 #define RAW_VERT_PIXELS		96
 
 unsigned char inbuf[RAW_VERT_PIXELS*(RAW_HORIZ_PIXELS/2)*5 + 3];

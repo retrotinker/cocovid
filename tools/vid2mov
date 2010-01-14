@@ -2,9 +2,11 @@
 
 if [ "$4" = "letterbox" ]
 then
-	SIZEOPTS="-s 128x72 -padtop 12 -padbottom 12 -padcolor 000000"
+#	SIZEOPTS="-s 128x72 -padtop 12 -padbottom 12 -padcolor 000000"
+	SIZEOPTS="-s 256x72 -padtop 12 -padbottom 12 -padcolor 000000"
 else
-	SIZEOPTS="-s sqcif"
+#	SIZEOPTS="-s sqcif"
+	SIZEOPTS="-s 256x96"
 fi
 
 ffmpeg -i "$1" -r 30 -ar 11025 -ac 1 $SIZEOPTS -b 200000 -acodec pcm_u8 -aspect 5:3 -f mov -y "$2"

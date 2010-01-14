@@ -11,6 +11,11 @@ PALOFF	EQU	$FFB0
 SAMR1ST	EQU	$FFD9
 
 AUBUFSZ	EQU	$02df
+ABFPTR1	EQU	$1800
+ABFPTR2	EQU	$1C00
+ABUFEND	EQU	$2000
+ABUFMSK	EQU	$1C
+ABFEMSK	EQU	$04
 
 * Frame step value should be 2x actual frame step for 30fps source video
 FRAMSTP	EQU	4
@@ -89,21 +94,21 @@ VINTLOP	LDA	,X+
 	STA	$FF23
 
 * Clear audio buffer
-	LDX	#$3800
+	LDX	#ABFPTR1
 	CLRA
 CLRAUD	STA	,X+
-	CMPX	#$4800
+	CMPX	#ABUFEND
 	BNE	CLRAUD
 
 * Init audio buffer switching and video frame step
 	LDA	#FRAMSTP
 	STA	>STEPCNT
 	CLR	>FRAMCNT
-	LDD	#$4000
+	LDD	#ABFPTR2
 	TFR	D,Y
 	ADDD	#AUBUFSZ
 	STD	>AUDRSTP
-	LDD	#$3800
+	LDD	#ABFPTR1
 	STD	>AUDWPTR
 	ADDD	#AUBUFSZ
 	STD	>AUDWSTP
@@ -407,13 +412,13 @@ SYNCLP2 LDA	>FRAMCNT
 * Switch to next audio frame
 	pshs	b
 	TFR	Y,D
-	ANDA	#$78
+	ANDA	#ABUFMSK
 	CLRB
 	STD	>AUDWPTR
 	ADDD	#AUBUFSZ
 	STD	>AUDWSTP
-	ANDA	#$78
-	EORA	#$78
+	ANDA	#ABUFMSK
+	EORA	#ABFEMSK
 	CLRB
 	TFR	D,Y
 	ADDD	#AUBUFSZ
@@ -443,7 +448,7 @@ EXIT	clr	$ff90
 * Init for video mode, set video buffer to $2000
 * (Assumes default MMU setup...)
 VIDINIT	FCB	$4C,$00,$00,$00,$00,$00,$00,$00
-	FCB	$82,$12,$00,$00,$0F,$E4,$00,$00
+	FCB	$82,$1A,$00,$00,$0F,$E4,$00,$00
 ENDVINT	EQU	*
 
 * Init for palette regs
