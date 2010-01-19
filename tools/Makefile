@@ -1,9 +1,14 @@
-.PHONY: all
+.PHONY: all clean
 
 CFLAGS=-Wall
 
-all: ppm2raw raw2ppm raw2rle raw2drw drw2drl drl2raw wav2pcm \
+TARGETS=ppm2raw raw2ppm raw2rle raw2drw drw2drl drl2raw wav2pcm \
 	pcm2clw clw2pcm drlprune colormap.ppm
+
+all: $(TARGETS)
+
+clean:
+	rm -f $(TARGETS)
 
 gencolors: gencolors.c palette.h
 	$(CC) $(CFLAGS) -o gencolors gencolors.c -lm

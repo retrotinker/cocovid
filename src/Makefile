@@ -1,4 +1,11 @@
-all: cocovid.bin cocovid.s19 cocoaud.bin cocoaud.s19
+.PHONY: all clean
+
+TARGETS=cocovid.bin cocovid.s19 cocoaud.bin cocoaud.s19
+
+all: $(TARGETS)
+
+clean:
+	rm -f $(TARGETS)
 
 cocovid.bin: cocovid.asm
 	mamou -mb -tb -l -ococovid.bin cocovid.asm
