@@ -8,7 +8,8 @@
 #include <unistd.h>
 
 #define RAW_HORIZ_PIXELS	256
-#define RAW_VERT_PIXELS		96
+#define RAW_VERT_PIXELS		192
+#define SCREENEND		((RAW_HORIZ_PIXELS / 2) * RAW_VERT_PIXELS)
 
 unsigned char prevbuf[RAW_VERT_PIXELS][RAW_HORIZ_PIXELS/2];
 unsigned char curbuf[RAW_VERT_PIXELS][RAW_HORIZ_PIXELS/2];
@@ -29,10 +30,10 @@ int badmatch(unsigned char *prev, unsigned char *cur, int offset)
 		if (prev[i] != cur[i])
 			break;
 
-	if (i == 4 && offset + 5 < 0x1800)
+	if (i == 4 && offset + 5 < SCREENEND)
 		return 0;
 	else if (i == 3 && cur[3] != 0xc0 &&
-	         offset + 4 < 0x1800)
+	         offset + 4 < SCREENEND)
 		return 0;
 
 	return 1;

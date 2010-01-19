@@ -9,7 +9,7 @@
 #include <errno.h>
 
 #define RAW_HORIZ_PIXELS	256
-#define RAW_VERT_PIXELS		96
+#define RAW_VERT_PIXELS		192
 
 unsigned char inbuf[RAW_VERT_PIXELS * RAW_HORIZ_PIXELS/2];
 unsigned char outbuf[RAW_VERT_PIXELS * RAW_HORIZ_PIXELS/2 * 2 + 3];

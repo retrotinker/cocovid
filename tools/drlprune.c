@@ -10,11 +10,11 @@
 
 #include "distance.h"
 
-/* Account for run data plus 3-byte run header... */
-#define MAXRUNLEN		16
-
 #define RAW_HORIZ_PIXELS	256
-#define RAW_VERT_PIXELS		96
+#define RAW_VERT_PIXELS		192
+
+/* Account for run data plus 3-byte run header... */
+#define MAXRUNLEN		(RAW_HORIZ_PIXELS / 16)
 
 struct vidrun {
 	unsigned char *data;
@@ -140,9 +140,9 @@ int main(int argc, char *argv[])
 			i += 2;
 			continue;
 		}
-		if (runpool[current].datalen > MAXRUNLEN ||
+		if (runpool[current].datalen >= MAXRUNLEN ||
 		    ((inbuf[i] & 0xc0) == 0xc0 &&
-		     runpool[current].datalen + inbuf[i] & 0x3f > MAXRUNLEN)) {
+		     runpool[current].datalen + (inbuf[i] & 0x3f) > MAXRUNLEN)) {
 			/* artificially start new run */
 			current++;
 			runpool[current].data = &inbuf[i];

@@ -11,11 +11,14 @@ PALOFF	EQU	$FFB0
 SAMR1ST	EQU	$FFD9
 
 AUBUFSZ	EQU	$02df
-ABFPTR1	EQU	$1800
-ABFPTR2	EQU	$1C00
-ABUFEND	EQU	$2000
+ABFPTR1	EQU	$1400
+ABFPTR2	EQU	$1800
+ABUFEND	EQU	$1C00
 ABUFMSK	EQU	$1C
-ABFEMSK	EQU	$04
+ABFEMSK	EQU	$0C
+
+VIDBUF	EQU	$1C00
+VBUFEND	EQU	$7C00
 
 * Frame step value should be 2x actual frame step for 30fps source video
 FRAMSTP	EQU	4
@@ -54,19 +57,18 @@ EXEC	EQU	*
 	STA	SAMR1ST
 
 * Setup palette...
-	LDX	#CPALINI
+	LDX	#RPALINI
 	LDY	#PALOFF
 PINTLOP	LDA	,X+
 	STA	,Y+
-	CMPX	#ENDCPIN
+	CMPX	#ENDRPIN
 	BNE	PINTLOP
 
 * ...clear screen...
-	LDX	#$2000
+	LDX	#VIDBUF
 	CLRA
 CLRSCN	STA	,X+
-* Check for $3840 to account for stray half-line at bottom of screen
-	CMPX	#$3840
+	CMPX	#VBUFEND
 	BNE	CLRSCN
 
 * ...and setup video mode
@@ -178,7 +180,7 @@ ideread	lda	7,u
 *	BEQ	START
 
 * Data movement goes here
-INLOOP	LDX	#$2000
+INLOOP	LDX	#VIDBUF
 * Check timer interrupt
 INLOP1	LDA	$FF93
 	BEQ	INLOP2
@@ -219,7 +221,7 @@ DATGT1
 PIXESC	puls	a
 	CMPA	#$C0
 	BNE	PIXMWR
-PIXJMP	LDX	#$2000
+PIXJMP	LDX	#VIDBUF
 * Check timer interrupt
 PIXJMP1	LDA	$FF93
 	BEQ	PIXJMP2
@@ -445,10 +447,10 @@ EXIT	clr	$ff90
 	clr	$ff9f
 	JMP	[RSTVEC]
 
-* Init for video mode, set video buffer to $2000
+* Init for video mode, set video buffer to VIDBUF
 * (Assumes default MMU setup...)
 VIDINIT	FCB	$4C,$00,$00,$00,$00,$00,$00,$00
-	FCB	$82,$1A,$00,$00,$0F,$E4,$00,$00
+	FCB	$80,$1A,$00,$00,$0F,$E3,$80,$00
 ENDVINT	EQU	*
 
 * Init for palette regs
