@@ -1,9 +1,10 @@
 -- preprocessing
 	-- use fewer tmp files (i.e. more piping) to improve conversion time
-	-- account for number of adjacent runs in sort comparison
-	-- insert 'whole' frames periodically in stream (?)
+	-- account for number of adjacent runs in sort comparison (?)
+	-- account for  least recently changed pixels in sort comparision (?)
 	-- brightness/contrast (?)
-	-- quadrant dithering (?)
+	-- use ImageMagick for stretch/resize
+	-- use YIQ for color distance calculations in gencolors
 
 -- integrated video conversion utility to process ppm/pcm data
 	-- dithering optional
