@@ -1,6 +1,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <ctype.h>
 
 #include <sys/types.h>
 #include <sys/stat.h>
@@ -13,7 +14,7 @@
 #include "colors.h"
 
 #define PPM_HORIZ_PIXELS	256
-#define PPM_VERT_PIXELS		96
+#define PPM_VERT_PIXELS		192
 
 struct rgb24 {
 	uint8_t r, g, b;
@@ -45,6 +46,7 @@ inline uint8_t add_clamp(uint8_t a, int16_t b)
 	return tmp;
 }
 
+#if 0
 void dither(int h, int v, uint8_t color)
 {
 	int16_t r_error, g_error, b_error;
@@ -99,6 +101,7 @@ void dither(int h, int v, uint8_t color)
 		}
 	}
 }
+#endif
 
 int main(int argc, char *argv[])
 {
@@ -125,8 +128,8 @@ int main(int argc, char *argv[])
 			perror("head read");
 		if (hdbuf == '\n' || isblank(hdbuf)) {
 			whitecount++;
-			while (whitecount < 4 &&
-				hdbuf == '\n' || isblank(hdbuf)) {
+			while ((whitecount < 4) &&
+				(hdbuf == '\n' || isblank(hdbuf))) {
 				if (read(infd, &hdbuf, 1) != 1)
 					perror("head read");
 				if (hdbuf == '#')
@@ -157,12 +160,16 @@ int main(int argc, char *argv[])
 			val = color[RGB(inmap.pixel[j][2*i].r,
 					inmap.pixel[j][2*i].g,
 					inmap.pixel[j][2*i].b)];
+#if 0
 			dither(2*i, j, val);
+#endif
 			val <<= 4;
 			val |= color[RGB(inmap.pixel[j][2*i+1].r,
 					 inmap.pixel[j][2*i+1].g,
 					 inmap.pixel[j][2*i+1].b)];
+#if 0
 			dither(2*i + 1, j, val & 0xf);
+#endif
 
 			cocobuf[j][i] = val;
 		}
