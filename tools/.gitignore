@@ -1,6 +1,8 @@
 gencolors
 colors.h
 distance.h
+genmap
+colormap.ppm
 ppm2raw
 raw2ppm
 raw2rle
