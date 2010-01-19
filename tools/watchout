@@ -1,0 +1,55 @@
+#!/bin/sh
+
+RAW2PPM=$(dirname $0)/raw2ppm
+
+cleanup()
+{
+	kill -HUP $PID >/dev/null 2>&1
+	kill -HUP $OLDPID >/dev/null 2>&1
+	exit 0
+}
+
+trap cleanup 1 2 3 15
+
+FEH_ARGS='-Z -F'
+
+while [ ! -d ../raw/$1 ]
+do
+	sleep 1
+done
+
+cd ../raw/$1
+
+while [ ! -f current.raw ]
+do
+	sleep 1
+done
+
+LASTMOD=$(stat -c '%Y' current.raw)
+$RAW2PPM current.raw current.ppm >/dev/null 2>&1
+#convert -resize 100x200%! current.ppm view.ppm
+#feh $FEH_ARGS view.ppm >/dev/null 2>&1 &
+feh $FEH_ARGS current.ppm >/dev/null 2>&1 &
+OLDPID=$!
+
+while true
+do
+	if [ ! -d /proc/$OLDPID -o ! -f current.raw ]
+	then
+		break
+	fi
+	if [ $LASTMOD -lt $(stat -c '%Y' current.raw) ]
+	then
+		LASTMOD=$(stat -c '%Y' current.raw)
+		$RAW2PPM current.raw current.ppm >/dev/null 2>&1
+#		convert -resize 100x200%! current.ppm view.ppm
+#		feh $FEH_ARGS view.ppm >/dev/null 2>&1 &
+		feh $FEH_ARGS current.ppm >/dev/null 2>&1 &
+		PID=$!
+		sleep 1
+		kill -HUP $OLDPID >/dev/null 2>&1
+		OLDPID=$PID
+	fi
+done
+
+cleanup
