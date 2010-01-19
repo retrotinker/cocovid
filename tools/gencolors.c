@@ -146,15 +146,18 @@ void gen_distance()
 	printf("uint16_t distance[16][16] = {\n");
 
 
-	for (i = 0; i < 16; i++)
+	for (i = 0; i < 16; i++) {
+		printf("\t{\n");
 		for (j = 0; j < 16; j++) {
 			if (j % 8 == 0)
-				printf("\t0x%04x,", distance_table[i][j]);
+				printf("\t\t0x%04x,", distance_table[i][j]);
 			else
 				printf(" 0x%04x,", distance_table[i][j]);
 			if (j % 8 == 7)
 				printf("\n");
 		}
+		printf("\t},\n");
+	}
 
 	printf("};\n");
 	printf("\n");

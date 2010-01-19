@@ -43,7 +43,7 @@ int main(int argc, char *argv[])
 	if (read(infd, hdbuf, sizeof(hdbuf)) != sizeof(hdbuf))
 		perror("head read");
 
-	while (rc = read(infd, &wavbuf, sizeof(wavbuf)) == sizeof(wavbuf)) {
+	while ((rc = read(infd, &wavbuf, sizeof(wavbuf))) == sizeof(wavbuf)) {
 		while (wavidx < sizeof(wavbuf)) {
 			outbuf[outidx++] = wavbuf[wavidx];
 			wavidx += factor;
