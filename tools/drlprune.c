@@ -13,8 +13,11 @@
 #define RAW_HORIZ_PIXELS	256
 #define RAW_VERT_PIXELS		192
 
-/* Account for run data plus 3-byte run header... */
-#define MAXRUNLEN		(RAW_HORIZ_PIXELS / 16)
+/*
+ * Account for run data plus 3-byte run header; needs to be short enough
+ * to make-up for time it takes to write a long run...
+ */
+#define MAXRUNLEN		8
 
 struct vidrun {
 	unsigned char *data;
