@@ -17,3 +17,12 @@
 	-- frame number marker (?)
 	-- display message (possibly frame number) while paused
 	-- video header to select parameters (colors, fps, etc)
+
+-- applications
+	-- "laser disc"-style game
+	-- vnc-like remote desktop
+	-- DVD "emulator" (i.e. rip/translate DVD menus as well as A/V)
+
+-- future
+	-- use ffmpeg and/or ImageMagick libraries instead of exec'ing utilities
+	-- re-implement toolchain as codec and container support for ffmpeg
