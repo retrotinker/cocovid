@@ -21,15 +21,28 @@ uint8_t color_table[MAXR * MAXG * MAXB];
  */
 uint16_t distance_table[16][16];
 
-float rgb_distance(struct rgb c1, struct rgb c2)
+struct yiq {
+        float y, i, q;
+};
+
+float yiq_distance(struct rgb c1, struct rgb c2)
 {
-	int rd, gd, bd;
+	struct yiq y1, y2;
+	float yd, id, qd;
 
-	rd = c1.r - c2.r;
-	gd = c1.g - c2.g;
-	bd = c1.b - c2.b;
+	y1.y = 0.299000*c1.r + 0.587000*c1.g + 0.114000*c1.b;
+	y1.i = 0.595716*c1.r - 0.274453*c1.g - 0.321263*c1.b;
+	y1.q = 0.211456*c1.r - 0.522591*c1.g + 0.311135*c1.b;
 
-	return sqrtf((rd * rd) + (gd * gd) + (bd * bd));
+	y2.y = 0.299000*c2.r + 0.587000*c2.g + 0.114000*c2.b;
+	y2.i = 0.595716*c2.r - 0.274453*c2.g - 0.321263*c2.b;
+	y2.q = 0.211456*c2.r - 0.522591*c2.g + 0.311135*c2.b;
+
+	yd = y1.y - y2.y;
+	id = y1.i - y2.i;
+	qd = y1.q - y2.q;
+
+	return sqrtf((yd * yd) + (id * id) + (qd * qd));
 }
 
 void init_colors()
@@ -50,10 +63,10 @@ void init_colors()
 
 				cur.b = b * 256 / MAXB;
 
-				closest_distance = rgb_distance(cur,
+				closest_distance = yiq_distance(cur,
 							palette[0]);
 				for (cmp = 1; cmp < PALETTE_SIZE; cmp++) {
-					cur_distance = rgb_distance(cur,
+					cur_distance = yiq_distance(cur,
 								palette[cmp]);
 					if (cur_distance < closest_distance) {
 						closest_distance = cur_distance;
@@ -87,7 +100,7 @@ void init_distance()
 	for (i = 0; i < 16; i++)
 		for (j = 0; j < 16; j++) {
 			distance_table[i][j] =
-				(uint16_t)(rgb_distance(palette[i],
+				(uint16_t)(yiq_distance(palette[i],
 							palette[j]) + 0.5);
 		}
 }

@@ -4,7 +4,6 @@
 	-- account for  least recently changed pixels in sort comparision (?)
 	-- brightness/contrast (?)
 	-- use ImageMagick for stretch/resize
-	-- use YIQ for color distance calculations in gencolors
 
 -- integrated video conversion utility to process ppm/pcm data
 	-- dithering optional
