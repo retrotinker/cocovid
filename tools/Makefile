@@ -2,8 +2,8 @@
 
 CFLAGS=-Wall
 
-TARGETS=ppm2raw raw2ppm raw2rle raw2drw drw2drl drl2raw wav2pcm \
-	pcm2clw clw2pcm drlprune colormap.ppm
+TARGETS=ppm2raw raw2ppm raw2drw drw2drl drl2raw drlprune \
+	wav2pcm pcm2clw clw2pcm colormap.ppm
 
 all: $(TARGETS)
 
@@ -30,9 +30,6 @@ ppm2raw: ppm2raw.c colors.h
 
 raw2ppm: raw2ppm.c palette.h
 	$(CC) $(CFLAGS) -o raw2ppm raw2ppm.c
-
-raw2rle: raw2rle.c
-	$(CC) $(CFLAGS) -o raw2rle raw2rle.c
 
 raw2drw: raw2drw.c
 	$(CC) $(CFLAGS) -o raw2drw raw2drw.c

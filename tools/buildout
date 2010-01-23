@@ -15,7 +15,6 @@ BINDIR=$(dirname $0)
 
 MOV2PPM=${BINDIR}/mov2ppm
 PPM2RAW=${BINDIR}/ppm2raw
-RAW2RLE=${BINDIR}/raw2rle
 RAW2DRW=${BINDIR}/raw2drw
 DRW2DRL=${BINDIR}/drw2drl
 DRL2RAW=${BINDIR}/drl2raw
