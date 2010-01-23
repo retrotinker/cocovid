@@ -57,8 +57,8 @@ then
 	do
 	#convert -map ${BINDIR}/colormap.ppm -dither Riemersma $i tmp-$$.ppm
 	# 100x100% is placeholder for when we rely on convert for stretching
-	convert -resize 100x100%! -resize 256x192 \
-		-background black -gravity center -extent 256x192 \
+	convert -resize 100x100%! -resize 128x192 \
+		-background black -gravity center -extent 128x192 \
 		-ordered-dither o2x2,4,4,4 \
 		-quantize YIQ +dither -map ${BINDIR}/colormap.ppm \
 		$i tmp-$$.ppm

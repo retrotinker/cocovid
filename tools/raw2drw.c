@@ -7,7 +7,7 @@
 #include <fcntl.h>
 #include <unistd.h>
 
-#define RAW_HORIZ_PIXELS	256
+#define RAW_HORIZ_PIXELS	128
 #define RAW_VERT_PIXELS		192
 #define SCREENEND		((RAW_HORIZ_PIXELS / 2) * RAW_VERT_PIXELS)
 

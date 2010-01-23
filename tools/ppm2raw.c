@@ -10,10 +10,12 @@
 #include <errno.h>
 #include <stdint.h>
 
+#if 0
 #include "palette.h"
+#endif
 #include "colors.h"
 
-#define PPM_HORIZ_PIXELS	256
+#define PPM_HORIZ_PIXELS	128
 #define PPM_VERT_PIXELS		192
 
 struct rgb24 {

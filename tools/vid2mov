@@ -1,14 +1,18 @@
 #!/bin/sh
 
-if [ "$4" = "letterbox" ]
+set -x
+
+if [ "$3" = "letterbox" ]
 then
 #	SIZEOPTS="-s 128x72 -padtop 12 -padbottom 12 -padcolor 000000"
-	SIZEOPTS="-s 256x144 -padtop 24 -padbottom 24 -padcolor 000000"
+#	SIZEOPTS="-s 256x144 -padtop 24 -padbottom 24 -padcolor 000000"
+	SIZEOPTS="-s 128x144 -padtop 24 -padbottom 24 -padcolor 000000"
 else
 #	SIZEOPTS="-s sqcif"
-	SIZEOPTS="-s 256x192"
+#	SIZEOPTS="-s 256x192"
+	SIZEOPTS="-s 128x192"
 fi
 
-ffmpeg -i "$1" -r 30 -ar 11025 -ac 1 $SIZEOPTS -b 200000 -acodec pcm_u8 -aspect 5:3 -f mov -y "$2"
-ffmpeg -i "$2" -vn -acodec pcm_u8 -y "$3"
-normalize "$3"
+ffmpeg -i "$1" -r 30 -ar 11025 -ac 1 $SIZEOPTS -b 200000 -acodec pcm_u8 -aspect 5:3 -f mov -y "$2".mov
+ffmpeg -i "$2".mov -vn -acodec pcm_u8 -y "$2".wav
+normalize "$2".wav

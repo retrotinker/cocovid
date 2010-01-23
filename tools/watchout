@@ -27,9 +27,9 @@ done
 
 LASTMOD=$(stat -c '%Y' current.raw)
 $RAW2PPM current.raw current.ppm >/dev/null 2>&1
-#convert -resize 100x200%! current.ppm view.ppm
-#feh $FEH_ARGS view.ppm >/dev/null 2>&1 &
-feh $FEH_ARGS current.ppm >/dev/null 2>&1 &
+convert -resize 200x100%! current.ppm view.ppm
+feh $FEH_ARGS view.ppm >/dev/null 2>&1 &
+#feh $FEH_ARGS current.ppm >/dev/null 2>&1 &
 OLDPID=$!
 
 while true
@@ -42,9 +42,9 @@ do
 	then
 		LASTMOD=$(stat -c '%Y' current.raw)
 		$RAW2PPM current.raw current.ppm >/dev/null 2>&1
-#		convert -resize 100x200%! current.ppm view.ppm
-#		feh $FEH_ARGS view.ppm >/dev/null 2>&1 &
-		feh $FEH_ARGS current.ppm >/dev/null 2>&1 &
+		convert -resize 200x100%! current.ppm view.ppm
+		feh $FEH_ARGS view.ppm >/dev/null 2>&1 &
+#		feh $FEH_ARGS current.ppm >/dev/null 2>&1 &
 		PID=$!
 		sleep 1
 		kill -HUP $OLDPID >/dev/null 2>&1
