@@ -5,10 +5,12 @@ CFLAGS=-Wall
 TARGETS=ppm2raw raw2ppm raw2drw drw2drl drl2raw drlprune \
 	wav2pcm pcm2clw clw2pcm colormap.ppm
 
+OTHERS=gencolors genmap
+
 all: $(TARGETS)
 
 clean:
-	rm -f $(TARGETS)
+	rm -f $(TARGETS) $(OTHERS)
 
 gencolors: gencolors.c palette.h
 	$(CC) $(CFLAGS) -o gencolors gencolors.c -lm
