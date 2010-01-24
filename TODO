@@ -1,21 +1,16 @@
--- preprocessing
-	-- use fewer tmp files (i.e. more piping) to improve conversion time
-	-- account for number of adjacent runs in sort comparison (?)
-	-- account for  least recently changed pixels in sort comparision (?)
-	-- brightness/contrast (?)
-	-- use ImageMagick for stretch/resize
-
--- integrated video conversion utility to process ppm/pcm data
-	-- dithering optional
-	-- variable bitrate
-	-- select resolution
-
 -- player
 	-- loadable from DECB
 	-- space to pause, break to end
 	-- frame number marker (?)
 	-- display message (possibly frame number) while paused
 	-- video header to select parameters (colors, fps, etc)
+
+-- integrated video conversion utility to process ppm/pcm data (?)
+	-- dithering optional
+	-- variable bitrate
+	-- select resolution
+	-- alternatively, clean-up buildout
+		-- better use of mktemp for temporary files/directories
 
 -- applications
 	-- "laser disc"-style game

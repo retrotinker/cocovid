@@ -84,11 +84,18 @@ int main(int argc, char *argv[])
 	/* open previous file */
 	prevfd = open(argv[1], O_RDONLY);
 
-	infd = open(argv[2], O_RDONLY);
+	/* open input file */
+	if (!strncmp(argv[2], "-", 1))
+		infd = 0;
+	else
+		infd = open(argv[2], O_RDONLY);
 
 	/* open output file */
-	outfd = open(argv[3], O_WRONLY | O_CREAT | O_TRUNC,
-			S_IRUSR | S_IWUSR | S_IRGRP | S_IROTH);
+	if (!strncmp(argv[2], "-", 1))
+		outfd = 1;
+	else
+		outfd = open(argv[3], O_WRONLY | O_CREAT | O_TRUNC,
+				S_IRUSR | S_IWUSR | S_IRGRP | S_IROTH);
 
 	if (sscanf(argv[4], "%d", &maxscore) < 0) {
 		perror("sscanf maxscore");

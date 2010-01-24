@@ -1,84 +1,67 @@
 #!/bin/sh
 
-PPM=1
-RAW=1
-PCM=1
-
 FRAMESTEP=2
 SAMPLES=735
-PCMFACTOR=1
 
 #MAXSCORE=896
 MAXSCORE=768
 
 BINDIR=$(dirname $0)
 
-MOV2PPM=${BINDIR}/mov2ppm
 PPM2RAW=${BINDIR}/ppm2raw
 RAW2DRW=${BINDIR}/raw2drw
 DRW2DRL=${BINDIR}/drw2drl
-DRL2RAW=${BINDIR}/drl2raw
-WAV2PCM=${BINDIR}/wav2pcm
-SPLITPCM=${BINDIR}/splitpcm
 DRLPRUNE=${BINDIR}/drlprune
+DRL2RAW=${BINDIR}/drl2raw
+WATCHOUT=${BINDIR}/watchout
 
-RAWBASE=../raw/"$1"
-DRWBASE=../drw/"$1"
-DRLBASE=../drl/"$1"
-PCMBASE=../pcm/"$1"
+PPMBASE=../ppm/"$2"
+RAWBASE=../raw/"$2"
+PCMBASE=../pcm/"$2"
 
+cleanup()
+{
+	rm -f buildout.$$
+
+	rm ../mov/"$2".mov
+	rm ../mov/"$2".wav
+
+	rm -rf $PPMBASE
+	rm -rf $RAWBASE
+	rm -rf $PCMBASE
+
+	exit 0
+}
+
+# START HERE
+
+trap cleanup 1 2 3 15
+
+mkdir -p $PPMBASE
 mkdir -p $RAWBASE
-mkdir -p $DRWBASE
-mkdir -p $DRLBASE
 mkdir -p $PCMBASE
 
-if [ $PPM -ne 0 ]
-then
-	echo Converting .mov file to a sequence of .ppm files...
-	mkdir -p ../ppm/"$1"
-	cd ../ppm/"$1"
-	rm -f *
-	$MOV2PPM ../../mov/"$1".mov >/dev/null 2>&1
-	FRAMES=$(ls | wc -l)
-	cd - >/dev/null
-else
-	cd ../ppm/"$1"
-	FRAMES=$(ls | wc -l)
-	cd - >/dev/null
-fi
+echo Transcoding $(basename "$1")...
+nice -n 1 ffmpeg -i "$1" -r 30 -ar 11025 -ac 1 -b 200000 -acodec pcm_u8 \
+	-f mov -y ../mov/"$2".mov
+nice -n 1 ffmpeg -i ../mov/"$2".mov -vn -acodec pcm_u8 -y ../mov/"$2".wav
+nice -n 1 normalize ../mov/"$2".wav
 
-if [ $RAW -ne 0 ]
-then
-	echo Converting .ppm files to .raw files...
-	mkdir -p ../raw/"$1"
-	rm -f ../raw/"$1"/*
-	cd ../ppm/"$1"
-	for i in *
-	do
-	#convert -map ${BINDIR}/colormap.ppm -dither Riemersma $i tmp-$$.ppm
-	# 100x100% is placeholder for when we rely on convert for stretching
-	convert -resize 100x100%! -resize 128x192 \
-		-background black -gravity center -extent 128x192 \
-		-ordered-dither o2x2,4,4,4 \
-		-quantize YIQ +dither -map ${BINDIR}/colormap.ppm \
-		$i tmp-$$.ppm
-	$PPM2RAW tmp-$$.ppm ../../raw/"$1"/${i%ppm}raw
-	rm $i
-	done
-	rm tmp-$$.ppm
-	cd - >/dev/null
-fi
+echo Converting .mov file to a sequence of .ppm files...
+cd $PPMBASE
+nice -n 1 ffmpeg -i ../../mov/"$2".mov %d.ppm >/dev/null 2>&1
+# Not necessary to delete MOV here, but why wait?
+rm ../../mov/"$2".mov
+FRAMES=$(ls | wc -l)
+cd - >/dev/null
 
-if [ $PCM -ne 0 ]
-then
-	echo Converting .wav file to .pcm file and split into appropriately sized chunks...
-	mkdir -p ../pcm/"$1"
-	cd ../pcm/"$1"
-	rm -f *
-	$WAV2PCM ../../mov/"$1".wav "$1".pcm $PCMFACTOR
-	$SPLITPCM "$1".pcm "$1". $SAMPLES 2>/dev/null
-	cd - >/dev/null
-fi
+echo Converting .wav file to .pcm file and split into appropriately sized chunks...
+cd $PCMBASE
+dd if=../../mov/"$2".wav bs=44 skip=1 | \
+	nice -n 1 split -d -b $SAMPLES -a 10 - "$2".
+# Not necessary to delete WAV here, but why wait?
+rm ../../mov/"$2".wav
+cd - >/dev/null
 
 CURRAW=${RAWBASE}/current.raw
 TMPRAW=${RAWBASE}/tmp.raw
@@ -88,8 +71,12 @@ cp ${BINDIR}/BLACK.raw $CURRAW
 
 echo Building final output file...
 
-cat ${BINDIR}/BLACK.drl > "$2"
-dd if=/dev/zero bs=$SAMPLES count=1 2>/dev/null >> "$2"
+$WATCHOUT "$2" &
+
+cat ${BINDIR}/BLACK.drl > "$2".out
+dd if=/dev/zero bs=$SAMPLES count=1 2>/dev/null >> "$2".out
+
+mkfifo buildout.$$
 
 for i in $(seq 1 $FRAMESTEP $FRAMES)
 do
@@ -97,21 +84,25 @@ do
 	then
 		echo Processing frame ${i}... >&2
 	fi
-	RAW=${RAWBASE}/$i.raw
-	DRW=${DRWBASE}/${i}-cur.drw
-	DRL=${DRLBASE}/${i}-cur.drl
-	DRLOUT=${DRLBASE}/${i}-out.drl
-	PCMFILE=${PCMBASE}/*.$((${i}/$FRAMESTEP))
+	PPM=${PPMBASE}/$i.ppm
+	DRL=${DRLBASE}/${i}.drl
+	PCMFILE=${PCMBASE}/"$2".$(printf "%010d" $(($i / $FRAMESTEP)))
 
-	$RAW2DRW $CURRAW $RAW $DRW
-	rm $RAW
-	$DRW2DRL $DRW $DRL
-	rm $DRW
-	$DRLPRUNE $CURRAW $DRL $DRLOUT $MAXSCORE
-	rm $DRL
-	cat $DRLOUT
-	$DRL2RAW $CURRAW $DRLOUT $TMPRAW
-	rm $DRLOUT
+	$DRL2RAW $CURRAW buildout.$$ $TMPRAW &
+	CURUPDATE=$!
+	convert -resize 125x200%! -resize 128x192 \
+			-ordered-dither o2x2,4,4,4 \
+			-quantize YIQ +dither -map ${BINDIR}/colormap.ppm \
+			-background black -gravity center -extent 128x192 \
+			$PPM ppm:- | \
+		$PPM2RAW - -|\
+		$RAW2DRW $CURRAW - - | \
+		$DRW2DRL - - | \
+		$DRLPRUNE $CURRAW - - $MAXSCORE | \
+		tee buildout.$$
+	# Not necessary to delete PPM here, but why wait?
+	rm $PPM
+	wait $CURUPDATE
 	mv $TMPRAW $CURRAW
 	if [ -f $PCMFILE ]
 	then
@@ -119,19 +110,16 @@ do
 		PCMSIZE=$(stat -c '%s' $PCMFILE)
 		if [ $PCMSIZE -lt $SAMPLES ]
 		then
-			dd if=/dev/zero bs=$(($SAMPLES - $PCMSIZE)) count=1 2>/dev/null
+			dd if=/dev/zero bs=$(($SAMPLES - $PCMSIZE)) \
+				count=1 2>/dev/null
 		fi
-		rm $PCMFILE
 	else
 		# This actually holds DAC at lowest value...
 		# ...should output 0x88 ("CoCo Law" virtual zero) instead?
 		dd if=/dev/zero bs=$SAMPLES count=1 2>/dev/null
 	fi
-done >> "$2"
-
-rm -rf $RAWBASE
-rm -rf $DRWBASE
-rm -rf $DRLBASE
-rm -rf $PCMBASE
+done >> "$2".out
 
 echo Done!
+
+cleanup

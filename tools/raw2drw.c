@@ -53,11 +53,17 @@ int main(int argc, char *argv[])
 	prevfd = open(argv[1], O_RDONLY);
 
 	/* open current file */
-	curfd = open(argv[2], O_RDONLY);
+	if (!strncmp(argv[2], "-", 1))
+		curfd = 0;
+	else
+		curfd = open(argv[2], O_RDONLY);
 
 	/* open output file */
-	outfd = open(argv[3], O_WRONLY | O_CREAT | O_TRUNC,
-			S_IRUSR | S_IWUSR | S_IRGRP | S_IROTH);
+	if (!strncmp(argv[3], "-", 1))
+		outfd = 1;
+	else
+		outfd = open(argv[3], O_WRONLY | O_CREAT | O_TRUNC,
+				S_IRUSR | S_IWUSR | S_IRGRP | S_IROTH);
 
 	if (read(prevfd, &prevbuf, sizeof(prevbuf)) != sizeof(prevbuf))
 		perror("prev read");

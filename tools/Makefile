@@ -3,7 +3,7 @@
 CFLAGS=-Wall
 
 TARGETS=ppm2raw raw2ppm raw2drw drw2drl drl2raw drlprune \
-	wav2pcm pcm2clw clw2pcm colormap.ppm
+	pcm2clw clw2pcm colormap.ppm
 
 OTHERS=gencolors genmap
 
@@ -44,9 +44,6 @@ drlprune: drlprune.c distance.h
 
 drl2raw: drl2raw.c
 	$(CC) $(CFLAGS) -o drl2raw drl2raw.c
-
-wav2pcm: wav2pcm.c
-	$(CC) $(CFLAGS) -o wav2pcm wav2pcm.c
 
 pcm2clw: pcm2clw.c
 	$(CC) $(CFLAGS) -o pcm2clw pcm2clw.c

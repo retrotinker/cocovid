@@ -81,11 +81,17 @@ int main(int argc, char *argv[])
 	}
 
 	/* open input file */
-	infd = open(argv[1], O_RDONLY);
+	if (!strncmp(argv[1], "-", 1))
+		infd = 0;
+	else
+		infd = open(argv[1], O_RDONLY);
 
 	/* open output file */
-	outfd = open(argv[2], O_WRONLY | O_CREAT | O_TRUNC,
-			S_IRUSR | S_IWUSR | S_IRGRP | S_IROTH);
+	if (!strncmp(argv[2], "-", 1))
+		outfd = 1;
+	else
+		outfd = open(argv[2], O_WRONLY | O_CREAT | O_TRUNC,
+				S_IRUSR | S_IWUSR | S_IRGRP | S_IROTH);
 
 	do {
 		rc = read(infd, inbuf, sizeof(inbuf));
