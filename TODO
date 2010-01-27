@@ -11,6 +11,7 @@
 	-- select resolution
 	-- alternatively, clean-up buildout
 		-- better use of mktemp for temporary files/directories
+	-- account for pixel aspect ratio (CMP 10:11?, RGB 1:1? or 5:6?)
 
 -- applications
 	-- "laser disc"-style game
