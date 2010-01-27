@@ -6,6 +6,8 @@ SAMPLES=735
 #MAXSCORE=896
 MAXSCORE=768
 
+NICE=2
+
 BINDIR=$(dirname $0)
 
 PPM2RAW=${BINDIR}/ppm2raw
@@ -23,8 +25,8 @@ cleanup()
 {
 	rm -f buildout.$$
 
-	rm ../mov/"$2".mov
-	rm ../mov/"$2".wav
+	rm -f ../mov/"$2".mov
+	rm -f ../mov/"$2".wav
 
 	rm -rf $PPMBASE
 	rm -rf $RAWBASE
@@ -35,32 +37,28 @@ cleanup()
 
 # START HERE
 
-trap cleanup 1 2 3 15
+trap "cleanup \"$1\" \"$2\"" 1 2 3 15
 
 mkdir -p $PPMBASE
 mkdir -p $RAWBASE
 mkdir -p $PCMBASE
 
 echo Transcoding $(basename "$1")...
-nice -n 1 ffmpeg -i "$1" -r 30 -ar 11025 -ac 1 -b 200000 -acodec pcm_u8 \
+nice -n $NICE ffmpeg -i "$1" -r 30 -ar 11025 -ac 1 -b 200000 -acodec pcm_u8 \
 	-f mov -y ../mov/"$2".mov
-nice -n 1 ffmpeg -i ../mov/"$2".mov -vn -acodec pcm_u8 -y ../mov/"$2".wav
-nice -n 1 normalize ../mov/"$2".wav
+nice -n $NICE ffmpeg -i ../mov/"$2".mov -vn -acodec pcm_u8 -y ../mov/"$2".wav
+nice -n $NICE normalize ../mov/"$2".wav
 
 echo Converting .mov file to a sequence of .ppm files...
 cd $PPMBASE
-nice -n 1 ffmpeg -i ../../mov/"$2".mov %d.ppm >/dev/null 2>&1
-# Not necessary to delete MOV here, but why wait?
-rm ../../mov/"$2".mov
+nice -n $NICE ffmpeg -i ../../mov/"$2".mov %d.ppm >/dev/null 2>&1
 FRAMES=$(ls | wc -l)
 cd - >/dev/null
 
 echo Converting .wav file to .pcm file and split into appropriately sized chunks...
 cd $PCMBASE
-dd if=../../mov/"$2".wav bs=44 skip=1 | \
-	nice -n 1 split -d -b $SAMPLES -a 10 - "$2".
-# Not necessary to delete WAV here, but why wait?
-rm ../../mov/"$2".wav
+dd if=../../mov/"$2".wav bs=44 skip=1 2>/dev/null | \
+	nice -n $NICE split -d -b $SAMPLES -a 10 - "$2".
 cd - >/dev/null
 
 CURRAW=${RAWBASE}/current.raw
@@ -86,11 +84,11 @@ do
 	fi
 	PPM=${PPMBASE}/$i.ppm
 	DRL=${DRLBASE}/${i}.drl
-	PCMFILE=${PCMBASE}/"$2".$(printf "%010d" $(($i / $FRAMESTEP)))
+	PCM=${PCMBASE}/"$2".$(printf "%010d" $(($i / $FRAMESTEP)))
 
 	$DRL2RAW $CURRAW buildout.$$ $TMPRAW &
 	CURUPDATE=$!
-	convert -resize 125x200%! -resize 128x192 \
+	convert -resize 100x200%! -resize 128x192 \
 			-ordered-dither o2x2,4,4,4 \
 			-quantize YIQ +dither -map ${BINDIR}/colormap.ppm \
 			-background black -gravity center -extent 128x192 \
@@ -100,14 +98,12 @@ do
 		$DRW2DRL - - | \
 		$DRLPRUNE $CURRAW - - $MAXSCORE | \
 		tee buildout.$$
-	# Not necessary to delete PPM here, but why wait?
-	rm $PPM
 	wait $CURUPDATE
 	mv $TMPRAW $CURRAW
-	if [ -f $PCMFILE ]
+	if [ -f $PCM ]
 	then
-		cat $PCMFILE
-		PCMSIZE=$(stat -c '%s' $PCMFILE)
+		cat $PCM
+		PCMSIZE=$(stat -c '%s' $PCM)
 		if [ $PCMSIZE -lt $SAMPLES ]
 		then
 			dd if=/dev/zero bs=$(($SAMPLES - $PCMSIZE)) \
@@ -122,4 +118,4 @@ done >> "$2".out
 
 echo Done!
 
-cleanup
+cleanup "$1" "$2"

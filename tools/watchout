@@ -27,7 +27,7 @@ done
 
 LASTMOD=$(stat -c '%Y' current.raw)
 $RAW2PPM current.raw current.ppm >/dev/null 2>&1
-convert -resize 160x100%! current.ppm view.ppm
+convert -resize 200x100%! current.ppm view.ppm
 feh $FEH_ARGS view.ppm >/dev/null 2>&1 &
 #feh $FEH_ARGS current.ppm >/dev/null 2>&1 &
 OLDPID=$!
@@ -38,11 +38,11 @@ do
 	then
 		break
 	fi
-	if [ $LASTMOD -lt $(stat -c '%Y' current.raw) ]
+	if [ -f current.raw -a $LASTMOD -lt $(stat -c '%Y' current.raw) ]
 	then
 		LASTMOD=$(stat -c '%Y' current.raw)
 		$RAW2PPM current.raw current.ppm >/dev/null 2>&1
-		convert -resize 160x100%! current.ppm view.ppm
+		convert -resize 200x100%! current.ppm view.ppm
 		feh $FEH_ARGS view.ppm >/dev/null 2>&1 &
 #		feh $FEH_ARGS current.ppm >/dev/null 2>&1 &
 		PID=$!
