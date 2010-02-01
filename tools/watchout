@@ -27,24 +27,32 @@ done
 
 LASTMOD=$(stat -c '%Y' current.raw)
 $RAW2PPM current.raw current.ppm >/dev/null 2>&1
-convert -resize 200x100%! current.ppm view.ppm
+convert -resize 180x100%! current.ppm view.ppm
 feh $FEH_ARGS view.ppm >/dev/null 2>&1 &
-#feh $FEH_ARGS current.ppm >/dev/null 2>&1 &
 OLDPID=$!
 
 while true
 do
-	if [ ! -d /proc/$OLDPID -o ! -f current.raw ]
+	if [ ! -d /proc/$OLDPID ]
 	then
 		break
 	fi
-	if [ -f current.raw -a $LASTMOD -lt $(stat -c '%Y' current.raw) ]
+	if [ -f current.raw ]
 	then
-		LASTMOD=$(stat -c '%Y' current.raw)
+		CURMOD=$(stat -c '%Y' current.raw)
+	else
+		break
+	fi
+	if [ $? != 0 ]
+	then
+		break
+	fi
+	if [ $LASTMOD -lt $CURMOD ]
+	then
+		LASTMOD=$CURMOD
 		$RAW2PPM current.raw current.ppm >/dev/null 2>&1
-		convert -resize 200x100%! current.ppm view.ppm
+		convert -resize 180x100%! current.ppm view.ppm
 		feh $FEH_ARGS view.ppm >/dev/null 2>&1 &
-#		feh $FEH_ARGS current.ppm >/dev/null 2>&1 &
 		PID=$!
 		sleep 1
 		kill -HUP $OLDPID >/dev/null 2>&1

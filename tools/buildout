@@ -1,10 +1,9 @@
 #!/bin/sh
 
-FRAMESTEP=2
-SAMPLES=735
+FRAMESTEP=1
+SAMPLES=368
 
-#MAXSCORE=896
-MAXSCORE=768
+MAXSCORE=384
 
 NICE=2
 
@@ -44,7 +43,7 @@ mkdir -p $RAWBASE
 mkdir -p $PCMBASE
 
 echo Transcoding $(basename "$1")...
-nice -n $NICE ffmpeg -i "$1" -r 30 -ar 11025 -ac 1 -b 200000 -acodec pcm_u8 \
+nice -n $NICE ffmpeg -i "$1" -r 30 -ar 11040 -ac 1 -b 200000 -acodec pcm_u8 \
 	-f mov -y ../mov/"$2".mov
 nice -n $NICE ffmpeg -i ../mov/"$2".mov -vn -acodec pcm_u8 -y ../mov/"$2".wav
 nice -n $NICE normalize ../mov/"$2".wav
@@ -88,7 +87,7 @@ do
 
 	$DRL2RAW $CURRAW buildout.$$ $TMPRAW &
 	CURUPDATE=$!
-	convert -resize 100x200%! -resize 128x192 \
+	convert -resize 110x200%! -resize 128x192 \
 			-ordered-dither o2x2,4,4,4 \
 			-quantize YIQ +dither -map ${BINDIR}/colormap.ppm \
 			-background black -gravity center -extent 128x192 \

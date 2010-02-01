@@ -10,7 +10,7 @@ VIDOFF	EQU	$FF90
 PALOFF	EQU	$FFB0
 SAMR1ST	EQU	$FFD9
 
-AUBUFSZ	EQU	$02df
+AUBUFSZ	EQU	$0170
 ABFPTR1	EQU	$1400
 ABFPTR2	EQU	$1800
 ABUFEND	EQU	$1C00
@@ -21,9 +21,9 @@ VIDBUF	EQU	$1C00
 VBUFEND	EQU	$7C00
 
 * Frame step value should be 2x actual frame step for 30fps source video
-FRAMSTP	EQU	4
+FRAMSTP	EQU	2
 
-* 324.625 for 11025 Hz
+* 325.1 for 11025 Hz
 TIMEVAL	EQU	325
 
 	ORG	LOAD
@@ -174,10 +174,6 @@ iderec1	lda	7,u
 ideread	lda	7,u
 	anda	#$80
 	bne	ideread
-
-** Wait for keyboard input
-*START	JSR	[$A000]
-*	BEQ	START
 
 * Data movement goes here
 INLOOP	LDX	#VIDBUF
