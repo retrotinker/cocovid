@@ -352,8 +352,19 @@ DATWAI2	pshs	a
 	JSR	[$A000]
 	BEQ	DATWAI3
 	cmpa	#$03
-	LBEQ	EXIT
+	lbeq	EXIT
+* Check for pause
+	cmpa	#$20
+	beq	DATWAI4
 DATWAI3	puls	a
+	clrb
+	rts
+* Pause until user hits space again
+DATWAI4	jsr	[$A000]
+	beq	DATWAI4
+	cmpa	#$20
+	bne	DATWAI4
+	puls	a
 	clrb
 	rts
 
@@ -370,7 +381,7 @@ AUDIN1	LDA	$FF93
 	LEAY	-1,Y
 AUDIN2	lda	$ff92
 	beq	AUDIN3
-	bsr	VIDTMR
+	lbsr	VIDTMR
 AUDIN3
 * Here to DATGT2 is for reading next byte from ide
 	tstb

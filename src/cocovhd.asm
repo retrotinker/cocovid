@@ -313,8 +313,18 @@ BRKCHK	pshs	a
 	JSR	[$A000]
 	BEQ	BRKCHK1
 	cmpa	#$03
-	BEQ	EXIT
+	lbeq	EXIT
+* Check for pause
+	cmpa	#$20
+	beq	BRKCHK2
 BRKCHK1	puls	a
+	rts
+* Pause until user hits space again
+BRKCHK2	jsr	[$A000]
+	beq	BRKCHK2
+	cmpa	#$20
+	bne	BRKCHK2
+	puls	a
 	rts
 
 * Audio data movement goes here
@@ -330,7 +340,7 @@ AUDIN1	LDA	$FF93
 	LEAY	-1,Y
 AUDIN2	lda	$ff92
 	beq	AUDIN3
-	bsr	VIDTMR
+	lbsr	VIDTMR
 AUDIN3
 * Here to DATGT2 is for reading next byte from vhd
 	lda	b,u
