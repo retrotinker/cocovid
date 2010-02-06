@@ -1,11 +1,16 @@
 -- player
-	-- loadable from DECB
+	-- loadable from DECB (done?)
 	-- space to pause, break to end
 	-- frame number marker (?)
 	-- display message (possibly frame number) while paused
 	-- video header to select parameters (colors, fps, etc)
 	-- encode video length in header (enable skipping video) (?)
 	   (using a directory gives same function)
+	-- read fewer sectors at a time (maybe none)
+	-- TC^3 SCSI driver (and driver/filesystem API?)
+	-- macros (or overlays) for multi-driver builds
+	-- reenable interrupts (for both video and audio?)
+	-- drop excessive frames
 
 -- integrated video conversion utility to process ppm/pcm data (?)
 	-- dithering optional
@@ -27,3 +32,5 @@
 -- future
 	-- use ffmpeg and/or ImageMagick libraries instead of exec'ing utilities
 	-- re-implement toolchain as codec and container support for ffmpeg
+		-- http://wiki.multimedia.cx/index.php?title=FFmpeg_codec_howto
+		-- http://www.inb.uni-luebeck.de/~boehme/using_libavcodec.html
