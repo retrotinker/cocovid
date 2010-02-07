@@ -1,3 +1,6 @@
+dnl
+dnl Macros for checking/handling audio timer expiration
+dnl
 define(`ckauditer', 0)dnl
 define(`ckaudentlbl', `CKAUD$1')dnl
 define(`ckaudpullbl', `CKAUDP$1')dnl
@@ -27,6 +30,9 @@ define(`init_video_timer',`
 	ora	#32
 	sta	$ff90
 ')dnl
+dnl
+dnl Macros for checking/handling video timer expiration
+dnl
 define(`ckviditer', 0)dnl
 define(`ckvidentlbl', `CKVID$1')dnl
 define(`ckvidextlbl', `CKVIDX$1')dnl

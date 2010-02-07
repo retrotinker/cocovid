@@ -1,3 +1,6 @@
+dnl
+dnl Initialize storage driver
+dnl
 define(`init_storage',`
 	ldu	#$ff80
 	clr	,u
@@ -20,6 +23,10 @@ define(`init_storage',`
 	clr	>VHDLRNM
 	clr	>VHDLRNL
 ')dnl
+dnl
+dnl Read next byte from storage into A accumulator
+dnl    -- Uses B accumulator for tracking next read location
+dnl
 define(`datrditer', 0)dnl
 define(`datrdentlbl', `DATRD$1')dnl
 define(`datrdextlbl', `DATRDX$1')dnl
@@ -33,6 +40,11 @@ datrdentry(datrditer)	lda	b,u
 	bne	datrdexit(datrditer)
 	lbsr	DATREQ
 datrdexit(datrditer)	equ	*')dnl
+dnl
+dnl Single instance body of storage driver
+dnl    -- Called to fill request new reads
+dnl    -- Also checks keyboard input
+dnl
 define(`storage_handler',`
 * Increment LBA and request next sector
 DATREQ	cmpu	#VHDBFHI
@@ -63,6 +75,9 @@ DATCMD
 	check_keyboard
 	rts
 ')dnl
+dnl
+dnl Single instance static allocation for storage driver usage
+dnl
 define(`storage_variables',`
 VHDLRNH	RMB	1
 VHDLRNM	RMB	1
