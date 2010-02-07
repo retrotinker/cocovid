@@ -4,6 +4,8 @@ TARGETS=cocovid.bin cocovid.s19 cocovhd.bin cocovhd.s19 \
 	cocoaud.bin cocoaud.s19 cocolaw.bin cocolaw.s19
 GENERATED=cocovhd.asm
 
+MACROS=timers.m4 input.m4 storage.m4 storage_vhd.m4
+
 all: $(TARGETS)
 
 clean:
@@ -15,8 +17,8 @@ cocovid.bin: cocovid.asm
 cocovid.s19: cocovid.asm
 	mamou -mb -ts -l -ococovid.s19 cocovid.asm
 
-cocovhd.asm: cocovhd.m4 timers.m4 input.m4 storage.m4
-	m4 $< > $@
+cocovhd.asm: cocovhd.m4 $(MACROS)
+	if ! m4 -D storage=vhd $< > $@; then rm -f $@; exit 1; fi
 
 cocovhd.bin: cocovhd.asm
 	mamou -mb -tb -l -ococovhd.bin cocovhd.asm
