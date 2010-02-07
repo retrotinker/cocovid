@@ -1,3 +1,7 @@
+include(`storage.m4')
+include(`timers.m4')
+include(`input.m4')
+
 	NAM	CoCoVid
 	TTL	Video player for CoCo3
 
@@ -55,9 +59,6 @@ EXEC	EQU	*
 
 * High-speed poke...definitely...
 	STA	SAMR1ST
-
-* Setup stack...
-*	lds	#$7f60
 
 * Setup palette...
 	LDX	#RPALINI
@@ -119,14 +120,9 @@ CLRAUD	STA	,X+
 	STD	>AUDWSTP
 
 * Init Vsync interrupt generation
-	LDA	$FF92
-	ORA	#$08
-	STA	$FF92
-	LDA	$FF90
-	ORA	#$20
-	STA	$FF90
+	init_video_timer
 
-* Init timer interrupt generation
+* Init (audio) timer interrupt generation
 	LDD	#TIMEVAL
 	STD	$FF94
 	LDA	$FF91
@@ -139,50 +135,14 @@ CLRAUD	STA	,X+
 	ORA	#$10
 	STA	$FF90
 
-* Init VHD access
-	ldu	#$ff80
-	clr	,u
-	clr	1,u
-	clr	2,u
-	ldd	#VHDBUF
-	sta	4,u
-	stb	5,u
-* Read first sector
-	clr	3,u
-* Check status
-	lda	3,u
-* Exit on error
-	lbne	EXIT
-* Point at buffer base
-	ldu	#VHDBUF
-	clrb
-* Clear stored record address
-	clr	>VHDLRNH
-	clr	>VHDLRNM
-	clr	>VHDLRNL
+* Init storage access
+	init_storage
 
 * Data movement goes here
-INLOOP	LDX	#VIDBUF
-* Check timer interrupt
-INLOP1	LDA	$FF93
-	BEQ	INLOP2
-* Load and play sample
-	LDA	,Y+
-	sta	$ff20
-	CMPY	>AUDRSTP
-	BLT	INLOP2
-	LEAY	-1,Y
-INLOP2	lda	$ff92
-	beq	INLOP3
-	lbsr	VIDTMR
-INLOP3
-* Here to DATGT1 is for reading next byte from vhd
-	lda	b,u
-	incb
-	cmpb	#$80
-	bne	DATGT1
-	lbsr	DATREQ
-DATGT1
+VIDFRM	LDX	#VIDBUF
+* Check timer interrupts
+INLOOP	check_timers
+	data_read
 * Check for escape char
 	pshs	a
 	anda	#$C0
@@ -191,37 +151,17 @@ DATGT1
 	puls	a
 * Store data in video buffer
 	STA	,X+
-	BRA	INLOP1
+	BRA	INLOOP
 
 PIXESC	puls	a
 	CMPA	#$C0
 	BNE	PIXMWR
 PIXJMP	LDX	#VIDBUF
 * Check timer interrupt
-PIXJMP1	LDA	$FF93
-	BEQ	PIXJMP2
-* Load and play sample
-	LDA	,Y+
-	sta	$ff20
-	CMPY	>AUDRSTP
-	BLT	PIXJMP2
-	LEAY	-1,Y
-PIXJMP2
-* Here to DATGT3 is for reading next byte from vhd
-	lda	b,u
-	incb
-	cmpb	#$80
-	bne	DATGT3
-	bsr	DATREQ
-DATGT3
+	check_audio_timer
+	data_read
 	pshs	a
-* Here to DATGT4 is for reading next byte from vhd
-	lda	b,u
-	incb
-	cmpb	#$80
-	bne	DATGT4
-	bsr	DATREQ
-DATGT4
+	data_read
 	pshs	b
 	tfr	a,b
 	lda	1,s
@@ -230,144 +170,38 @@ DATGT4
 	LEAX	D,X
 	puls	b
 	leas	1,s
-	JMP	INLOP1
+	JMP	INLOOP
 PIXJMP3	cmpb	#$ff
 	lbne	EXIT
 PIXJMP4	puls	b
 	leas	1,s
-	lbra	AUDIN
+	bra	AUDFRM
 
 PIXMWR	anda	#$3f
 	pshs	a
-* Here to DATGT5 is for reading next byte from vhd
-	lda	b,u
-	incb
-	cmpb	#$80
-	bne	DATGT5
-	bsr	DATREQ
-DATGT5
-* Check timer interrupt
-PIXMWR2	TST	$FF93
-	BEQ	PIXMWR4
-	PSHS	A
-* Load and play sample
-	LDA	,Y+
-	sta	$ff20
-	CMPY	>AUDRSTP
-	BLT	PIXMWR3
-	LEAY	-1,Y
-PIXMWR3	PULS	A
-	tst	$ff92
-	beq	PIXMWR4
-	bsr	VIDTMR
-PIXMWR4	STA	,X+
+	data_read
+* Check timer interrupts
+PIXMWR2	check_timers
+	STA	,X+
 	dec	,s
 	BNE	PIXMWR2
 	leas	1,s
-	JMP	INLOP1
-
-* Clear Vsync interrupt
-VIDTMR	pshs	a
-* Account for frame timing
-	DEC	>STEPCNT
-	BNE	VIDTMR2
-* Unblock data pump -- limit FRAMCNT to prevent catch-up silliness
-	LDA	>FRAMCNT
-	INCA
-	ANDA	#$07
-	STA	>FRAMCNT
-* Reset frame skip count
-	LDA	#FRAMSTP
-	STA	>STEPCNT
-VIDTMR2 puls	a
-	RTS
-
-* Increment LBA and request next sector
-DATREQ	cmpu	#VHDBFHI
-	beq	DATREQ1
-	ldu	#VHDBFHI
-	clrb
-	rts
-DATREQ1
-	ldu	#$ff80
-	inc	>VHDLRNL
-	ldb	>VHDLRNL
-	stb	2,u
-	bne	DATCMD
-	inc	>VHDLRNM
-	ldb	>VHDLRNM
-	stb	1,u
-	bne	DATCMD
-	inc	>VHDLRNH
-	ldb	>VHDLRNH
-	stb	,u
-DATCMD
-	clr	3,u
-	ldb	3,u
-* Abort on error...ick...
-	lbne	EXIT
-	ldu	#VHDBUF
-	clrb
-* Check for user stop request
-BRKCHK	pshs	a
-	JSR	[$A000]
-	BEQ	BRKCHK1
-	cmpa	#$03
-	lbeq	EXIT
-* Check for pause
-	cmpa	#$20
-	beq	BRKCHK2
-BRKCHK1	puls	a
-	rts
-* Pause until user hits space again
-BRKCHK2	jsr	[$A000]
-	beq	BRKCHK2
-	cmpa	#$20
-	bne	BRKCHK2
-	puls	a
-	rts
+	JMP	INLOOP
 
 * Audio data movement goes here
-* Check timer interrupt
-AUDIN	LDX	>AUDWPTR
-AUDIN1	LDA	$FF93
-	BEQ	AUDIN3
-* Load and play sample
-	LDA	,Y+
-	sta	$ff20
-	CMPY	>AUDRSTP
-	BLT	AUDIN2
-	LEAY	-1,Y
-AUDIN2	lda	$ff92
-	beq	AUDIN3
-	lbsr	VIDTMR
-AUDIN3
-* Here to DATGT2 is for reading next byte from vhd
-	lda	b,u
-	incb
-	cmpb	#$80
-	bne	DATGT2
-	bsr	DATREQ
-DATGT2
+AUDFRM	LDX	>AUDWPTR
+* Check timer interrupts
+AUDLOOP	check_timers
+	data_read
 * Store data in audio buffer
 	STA	,X+
 	CMPX	>AUDWSTP
-	BLT	AUDIN1
+	BLT	AUDLOOP
 
 * Synchronize!
-* Check timer interrupt
-SYNCLOP	LDA	$FF93
-	BEQ	SYNCLP1
-* Load and play sample
-	LDA	,Y+
-	sta	$ff20
-	CMPY	>AUDRSTP
-	BLT	SYNCLP1
-	LEAY	-1,Y
-SYNCLP1	lda	$ff92
-	beq	SYNCLP2
-	lbsr	VIDTMR
-SYNCLP2 LDA	>FRAMCNT
+* Check timer interrupts
+SYNCLOP	check_timers
+	LDA	>FRAMCNT
 	BEQ	SYNCLOP
 	DEC	>FRAMCNT
 * Switch to next audio frame
@@ -385,9 +219,10 @@ SYNCLP2 LDA	>FRAMCNT
 	ADDD	#AUBUFSZ
 	STD	>AUDRSTP
 	puls	b
-	LBRA	INLOOP
+	LBRA	VIDFRM
 
 * Execute reset vector
+* (Most of these clr's are unnecessary...?)
 EXIT	clr	$ff90
 	clr	$ff91
 	clr	$ff92
@@ -405,6 +240,12 @@ EXIT	clr	$ff90
 	clr	$ff9e
 	clr	$ff9f
 	JMP	[$fffe]
+
+* Instantiate body of storage driver
+	storage_handler
+
+* Handle Vsync interrupt
+	video_timer_handler
 
 * Init for video mode, set video buffer to VIDBUF
 * (Assumes default MMU setup...)
@@ -429,11 +270,7 @@ AUDRSTP	RMB	2
 AUDWPTR	RMB	2
 AUDWSTP	RMB	2
 
-VHDLRNH	RMB	1
-VHDLRNM	RMB	1
-VHDLRNL	RMB	1
-
-VHDBUF	RMB	128
-VHDBFHI	RMB	128
+* Allocate any variables used by storage driver
+	storage_variables
 
 	END	EXEC

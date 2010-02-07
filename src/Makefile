@@ -2,17 +2,21 @@
 
 TARGETS=cocovid.bin cocovid.s19 cocovhd.bin cocovhd.s19 \
 	cocoaud.bin cocoaud.s19 cocolaw.bin cocolaw.s19
+GENERATED=cocovhd.asm
 
 all: $(TARGETS)
 
 clean:
-	rm -f $(TARGETS)
+	rm -f $(TARGETS) $(GENERATED)
 
 cocovid.bin: cocovid.asm
 	mamou -mb -tb -l -ococovid.bin cocovid.asm
 
 cocovid.s19: cocovid.asm
 	mamou -mb -ts -l -ococovid.s19 cocovid.asm
+
+cocovhd.asm: cocovhd.m4 timers.m4 input.m4 storage.m4
+	m4 $< > $@
 
 cocovhd.bin: cocovhd.asm
 	mamou -mb -tb -l -ococovhd.bin cocovhd.asm
