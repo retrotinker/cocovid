@@ -3,23 +3,19 @@ dnl Macros for checking/handling audio timer expiration
 dnl
 define(`ckauditer', 0)dnl
 define(`ckaudentlbl', `CKAUD$1')dnl
-define(`ckaudpullbl', `CKAUDP$1')dnl
 define(`ckaudextlbl', `CKAUDX$1')dnl
 define(`ckaudentry', `define(`ckauditer', incr(ckauditer))dnl
 ckaudentlbl(ckauditer)')dnl
-define(`ckaudpull', `ckaudpullbl(ckauditer)')dnl
 define(`ckaudexit', `ckaudextlbl(ckauditer)')dnl
 define(`check_audio_timer',`
 ckaudentry(ckauditer)	tst	$ff93
 	beq	ckaudexit(ckauditer)
-	pshs	a
 * Load and play sample
 	lda	,y+
 	sta	$ff20
 	cmpy	>AUDRSTP
-	blt	ckaudpull(ckauditer)
+	blt	ckaudexit(ckauditer)
 	leay	-1,y
-ckaudpull(ckauditer)	puls	a
 ckaudexit(ckauditer)	equ	*')dnl
 dnl
 define(`init_video_timer',`

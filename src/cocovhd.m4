@@ -141,7 +141,7 @@ CLRAUD	STA	,X+
 * Data movement goes here
 VIDFRM	LDX	#VIDBUF
 * Check timer interrupts
-INLOOP	check_timers
+VIDLOOP	check_timers
 	data_read
 * Check for escape char
 	pshs	a
@@ -151,14 +151,12 @@ INLOOP	check_timers
 	puls	a
 * Store data in video buffer
 	STA	,X+
-	BRA	INLOOP
+	bra	VIDLOOP
 
 PIXESC	puls	a
 	CMPA	#$C0
 	BNE	PIXMWR
 PIXJMP	LDX	#VIDBUF
-* Check timer interrupt
-	check_audio_timer
 	data_read
 	pshs	a
 	data_read
@@ -170,7 +168,7 @@ PIXJMP	LDX	#VIDBUF
 	LEAX	D,X
 	puls	b
 	leas	1,s
-	JMP	INLOOP
+	jmp	VIDLOOP
 PIXJMP3	cmpb	#$ff
 	lbne	EXIT
 PIXJMP4	puls	b
@@ -180,13 +178,11 @@ PIXJMP4	puls	b
 PIXMWR	anda	#$3f
 	pshs	a
 	data_read
-* Check timer interrupts
-PIXMWR2	check_timers
-	STA	,X+
+PIXMWR2 sta	,x+
 	dec	,s
 	BNE	PIXMWR2
 	leas	1,s
-	JMP	INLOOP
+	jmp	VIDLOOP
 
 * Audio data movement goes here
 AUDFRM	LDX	>AUDWPTR
@@ -200,9 +196,9 @@ AUDLOOP	check_timers
 
 * Synchronize!
 * Check timer interrupts
-SYNCLOP	check_timers
+SYNCLP	check_timers
 	LDA	>FRAMCNT
-	BEQ	SYNCLOP
+	BEQ	SYNCLP
 	DEC	>FRAMCNT
 * Switch to next audio frame
 	pshs	b
