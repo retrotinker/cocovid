@@ -138,6 +138,9 @@ CLRAUD	STA	,X+
 * Init storage access
 	init_storage
 
+* Enable Vsync interrupt
+	andcc	#$ef
+
 * Data movement goes here
 VIDFRM	LDX	#VIDBUF
 * Check timer interrupts

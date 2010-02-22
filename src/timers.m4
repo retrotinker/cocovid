@@ -18,6 +18,8 @@ ckaudentry(ckauditer)	tst	$ff93
 	leay	-1,y
 ckaudexit(ckauditer)	equ	*')dnl
 dnl
+dnl Macro for initializing video timer
+dnl
 define(`init_video_timer',`
 	lda	$ff92
 	ora	#08
@@ -25,27 +27,17 @@ define(`init_video_timer',`
 	lda	$ff90
 	ora	#32
 	sta	$ff90
+	ldd	#VIDISR
+	std	>IRQADR
 ')dnl
 dnl
-dnl Macros for checking/handling video timer expiration
-dnl
-define(`ckviditer', 0)dnl
-define(`ckvidentlbl', `CKVID$1')dnl
-define(`ckvidextlbl', `CKVIDX$1')dnl
-define(`ckvidentry', `define(`ckviditer', incr(ckviditer))dnl
-ckvidentlbl(ckviditer)')dnl
-define(`ckvidexit', `ckvidextlbl(ckviditer)')dnl
-define(`check_video_timer',`
-ckvidentry(ckviditer)	tst	$ff92
-	beq	ckvidexit(ckviditer)
-	lbsr	VIDTMR
-ckvidexit(ckviditer)	equ	*')dnl
+dnl Macro for handling video timer expiration
 dnl
 define(`video_timer_handler',`
-VIDTMR	pshs	a
+VIDISR	tst	$ff92
 * Account for frame timing
 	DEC	>STEPCNT
-	BNE	VIDTMR2
+	BNE	VIDISR2
 * Unblock data pump -- limit FRAMCNT to prevent catch-up silliness
 	LDA	>FRAMCNT
 	INCA
@@ -54,8 +46,6 @@ VIDTMR	pshs	a
 * Reset frame skip count
 	LDA	#FRAMSTP
 	STA	>STEPCNT
-VIDTMR2 puls	a
-	RTS
+VIDISR2 rti
 ')dnl
-define(`ckviditer', 0)dnl
-define(`check_timers', `check_audio_timer()check_video_timer()')dnl
+define(`check_timers', `check_audio_timer()')dnl
