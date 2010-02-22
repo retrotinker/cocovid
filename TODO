@@ -6,7 +6,6 @@
 	   (using a directory gives same function)
 	-- read fewer extra sectors at a time (maybe none)
 	-- TC^3 SCSI driver (and driver/filesystem API?)
-	-- macros (or overlays) for multi-driver builds
 	-- reenable interrupts (for both video and audio?)
 	-- drop excessive frames
 
