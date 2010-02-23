@@ -6,8 +6,8 @@
 	   (using a directory gives same function)
 	-- read fewer extra sectors at a time (maybe none)
 	-- TC^3 SCSI driver (and driver/filesystem API?)
-	-- reenable interrupts (for both video and audio?)
 	-- drop excessive frames
+	-- exit more gracefully (e.g. restore interrupt handlers, etc)
 
 -- integrated video conversion utility to process ppm/pcm data (?)
 	-- dithering optional
