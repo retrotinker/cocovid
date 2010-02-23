@@ -9,6 +9,7 @@ LOAD	EQU	$0E00		Actual load address for binary
 
 RSTVEC	EQU	$0072
 IRQADR	EQU	$010d
+FIRQADR	EQU	$0110
 
 VIDOFF	EQU	$FF90
 PALOFF	EQU	$FFB0
@@ -123,29 +124,17 @@ CLRAUD	STA	,X+
 	init_video_timer
 
 * Init (audio) timer interrupt generation
-	LDD	#TIMEVAL
-	STD	$FF94
-	LDA	$FF91
-	ORA	#$20
-	STA	$FF91
-	LDA	$FF93
-	ORA	#$20
-	STA	$FF93
-	LDA	$FF90
-	ORA	#$10
-	STA	$FF90
+	init_audio_timer
 
 * Init storage access
 	init_storage
 
-* Enable Vsync interrupt
-	andcc	#$ef
+* Enable Vsync and (audio) timer interrupts
+	andcc	#$af
 
 * Data movement goes here
 VIDFRM	LDX	#VIDBUF
-* Check timer interrupts
-VIDLOOP	check_timers
-	data_read
+VIDLOOP	data_read
 * Check for escape char
 	pshs	a
 	anda	#$C0
@@ -189,18 +178,14 @@ PIXMWR2 sta	,x+
 
 * Audio data movement goes here
 AUDFRM	LDX	>AUDWPTR
-* Check timer interrupts
-AUDLOOP	check_timers
-	data_read
+AUDLOOP	data_read
 * Store data in audio buffer
 	STA	,X+
 	CMPX	>AUDWSTP
 	BLT	AUDLOOP
 
 * Synchronize!
-* Check timer interrupts
-SYNCLP	check_timers
-	LDA	>FRAMCNT
+SYNCLP	LDA	>FRAMCNT
 	BEQ	SYNCLP
 	DEC	>FRAMCNT
 * Switch to next audio frame
@@ -245,6 +230,9 @@ EXIT	clr	$ff90
 
 * Handle Vsync interrupt
 	video_timer_handler
+
+* Handle (audio) timer interrupt
+	audio_timer_handler
 
 * Init for video mode, set video buffer to VIDBUF
 * (Assumes default MMU setup...)

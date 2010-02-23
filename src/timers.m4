@@ -1,22 +1,37 @@
 dnl
-dnl Macros for checking/handling audio timer expiration
+dnl Macro for initializing audio timer
 dnl
-define(`ckauditer', 0)dnl
-define(`ckaudentlbl', `CKAUD$1')dnl
-define(`ckaudextlbl', `CKAUDX$1')dnl
-define(`ckaudentry', `define(`ckauditer', incr(ckauditer))dnl
-ckaudentlbl(ckauditer)')dnl
-define(`ckaudexit', `ckaudextlbl(ckauditer)')dnl
-define(`check_audio_timer',`
-ckaudentry(ckauditer)	tst	$ff93
-	beq	ckaudexit(ckauditer)
+define(`init_audio_timer',`
+	ldd	#TIMEVAL
+	std	$ff94
+	lda	$ff91
+	ora	#32
+	sta	$ff91
+	lda	$ff93
+	ora	#32
+	sta	$ff93
+	lda	$ff90
+	ora	#16
+	sta	$ff90
+	ldd	#AUDISR
+	std	>FIRQADR
+')dnl
+dnl
+dnl Macro for handling audio timer expiration
+dnl
+define(`audio_timer_handler',`
+AUDISR	pshs	a
+	tst	$ff93
+	beq	AUDISR1
 * Load and play sample
 	lda	,y+
 	sta	$ff20
 	cmpy	>AUDRSTP
-	blt	ckaudexit(ckauditer)
+	blt	AUDISR1
 	leay	-1,y
-ckaudexit(ckauditer)	equ	*')dnl
+AUDISR1	puls	a
+	rti
+')dnl
 dnl
 dnl Macro for initializing video timer
 dnl
@@ -37,7 +52,7 @@ define(`video_timer_handler',`
 VIDISR	tst	$ff92
 * Account for frame timing
 	DEC	>STEPCNT
-	BNE	VIDISR2
+	BNE	VIDISR1
 * Unblock data pump -- limit FRAMCNT to prevent catch-up silliness
 	LDA	>FRAMCNT
 	INCA
@@ -46,6 +61,5 @@ VIDISR	tst	$ff92
 * Reset frame skip count
 	LDA	#FRAMSTP
 	STA	>STEPCNT
-VIDISR2 rti
+VIDISR1 rti
 ')dnl
-define(`check_timers', `check_audio_timer()')dnl
