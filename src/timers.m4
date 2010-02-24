@@ -7,12 +7,13 @@ define(`init_audio_timer',`
 	lda	$ff91
 	ora	#32
 	sta	$ff91
-	lda	$ff93
-	ora	#32
+	lda	#32
 	sta	$ff93
 	lda	$ff90
 	ora	#16
 	sta	$ff90
+	lda	#126
+	sta	>FIRQJMP
 	ldd	#AUDISR
 	std	>FIRQADR
 ')dnl
@@ -36,12 +37,8 @@ dnl
 dnl Macro for initializing video timer
 dnl
 define(`init_video_timer',`
-	lda	$ff92
-	ora	#08
-	sta	$ff92
-	lda	$ff90
-	ora	#32
-	sta	$ff90
+	lda	#126
+	sta	>IRQJMP
 	ldd	#VIDISR
 	std	>IRQADR
 ')dnl
@@ -49,7 +46,7 @@ dnl
 dnl Macro for handling video timer expiration
 dnl
 define(`video_timer_handler',`
-VIDISR	tst	$ff92
+VIDISR	tst	$ff02
 * Account for frame timing
 	DEC	>STEPCNT
 	BNE	VIDISR1

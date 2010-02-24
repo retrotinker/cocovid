@@ -8,7 +8,9 @@ include(`input.m4')
 LOAD	EQU	$0E00		Actual load address for binary
 
 RSTVEC	EQU	$0072
+IRQJMP	EQU	$010c
 IRQADR	EQU	$010d
+FIRQJMP	EQU	$010f
 FIRQADR	EQU	$0110
 
 VIDOFF	EQU	$FF90
@@ -36,30 +38,33 @@ TIMEVAL	EQU	325
 EXEC	EQU	*
 
 * Disable IRQ and FIRQ
-	ORCC	#$50
-* Disable PIA0 IRQ generation
-	LDX	#$FF00
-	LDA	1,X
-	ANDA	#$3E
-	STA	1,X
-	LDA	,X
-	LDA	3,X
-	ANDA	#$3E
-	STA	3,X
-	LDA	2,X
-* Disable PIA1 FIRQ generation
-	LDX	#$FF20
-	LDA	1,X
-	ANDA	#$3E
-	STA	1,X
-	LDA	,X
-	LDA	3,X
-	ANDA	#$3E
-	STA	3,X
-	LDA	2,X
+	orcc	#$50
+
+* Initialize PIAs
+* - Disable PIA[01] interrupt generation
+* - Select internal DAC for sound output
+* - Enable sound output
+	ldx	#$ff00
+	lda	#$34
+	sta	1,x
+	lda	#$35
+	sta	3,x
+	lda	#$30
+	sta	$21,x
+	lda	#$fc
+	sta	$20,x
+	lda	#$34
+	sta	$21,x
+	lda	#$38
+	sta	$23,x
+* Bleed-off PIA[01] interrupts
+	lda	,x
+	lda	2,x
+	lda	$20,x
+	lda	$22,x
 
 * High-speed poke...definitely...
-	STA	SAMR1ST
+	sta	SAMR1ST
 
 * Setup palette...
 	LDX	#RPALINI
@@ -83,22 +88,6 @@ VINTLOP	LDA	,X+
 	STA	,Y+
 	CMPX	#ENDVINT
 	BNE	VINTLOP
-
-* Select DAC sound output
-	LDA	$FF01
-	ANDA	#$C7
-	ORA	#$30
-	STA	$FF01
-	LDA	$FF03
-	ANDA	#$C7
-	ORA	#$30
-	STA	$FF03
-
-* Enable sound output
-	LDA	$FF23
-	ANDA	#$C7
-	ORA	#$38
-	STA	$FF23
 
 * Clear audio buffer
 	LDX	#ABFPTR1
@@ -133,7 +122,7 @@ CLRAUD	STA	,X+
 	andcc	#$af
 
 * Data movement goes here
-VIDFRM	LDX	#VIDBUF
+VIDFRM	ldx	#VIDBUF
 VIDLOOP	data_read
 * Check for escape char
 	pshs	a
@@ -177,7 +166,7 @@ PIXMWR2 sta	,x+
 	jmp	VIDLOOP
 
 * Audio data movement goes here
-AUDFRM	LDX	>AUDWPTR
+AUDFRM	ldx	>AUDWPTR
 AUDLOOP	data_read
 * Store data in audio buffer
 	STA	,X+
