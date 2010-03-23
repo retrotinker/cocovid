@@ -85,13 +85,13 @@ int main(int argc, char *argv[])
 				argv[2], (size_t)outptr - (size_t)outbuf);
 			break;
 		}
-		if (*inptr == 0xc0) {
+		if (*inptr == 0xf0) {
 			outptr = &outbuf[(*(inptr + 1) << 8) + *(inptr + 2)];
 			inptr += 2;
 			continue;
 		}
-		if ((*inptr & 0xc0) == 0xc0) {
-			runsize = *inptr & 0x3f;
+		if ((*inptr & 0xf0) == 0xf0) {
+			runsize = *inptr & 0x0f;
 			writerun(outptr, *(inptr + 1), runsize);
 			inptr += 1;
 			outptr += runsize;

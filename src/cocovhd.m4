@@ -126,8 +126,8 @@ VIDFRM	ldx	#VIDBUF
 VIDLOOP	data_read
 * Check for escape char
 	pshs	a
-	anda	#$C0
-	cmpa	#$C0
+	anda	#$f0
+	cmpa	#$f0
 	beq	PIXESC
 	puls	a
 * Store data in video buffer
@@ -135,7 +135,7 @@ VIDLOOP	data_read
 	bra	VIDLOOP
 
 PIXESC	puls	a
-	CMPA	#$C0
+	CMPA	#$f0
 	BNE	PIXMWR
 PIXJMP	LDX	#VIDBUF
 	data_read
@@ -156,7 +156,7 @@ PIXJMP4	puls	b
 	leas	1,s
 	bra	AUDFRM
 
-PIXMWR	anda	#$3f
+PIXMWR	anda	#$0f
 	pshs	a
 	data_read
 PIXMWR2 sta	,x+

@@ -130,7 +130,7 @@ int main(int argc, char *argv[])
 	insize -= 3;
 
 	/* hack to correctly allocate first run */
-	if (inbuf[0] == 0xc0)
+	if (inbuf[0] == 0xf0)
 		current = -1;
 	else {
 		current = 0;
@@ -142,7 +142,7 @@ int main(int argc, char *argv[])
 
 	/* Scan input to identify runs... */
 	for (i = 0; i < insize; i++) {
-		if (inbuf[i] == 0xc0) {
+		if (inbuf[i] == 0xf0) {
 			/* start new run */
 			current++;
 			offset = (inbuf[i+1] << 8) + inbuf[i+2];
@@ -153,17 +153,17 @@ int main(int argc, char *argv[])
 			continue;
 		}
 		if (runpool[current].datalen >= MAXRUNLEN ||
-		    ((inbuf[i] & 0xc0) == 0xc0 &&
-		     runpool[current].datalen + (inbuf[i] & 0x3f) > MAXRUNLEN)) {
+		    ((inbuf[i] & 0xf0) == 0xf0 &&
+		     runpool[current].datalen + (inbuf[i] & 0x0f) > MAXRUNLEN)) {
 			/* artificially start new run */
 			current++;
 			runpool[current].data = &inbuf[i];
 			runpool[current].offset = offset;
 			runpool[current].datalen = 3;
 		}
-		if ((inbuf[i] & 0xc0) == 0xc0) {
+		if ((inbuf[i] & 0xf0) == 0xf0) {
 			/* Split RLE runs if longer than MAXRUNLEN... */
-			while ((inbuf[i] & 0x3f) > MAXRUNLEN) {
+			while ((inbuf[i] & 0x0f) > MAXRUNLEN) {
 				uint8_t oldlen, len;
 				struct splitrun *run;
 				unsigned char *buf;
@@ -178,12 +178,12 @@ int main(int argc, char *argv[])
 					buf = &run->data[0];
 				}
 
-				oldlen = inbuf[i] & 0x3f;
+				oldlen = inbuf[i] & 0x0f;
 				len = oldlen < MAXRUNLEN*2 ?
 					oldlen / 2 : MAXRUNLEN;
 				inbuf[i] -= len;
 
-				buf[0] = 0xc0 | len;
+				buf[0] = 0xf0 | len;
 				buf[1] = inbuf[i + 1];
 
 				runpool[current].data = buf;
@@ -205,18 +205,18 @@ int main(int argc, char *argv[])
 				runpool[current].offset = offset;
 				runpool[current].datalen = 3;
 			}
-			runpool[current].rasterlen += inbuf[i] & 0x3f;
+			runpool[current].rasterlen += inbuf[i] & 0x0f;
 			runpool[current].datalen += 2;
 
 			/* compute color difference for RLE run */
-			for (j = 0; j < (inbuf[i] & 0x3f); j++) {
+			for (j = 0; j < (inbuf[i] & 0x0f); j++) {
 				runpool[current].colordiff +=
 					distance[inbuf[i+1] >> 8][prevbuf[offset+j] >> 8];
 				runpool[current].colordiff +=
 					distance[inbuf[i+1] & 0x0f][prevbuf[offset+j] & 0x0f];
 			}
 
-			offset += inbuf[i] & 0x3f;
+			offset += inbuf[i] & 0x0f;
 			i += 1;
 			continue;
 		}
@@ -235,7 +235,7 @@ int main(int argc, char *argv[])
 	/* Emit runs in sorted order until quota is fulfilled... */
 	for (i = 0; i < current + 1; i++) {
 		if (curscore + runpool[i].datalen < maxscore - 3) {
-			outbuf[outsize++] = 0xc0;
+			outbuf[outsize++] = 0xf0;
 			outbuf[outsize++] = (runpool[i].offset & 0xff00) >> 8;
 			outbuf[outsize++] = runpool[i].offset & 0x00ff;
 			for (j=0; j<runpool[i].datalen - 3; j++) {
@@ -249,7 +249,7 @@ int main(int argc, char *argv[])
 	}
 
 	/* Always emit end of frame marker... */
-	outbuf[outsize++] = 0xc0;
+	outbuf[outsize++] = 0xf0;
 	outbuf[outsize++] = 0xff;
 	outbuf[outsize++] = 0xff;
 

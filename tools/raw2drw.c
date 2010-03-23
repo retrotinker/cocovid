@@ -32,7 +32,7 @@ int badmatch(unsigned char *prev, unsigned char *cur, int offset)
 
 	if (i == 4 && offset + 5 < SCREENEND)
 		return 0;
-	else if (i == 3 && cur[3] != 0xc0 &&
+	else if (i == 3 && cur[3] != 0xf0 &&
 	         offset + 4 < SCREENEND)
 		return 0;
 
@@ -79,7 +79,7 @@ int main(int argc, char *argv[])
 			    !badmatch(&prevbuf[i][j], &curbuf[i][j], offset))
 				matching = 1;
 			else if (matching && prevbuf[i][j] != curbuf[i][j]) {
-				outbuf[outsize++] = 0xc0;
+				outbuf[outsize++] = 0xf0;
 				outbuf[outsize++] =
 					(offset & 0xff00) >> 8;
 				outbuf[outsize++] =
@@ -87,15 +87,15 @@ int main(int argc, char *argv[])
 				matching = 0;
 			}
 			if (!matching) {
-				if ((curbuf[i][j] == 0xc0) ||
-				    (curbuf[i][j] == 0xc1))
-					outbuf[outsize++] = 0xc1;
+				if ((curbuf[i][j] == 0xf0) ||
+				    (curbuf[i][j] == 0xf1))
+					outbuf[outsize++] = 0xf1;
 				outbuf[outsize++] = curbuf[i][j];
 			}
 		}
 
 	/* Always have at least a frame delimeter... */
-	outbuf[outsize++] = 0xc0;
+	outbuf[outsize++] = 0xf0;
 	outbuf[outsize++] = 0xff;
 	outbuf[outsize++] = 0xff;
 

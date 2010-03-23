@@ -29,7 +29,7 @@ int rlecompress(unsigned char *inbuf, unsigned char *outbuf, int bufsize)
 		return 0;
 
 	cur = inbuf[0];
-	if ((cur & 0xc0) == 0xc0) { /* check for reserved char */
+	if ((cur & 0xf0) == 0xf0) { /* check for reserved char */
 		/* start counting */
 		count++; /* just current */
 	}
@@ -37,13 +37,13 @@ int rlecompress(unsigned char *inbuf, unsigned char *outbuf, int bufsize)
 		if (count) {
 			if (cur == inbuf[i]) { /* check for continued match */
 				count++; /* count */
-				if (count > 0x3f) { /* check for max count */
+				if (count > 0x0f) { /* check for max count */
 					outbuf[size++] = 0xff;
 					outbuf[size++] = cur;
 					count = 1; /* reset count to one */
 				}
 			} else { /* end match */
-				outbuf[size++] = 0xc0 | count;
+				outbuf[size++] = 0xf0 | count;
 				outbuf[size++] = cur;
 				count = 0; /* reset count */
 			}
@@ -56,13 +56,13 @@ int rlecompress(unsigned char *inbuf, unsigned char *outbuf, int bufsize)
 			}
 		}
 		cur = inbuf[i];
-		if (!count && (cur & 0xc0) == 0xc0) { /* check for reserved char */
+		if (!count && (cur & 0xf0) == 0xf0) { /* check for reserved char */
 			/* start counting */
 			count++; /* just current */
 		}
 	}
 	if (count)
-		outbuf[size++] = 0xc0 | count;
+		outbuf[size++] = 0xf0 | count;
 	outbuf[size++] = cur;
 
 	return size;
@@ -108,14 +108,14 @@ int main(int argc, char *argv[])
 	outptr = outbuf;
 
 	while (inptr < inbuf + insize) {
-		if (*inptr == 0xc0) {
+		if (*inptr == 0xf0) {
 			outptr += rlecompress(tmpbuf, outptr, tmpptr - tmpbuf);
 			tmpptr = tmpbuf;
 			*outptr++ = *inptr++;
 			*outptr++ = *inptr++;
 			*outptr++ = *inptr++;
 		} else {
-			if (*inptr == 0xc1) {
+			if (*inptr == 0xf1) {
 				*tmpptr++ = *(inptr + 1);
 				inptr += 2;
 			} else {
