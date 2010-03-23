@@ -17,7 +17,7 @@ uint8_t color_table[MAXR * MAXG * MAXB];
 
 /*
  * distance_table is indexed by two palette colors and
- * returns the distance between them in the RGB cube.
+ * returns the distance between them in the YIQ cube.
  */
 uint16_t distance_table[16][16];
 
