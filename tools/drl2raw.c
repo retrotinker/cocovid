@@ -81,8 +81,8 @@ int main(int argc, char *argv[])
 
 	for (inptr = inbuf; inptr < inbuf + insize; inptr++) {
 		if (outptr - outbuf > sizeof(outbuf)) {
-			printf("Frame offset out of bounds: %s %ld\n",
-				argv[2], outptr - outbuf);
+			printf("Frame offset out of bounds: %s %zd\n",
+				argv[2], (size_t)outptr - (size_t)outbuf);
 			break;
 		}
 		if (*inptr == 0xc0) {
