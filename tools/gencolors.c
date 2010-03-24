@@ -42,7 +42,8 @@ float yiq_distance(struct rgb c1, struct rgb c2)
 	id = y1.i - y2.i;
 	qd = y1.q - y2.q;
 
-	return sqrtf((yd * yd) + (id * id) + (qd * qd));
+	/* return sum of squares to better differentiate colors */
+	return (yd * yd) + (id * id) + (qd * qd);
 }
 
 void init_colors()
