@@ -17,9 +17,9 @@
 
 /*
  * Account for run data plus 3-byte run header; needs to be short enough
- * to make-up for time it takes to write a long run...
+ * to avoid distracting visual effects...
  */
-#define MAXRUNLEN		(RAW_HORIZ_PIXELS / (8 * PIXELS_PER_BYTE))
+#define MAXRUNLEN		(RAW_HORIZ_PIXELS / (4 * PIXELS_PER_BYTE))
 
 struct vidrun {
 	unsigned char *data;
@@ -27,6 +27,7 @@ struct vidrun {
 	unsigned int datalen;
 	unsigned int offset;
 	unsigned int colordiff;
+	unsigned int adjscore;
 };
 
 struct splitrun {
@@ -198,6 +199,10 @@ int main(int argc, char *argv[])
 						distance[inbuf[i+1] & 0x0f][prevbuf[offset+j] & 0x0f];
 				}
 
+				/* add adjustment to score RLE runs properly */
+				runpool[current].adjscore += len > 1 ?
+					((len - 1) / 2) : 0;
+
 				/* start another new run */
 				offset += len;
 				current++;
@@ -215,6 +220,10 @@ int main(int argc, char *argv[])
 				runpool[current].colordiff +=
 					distance[inbuf[i+1] & 0x0f][prevbuf[offset+j] & 0x0f];
 			}
+
+			/* add adjustment to score RLE runs properly */
+			runpool[current].adjscore += (inbuf[i] & 0x0f) > 1 ?
+				(((inbuf[i] & 0x0f) - 1) / 2) : 0;
 
 			offset += inbuf[i] & 0x0f;
 			i += 1;
@@ -234,7 +243,8 @@ int main(int argc, char *argv[])
 
 	/* Emit runs in sorted order until quota is fulfilled... */
 	for (i = 0; i < current + 1; i++) {
-		if (curscore + runpool[i].datalen < maxscore - 3) {
+		if (curscore + runpool[i].datalen + runpool[i].adjscore <
+				maxscore - 3) {
 			outbuf[outsize++] = 0xf0;
 			outbuf[outsize++] = (runpool[i].offset & 0xff00) >> 8;
 			outbuf[outsize++] = runpool[i].offset & 0x00ff;
@@ -242,6 +252,7 @@ int main(int argc, char *argv[])
 				outbuf[outsize++] = runpool[i].data[j];
 			}
 			curscore += runpool[i].datalen;
+			curscore += runpool[i].adjscore;
 		}
 		/* Need room for EOF and minimum run or no point continuing */
 		if (curscore >= maxscore - 7)
