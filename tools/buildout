@@ -87,10 +87,10 @@ do
 
 	$DRL2RAW $CURRAW buildout.$$ $TMPRAW &
 	CURUPDATE=$!
-	convert -resize 110x200%! -resize 128x192 \
+	convert -resize 110x100%! -resize 256x192 \
 			-ordered-dither o2x2,3,3,3 \
 			-quantize YIQ +dither -map ${BINDIR}/colormap.ppm \
-			-background black -gravity center -extent 128x192 \
+			-background black -gravity center -extent 256x192 \
 			$PPM ppm:- | \
 		$PPM2RAW - -|\
 		$RAW2DRW $CURRAW - - | \

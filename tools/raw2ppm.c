@@ -10,10 +10,10 @@
 
 #include "palette.h"
 
-#define RAW_HORIZ_PIXELS	128
+#define RAW_HORIZ_PIXELS	256
 #define RAW_VERT_PIXELS		192
 
-#define PPM_HEADER	"P6\n128 192\n255\n"
+#define PPM_HEADER	"P6\n256 192\n255\n"
 #define PPM_HEADER_SIZE	15
 
 unsigned char inbuf[RAW_VERT_PIXELS][RAW_HORIZ_PIXELS/2];
