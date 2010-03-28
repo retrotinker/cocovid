@@ -27,7 +27,7 @@ done
 
 LASTMOD=$(stat -c '%Y' current.raw)
 $RAW2PPM current.raw current.ppm >/dev/null 2>&1
-convert -resize 180x100%! current.ppm view.ppm
+convert -resize 90x100%! current.ppm view.ppm
 feh $FEH_ARGS view.ppm >/dev/null 2>&1 &
 OLDPID=$!
 
@@ -51,7 +51,7 @@ do
 	then
 		LASTMOD=$CURMOD
 		$RAW2PPM current.raw current.ppm >/dev/null 2>&1
-		convert -resize 180x100%! current.ppm view.ppm
+		convert -resize 90x100%! current.ppm view.ppm
 		feh $FEH_ARGS view.ppm >/dev/null 2>&1 &
 		PID=$!
 		sleep 1

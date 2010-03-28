@@ -228,7 +228,7 @@ EXIT	clr	$ff90
 * Init for video mode, set video buffer to VIDBUF
 * (Assumes default MMU setup...)
 VIDINIT	FCB	$4C,$00,$00,$00,$00,$00,$00,$00
-	FCB	$80,$12,$00,$00,$0F,$E3,$80,$00
+	FCB	$82,$12,$00,$00,$0F,$E3,$80,$00
 ENDVINT	EQU	*
 
 * Init for palette regs

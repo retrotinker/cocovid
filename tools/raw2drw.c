@@ -8,7 +8,7 @@
 #include <unistd.h>
 
 #define RAW_HORIZ_PIXELS	128
-#define RAW_VERT_PIXELS		192
+#define RAW_VERT_PIXELS		96
 #define SCREENEND		((RAW_HORIZ_PIXELS / 2) * RAW_VERT_PIXELS)
 
 unsigned char prevbuf[RAW_VERT_PIXELS][RAW_HORIZ_PIXELS/2];
