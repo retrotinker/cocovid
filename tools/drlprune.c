@@ -13,7 +13,7 @@
 #define RAW_HORIZ_PIXELS	128
 #define RAW_VERT_PIXELS		192
 
-#define PIXELS_PER_BYTE		2
+#define PIXELS_PER_BYTE		1
 
 /*
  * Account for run data plus 3-byte run header; needs to be short enough
@@ -36,11 +36,11 @@ struct splitrun {
 };
 struct splitrun *splitrun_head = NULL;
 
-unsigned char prevbuf[RAW_VERT_PIXELS * RAW_HORIZ_PIXELS/2];
-unsigned char inbuf[RAW_VERT_PIXELS * RAW_HORIZ_PIXELS/2 * 5 + 3];
-unsigned char outbuf[RAW_VERT_PIXELS * RAW_HORIZ_PIXELS/2 * 5 + 3];
+unsigned char prevbuf[RAW_VERT_PIXELS * RAW_HORIZ_PIXELS];
+unsigned char inbuf[RAW_VERT_PIXELS * RAW_HORIZ_PIXELS * 5 + 3];
+unsigned char outbuf[RAW_VERT_PIXELS * RAW_HORIZ_PIXELS * 5 + 3];
 
-struct vidrun runpool[RAW_VERT_PIXELS * RAW_HORIZ_PIXELS/2];
+struct vidrun runpool[RAW_VERT_PIXELS * RAW_HORIZ_PIXELS];
 
 int compare_vidruns(const void *run1, const void *run2)
 {
@@ -194,9 +194,7 @@ int main(int argc, char *argv[])
 				/* compute color difference for RLE run */
 				for (j = 0; j < len; j++) {
 					runpool[current].colordiff +=
-						distance[inbuf[i+1] >> 8][prevbuf[offset+j] >> 8];
-					runpool[current].colordiff +=
-						distance[inbuf[i+1] & 0x0f][prevbuf[offset+j] & 0x0f];
+						distance[inbuf[i+1]][prevbuf[offset+j]];
 				}
 
 				/* add adjustment to score RLE runs properly */
@@ -216,9 +214,7 @@ int main(int argc, char *argv[])
 			/* compute color difference for RLE run */
 			for (j = 0; j < (inbuf[i] & 0x0f); j++) {
 				runpool[current].colordiff +=
-					distance[inbuf[i+1] >> 8][prevbuf[offset+j] >> 8];
-				runpool[current].colordiff +=
-					distance[inbuf[i+1] & 0x0f][prevbuf[offset+j] & 0x0f];
+					distance[inbuf[i+1]][prevbuf[offset+j]];
 			}
 
 			/* add adjustment to score RLE runs properly */
@@ -232,9 +228,7 @@ int main(int argc, char *argv[])
 		runpool[current].rasterlen++;
 		runpool[current].datalen++;
 		runpool[current].colordiff +=
-			distance[inbuf[i] >> 8][prevbuf[offset] >> 8];
-		runpool[current].colordiff +=
-			distance[inbuf[i] & 0x0f][prevbuf[offset] & 0x0f];
+			distance[inbuf[i]][prevbuf[offset]];
 		offset++;
 	}
 

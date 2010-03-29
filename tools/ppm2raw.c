@@ -28,7 +28,7 @@ struct pixmap24 {
 
 struct pixmap24 inmap;
 
-unsigned char cocobuf[PPM_VERT_PIXELS][PPM_HORIZ_PIXELS/2];
+unsigned char cocobuf[PPM_VERT_PIXELS][PPM_HORIZ_PIXELS];
 
 void usage(char *prg)
 {
@@ -162,25 +162,11 @@ int main(int argc, char *argv[])
 
 
 	for (j=0; j<PPM_VERT_PIXELS; j++)
-		for (i=0; i<PPM_HORIZ_PIXELS/2; i++) {
-			unsigned char val;
-
-			val = color[RGB(inmap.pixel[j][2*i].r,
-					inmap.pixel[j][2*i].g,
-					inmap.pixel[j][2*i].b)];
-#if 0
-			dither(2*i, j, val);
-#endif
-			val <<= 4;
-			val |= color[RGB(inmap.pixel[j][2*i+1].r,
-					 inmap.pixel[j][2*i+1].g,
-					 inmap.pixel[j][2*i+1].b)];
-#if 0
-			dither(2*i + 1, j, val & 0xf);
-#endif
-
-			cocobuf[j][i] = val;
-		}
+		for (i=0; i<PPM_HORIZ_PIXELS; i++) {
+			cocobuf[j][i] = color[RGB(inmap.pixel[j][i].r,
+							inmap.pixel[j][i].g,
+							inmap.pixel[j][i].b)];
+	}
 
 	if (write(outfd, cocobuf, sizeof(cocobuf)) != sizeof(cocobuf))
 		perror("pixel write");

@@ -9,13 +9,13 @@
 
 #define RAW_HORIZ_PIXELS	128
 #define RAW_VERT_PIXELS		192
-#define SCREENEND		((RAW_HORIZ_PIXELS / 2) * RAW_VERT_PIXELS)
+#define SCREENEND		(RAW_HORIZ_PIXELS * RAW_VERT_PIXELS)
 
-unsigned char prevbuf[RAW_VERT_PIXELS][RAW_HORIZ_PIXELS/2];
-unsigned char curbuf[RAW_VERT_PIXELS][RAW_HORIZ_PIXELS/2];
+unsigned char prevbuf[RAW_VERT_PIXELS][RAW_HORIZ_PIXELS];
+unsigned char curbuf[RAW_VERT_PIXELS][RAW_HORIZ_PIXELS];
 
 /* Quintuple the output buffer in case of degenerate worst case */
-unsigned char outbuf[RAW_VERT_PIXELS*(RAW_HORIZ_PIXELS/2)*5 + 3];
+unsigned char outbuf[RAW_VERT_PIXELS*(RAW_HORIZ_PIXELS)*5 + 3];
 
 void usage(char *prg)
 {
@@ -72,8 +72,8 @@ int main(int argc, char *argv[])
 		perror("cur read");
 
 	for (i = 0; i < RAW_VERT_PIXELS; i++)
-		for (j = 0; j < (RAW_HORIZ_PIXELS/2); j++) {
-			int offset = (i * (RAW_HORIZ_PIXELS/2)) + j;
+		for (j = 0; j < (RAW_HORIZ_PIXELS); j++) {
+			int offset = (i * (RAW_HORIZ_PIXELS)) + j;
 
 			if (!matching && prevbuf[i][j] == curbuf[i][j] &&
 			    !badmatch(&prevbuf[i][j], &curbuf[i][j], offset))

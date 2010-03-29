@@ -8,8 +8,8 @@
 
 #include "palette.h"
 
-#define PPM_HEADER	"P6\n16 1\n255\n"
-#define PPM_HEADER_SIZE	12
+#define PPM_HEADER	"P6\n256 1\n255\n"
+#define PPM_HEADER_SIZE	13
 
 void usage(char *prg)
 {

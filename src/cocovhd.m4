@@ -69,11 +69,11 @@ EXEC	EQU	*
 	sta	SAMR1ST
 
 * Setup palette...
-	LDX	#RPALINI
+	LDX	#CPAL256
 	LDY	#PALOFF
 PINTLOP	LDA	,X+
 	STA	,Y+
-	CMPX	#ENDRPIN
+	CMPX	#ENDC256
 	BNE	PINTLOP
 
 * ...clear screen...
@@ -228,7 +228,7 @@ EXIT	clr	$ff90
 * Init for video mode, set video buffer to VIDBUF
 * (Assumes default MMU setup...)
 VIDINIT	FCB	$4C,$00,$00,$00,$00,$00,$00,$00
-	FCB	$80,$12,$00,$00,$0F,$E3,$80,$00
+	FCB	$80,$19,$00,$00,$0F,$E3,$80,$00
 ENDVINT	EQU	*
 
 * Init for palette regs
@@ -238,6 +238,10 @@ ENDRPIN	EQU	*
 CPALINI	FCB	$00,$1C,$22,$1E,$17,$19,$14,$20
 	FCB	$10,$2B,$32,$3D,$36,$38,$34,$30
 ENDCPIN	EQU	*
+
+* Init for palette regs (256-colors)
+CPAL256	FCB	$00,$10,$20,$30
+ENDC256	EQU	*
 
 DATFLAG	FCB	$00
 

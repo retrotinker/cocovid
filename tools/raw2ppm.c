@@ -16,7 +16,7 @@
 #define PPM_HEADER	"P6\n128 192\n255\n"
 #define PPM_HEADER_SIZE	15
 
-unsigned char inbuf[RAW_VERT_PIXELS][RAW_HORIZ_PIXELS/2];
+unsigned char inbuf[RAW_VERT_PIXELS][RAW_HORIZ_PIXELS];
 struct rgb outbuf[RAW_VERT_PIXELS][RAW_HORIZ_PIXELS];
 
 void usage(char *prg)
@@ -55,13 +55,10 @@ int main(int argc, char *argv[])
 
 	/* process image data */
 	for (j=0; j<RAW_VERT_PIXELS; j++)
-		for (i=0; i<RAW_HORIZ_PIXELS/2; i++) {
-			outbuf[j][i*2].r = palette[(inbuf[j][i] & 0xf0) >> 4].r;
-			outbuf[j][i*2].g = palette[(inbuf[j][i] & 0xf0) >> 4].g;
-			outbuf[j][i*2].b = palette[(inbuf[j][i] & 0xf0) >> 4].b;
-			outbuf[j][i*2+1].r = palette[inbuf[j][i] & 0x0f].r;
-			outbuf[j][i*2+1].g = palette[inbuf[j][i] & 0x0f].g;
-			outbuf[j][i*2+1].b = palette[inbuf[j][i] & 0x0f].b;
+		for (i=0; i<RAW_HORIZ_PIXELS; i++) {
+			outbuf[j][i].r = palette[inbuf[j][i]].r;
+			outbuf[j][i].g = palette[inbuf[j][i]].g;
+			outbuf[j][i].b = palette[inbuf[j][i]].b;
 		}
 
 	/* output PPM header */
