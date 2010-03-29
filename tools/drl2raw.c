@@ -11,7 +11,7 @@
 #include <stdint.h>
 
 #define RAW_HORIZ_PIXELS	128
-#define RAW_VERT_PIXELS		192
+#define RAW_VERT_PIXELS		96
 
 unsigned char inbuf[RAW_VERT_PIXELS * RAW_HORIZ_PIXELS * 5 + 3];
 unsigned char outbuf[RAW_VERT_PIXELS * RAW_HORIZ_PIXELS];

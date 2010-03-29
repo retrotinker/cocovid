@@ -11,7 +11,7 @@
 #include "distance.h"
 
 #define RAW_HORIZ_PIXELS	128
-#define RAW_VERT_PIXELS		192
+#define RAW_VERT_PIXELS		96
 
 #define PIXELS_PER_BYTE		1
 

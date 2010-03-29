@@ -16,7 +16,7 @@
 #include "colors.h"
 
 #define PPM_HORIZ_PIXELS	128
-#define PPM_VERT_PIXELS		192
+#define PPM_VERT_PIXELS		96
 
 struct rgb24 {
 	uint8_t r, g, b;
