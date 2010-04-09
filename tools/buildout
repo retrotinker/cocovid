@@ -1,9 +1,9 @@
 #!/bin/sh
 
 FRAMESTEP=1
-SAMPLES=368
+SAMPLES=736
 
-MAXSCORE=480
+MAXSCORE=960
 
 NICE=2
 
@@ -43,7 +43,7 @@ mkdir -p $RAWBASE
 mkdir -p $PCMBASE
 
 echo Transcoding $(basename "$1")...
-nice -n $NICE ffmpeg -i "$1" -r 30 -ar 11040 -ac 1 -b 200000 -acodec pcm_u8 \
+nice -n $NICE ffmpeg -i "$1" -r 15 -ar 11040 -ac 1 -b 200000 -acodec pcm_u8 \
 	-f mov -y ../mov/"$2".mov
 nice -n $NICE ffmpeg -i ../mov/"$2".mov -vn -acodec pcm_u8 -y ../mov/"$2".wav
 nice -n $NICE normalize ../mov/"$2".wav
@@ -77,7 +77,7 @@ mkfifo buildout.$$
 
 for i in $(seq 1 $FRAMESTEP $FRAMES)
 do
-	if [ $(($i % $((10 * 30)))) -eq 1 ]
+	if [ $(($i % $((10 * 15)))) -eq 1 ]
 	then
 		echo Processing frame ${i}... >&2
 	fi
