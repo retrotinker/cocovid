@@ -35,6 +35,8 @@ TIMEVAL	EQU	325
 
 	ORG	LOAD
 
+VIDSTRT	FCB	$00,$00,$00,$00
+
 EXEC	EQU	*
 
 * Disable IRQ and FIRQ

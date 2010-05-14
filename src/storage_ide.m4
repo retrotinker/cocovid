@@ -29,11 +29,17 @@ iderec1	lda	7,u
 
 * Now issue first read command
 	clr	1,u
+* For now, presume 256-sector padding
 	clr	2,u
-	clr	3,u
-	clr	4,u
-	clr	5,u
-	lda	#224
+	ldx	#VIDSTRT
+	lda	3,x
+	sta	3,u
+	lda	2,x
+	sta	4,u
+	lda	1,x
+	sta	5,u
+	lda	,x
+	ora	#224
 	sta	6,u
 	lda	#32	
 	sta	7,u

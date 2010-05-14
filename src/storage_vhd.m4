@@ -3,9 +3,13 @@ dnl Initialize storage driver
 dnl
 define(`init_storage',`
 	ldu	#$ff80
-	clr	,u
-	clr	1,u
-	clr	2,u
+	ldx	#VIDSTRT
+	lda	3,x
+	sta	,u
+	lda	2,x
+	sta	1,u
+	lda	1,x
+	sta	2,u
 	ldd	#VHDBUF
 	sta	4,u
 	stb	5,u
