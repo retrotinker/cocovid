@@ -194,7 +194,7 @@ int main(int argc, char *argv[])
 				/* compute color difference for RLE run */
 				for (j = 0; j < len; j++) {
 					runpool[current].colordiff +=
-						distance[inbuf[i+1] >> 8][prevbuf[offset+j] >> 8];
+						distance[inbuf[i+1] >> 4][prevbuf[offset+j] >> 4];
 					runpool[current].colordiff +=
 						distance[inbuf[i+1] & 0x0f][prevbuf[offset+j] & 0x0f];
 				}
@@ -216,7 +216,7 @@ int main(int argc, char *argv[])
 			/* compute color difference for RLE run */
 			for (j = 0; j < (inbuf[i] & 0x0f); j++) {
 				runpool[current].colordiff +=
-					distance[inbuf[i+1] >> 8][prevbuf[offset+j] >> 8];
+					distance[inbuf[i+1] >> 4][prevbuf[offset+j] >> 4];
 				runpool[current].colordiff +=
 					distance[inbuf[i+1] & 0x0f][prevbuf[offset+j] & 0x0f];
 			}
@@ -232,7 +232,7 @@ int main(int argc, char *argv[])
 		runpool[current].rasterlen++;
 		runpool[current].datalen++;
 		runpool[current].colordiff +=
-			distance[inbuf[i] >> 8][prevbuf[offset] >> 8];
+			distance[inbuf[i] >> 4][prevbuf[offset] >> 4];
 		runpool[current].colordiff +=
 			distance[inbuf[i] & 0x0f][prevbuf[offset] & 0x0f];
 		offset++;
