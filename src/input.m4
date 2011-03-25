@@ -14,7 +14,7 @@ KEYCHK1	puls	a
 KEYCHK2	jsr	[$A000]
 	beq	KEYCHK2
 	cmpa	#03
-	lbeq	EXIT
+	beq	EXIT
 	cmpa	#32
 	bne	KEYCHK2
 	puls	a

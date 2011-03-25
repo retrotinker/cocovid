@@ -5,10 +5,13 @@ define(`init_storage',`
 	ldu	#$ff80
 	ldx	#VIDSTRT
 	lda	3,x
+	sta	>VHDLRNH
 	sta	,u
 	lda	2,x
+	sta	>VHDLRNM
 	sta	1,u
 	lda	1,x
+	sta	>VHDLRNH
 	sta	2,u
 	ldd	#VHDBUF
 	sta	4,u
@@ -22,14 +25,9 @@ define(`init_storage',`
 * Point at buffer base
 	ldu	#VHDBUF
 	clrb
-* Clear stored record address
-	clr	>VHDLRNH
-	clr	>VHDLRNM
-	clr	>VHDLRNL
 ')dnl
 dnl
-dnl Read next byte from storage into A accumulator
-dnl    -- Uses B accumulator for tracking next read location
+dnl Read next 2 bytes from storage into D accumulator
 dnl
 define(`datrditer', 0)dnl
 define(`datrdentlbl', `DATRD$1')dnl
@@ -38,9 +36,8 @@ define(`datrdentry', `define(`datrditer', incr(datrditer))dnl
 datrdentlbl(datrditer)')dnl
 define(`datrdexit', `datrdextlbl(datrditer)')dnl
 define(`data_read',`
-datrdentry(datrditer)	lda	b,u
-	incb
-	cmpb	#128
+datrdentry(datrditer)	ldd	,u++
+	cmpu	#VHDBEND
 	bne	datrdexit(datrditer)
 	lbsr	DATREQ
 datrdexit(datrditer)	equ	*')dnl
@@ -51,14 +48,9 @@ dnl    -- Also checks keyboard input
 dnl
 define(`storage_handler',`
 * Increment LBA and request next sector
-DATREQ	cmpu	#VHDBFHI
-	beq	DATREQ1
-	ldu	#VHDBFHI
-	clrb
-	rts
-DATREQ1
-	ldu	#$ff80
+DATREQ	ldu	#$ff80
 	inc	>VHDLRNL
+	pshs	b
 	ldb	>VHDLRNL
 	stb	2,u
 	bne	DATCMD
@@ -69,13 +61,14 @@ DATREQ1
 	inc	>VHDLRNH
 	ldb	>VHDLRNH
 	stb	,u
-DATCMD
-	clr	3,u
+DATCMD	clr	3,u
 	ldb	3,u
+	puls	b
 * Abort on error...ick...
 	bne	EXIT
 	ldu	#VHDBUF
-	clrb
+* Is this really the best time to check
+* the keyboard??
 	check_keyboard
 	rts
 ')dnl
@@ -83,9 +76,9 @@ dnl
 dnl Single instance static allocation for storage driver usage
 dnl
 define(`storage_variables',`
-VHDLRNH	RMB	1
-VHDLRNM	RMB	1
-VHDLRNL	RMB	1
-VHDBUF	RMB	128
-VHDBFHI	RMB	128
+VHDLRNH	rmb	1
+VHDLRNM	rmb	1
+VHDLRNL	rmb	1
+VHDBUF	rmb	256
+VHDBEND	equ	*
 ')dnl

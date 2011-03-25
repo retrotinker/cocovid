@@ -48,34 +48,23 @@ ideread	lda	7,u
 	bne	ideread
 ')dnl
 dnl
-dnl Read next byte from storage into A accumulator
-dnl    -- Uses B accumulator for tracking next read location
+dnl Read next 2 bytes from storage into D accumulator
 dnl
 define(`datrditer', 0)dnl
 define(`datrdentlbl', `DATRD$1')dnl
-define(`datrdlowlbl', `DATRDL$1')dnl
-define(`datrdhighlbl', `DATRDH$1')dnl
-define(`datrdextlbl', `DATRDX$1')dnl
+define(`datrdcntlbl', `DATRDC$1')dnl
 define(`datrdentry', `define(`datrditer', incr(datrditer))dnl
 datrdentlbl(datrditer)')dnl
-define(`datrdlow', `datrdlowlbl(datrditer)')dnl
-define(`datrdhigh', `datrdhighlbl(datrditer)')dnl
-define(`datrdexit', `datrdextlbl(datrditer)')dnl
+define(`datrdcont', `datrdcntlbl(datrditer)')dnl
 define(`data_read',`
 * Read next byte from IDE device
-datrdentry(datrditer)	tstb
-	beq	datrdlow(datrditer)
-	lda	8,u
-* Check if more data available for next round
+datrdentry(datrditer)	ldb	#08
 	bitb	7,u
-	bne	datrdhigh(datrditer)
+	bne	datrdcont(datrditer)
 	lbsr	DATREQ
-	bra	datrdhigh(datrditer)
-datrdlow(datrditer)	ldb	#08
-	lda	,u
-	bra	datrdexit(datrditer)
-datrdhigh(datrditer)	clrb
-datrdexit(datrditer)	equ	*')dnl
+datrdcont(datrditer)	lda	,u
+	ldb	8,u
+')dnl
 dnl
 dnl Single instance body of storage driver
 dnl    -- Called to fill request new reads
@@ -99,8 +88,9 @@ DATCMD	ldb	#32
 DATWAIT ldb	7,u
 	andb	#128
 	bne	DATWAIT
+* Is this really the best time to check
+* the keyboard??
 	check_keyboard
-	clrb
 	rts
 ')dnl
 dnl

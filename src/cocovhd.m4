@@ -13,6 +13,11 @@ IRQADR	EQU	$010d
 FIRQJMP	EQU	$010f
 FIRQADR	EQU	$0110
 
+CTLFMT	EQU	$80
+CTRLRPT	EQU	$40
+CTRLEOF	EQU	$20
+CTRLEOV	EQU	$10
+
 VIDOFF	EQU	$FF90
 PALOFF	EQU	$FFB0
 SAMR1ST	EQU	$FFD9
@@ -125,53 +130,67 @@ CLRAUD	STA	,X+
 
 * Data movement goes here
 VIDFRM	ldx	#VIDBUF
+* read control word
 VIDLOOP	data_read
-* Check for escape char
-	pshs	a
-	anda	#$f0
-	cmpa	#$f0
-	beq	PIXESC
-	puls	a
-* Store data in video buffer
-	STA	,X+
+* check for jump
+	bita	#CTLFMT
+	beq	CTRL1
+CTRL0	pshs	a
+* mask/shift d to retrieve offset
+	anda	#$7c
+	lsra
+	lslb
+	bcc	CTRL0VP
+	ora	#$01
+* load x w/ start of video buffer
+CTRL0VP	ldx	#VIDBUF
+* adjust x to correct offset
+	leax	d,x
+* convert a to word count
+	lda	#$03
+	anda	,s
+	sta	,s
+	beq	CTRL0EX
+CTRL0LP	data_read
+	std	,x++
+	dec	,s
+	bne	CTRL0LP
+* jump to outer loop
+CTRL0EX	leas	1,s
 	bra	VIDLOOP
 
-PIXESC	puls	a
-	CMPA	#$f0
-	BNE	PIXMWR
-PIXJMP	LDX	#VIDBUF
-	data_read
+* check for repeat
+CTRL1	bita	#CTRLRPT
+	beq	CTL1EOV
+* convert a to repeat count
+	anda	#$0f
 	pshs	a
-	data_read
-	pshs	b
-	tfr	a,b
-	lda	1,s
-	cmpa	#$ff
-	beq	PIXJMP3
-	LEAX	D,X
-	puls	b
-	leas	1,s
-	jmp	VIDLOOP
-PIXJMP3	cmpb	#$ff
-	lbne	EXIT
-PIXJMP4	puls	b
-	leas	1,s
-	bra	AUDFRM
-
-PIXMWR	anda	#$0f
-	pshs	a
-	data_read
-PIXMWR2 sta	,x+
+* copy b to a
+	tfr	b,a
+CTL1RLP	std	,x++
 	dec	,s
-	BNE	PIXMWR2
+	bne	CTL1RLP
+* jump to outer loop
 	leas	1,s
-	jmp	VIDLOOP
+	bra	VIDLOOP
+
+* check for end of video
+CTL1EOV	bita	#CTRLEOV
+	bne	EXIT
+
+* check for end of frame
+CTL1EOF	bita	#CTRLEOF
+* jump to audio processing
+	bne	AUDFRM
+
+* shouldn't get here...
+CTL1ERR	bra	EXIT
 
 * Audio data movement goes here
 AUDFRM	ldx	>AUDWPTR
 AUDLOOP	data_read
 * Store data in audio buffer
-	STA	,X+
+	std	,x++
 	CMPX	>AUDWSTP
 	BLT	AUDLOOP
 
