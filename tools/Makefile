@@ -2,8 +2,8 @@
 
 CFLAGS=-Wall
 
-TARGETS=ppm2raw raw2ppm raw2drw drw2drl drl2raw drlprune \
-	pcm2clw clw2pcm colormap.ppm
+TARGETS=ppm2raw raw2ppm raw2frm frm2raw frmprune \
+	colormap.ppm START.frm END.frm BLACK.frm
 
 OTHERS=gencolors genmap
 
@@ -33,20 +33,26 @@ ppm2raw: ppm2raw.c colors.h
 raw2ppm: raw2ppm.c palette.h
 	$(CC) $(CFLAGS) -o raw2ppm raw2ppm.c
 
-raw2drw: raw2drw.c
-	$(CC) $(CFLAGS) -o raw2drw raw2drw.c
+raw2frm: raw2frm.c
+	$(CC) $(CFLAGS) -o raw2frm raw2frm.c
 
-drw2drl: drw2drl.c
-	$(CC) $(CFLAGS) -o drw2drl drw2drl.c
+frmprune: frmprune.c distance.h
+	$(CC) $(CFLAGS) -o frmprune frmprune.c
 
-drlprune: drlprune.c distance.h
-	$(CC) $(CFLAGS) -o drlprune drlprune.c
+frm2raw: frm2raw.c
+	$(CC) $(CFLAGS) -o frm2raw frm2raw.c
 
-drl2raw: drl2raw.c
-	$(CC) $(CFLAGS) -o drl2raw drl2raw.c
+START.frm: START.dat
+	xxd -r $< $@
 
-pcm2clw: pcm2clw.c
-	$(CC) $(CFLAGS) -o pcm2clw pcm2clw.c
+END.frm: END.dat
+	xxd -r $< $@
 
-clw2pcm: clw2pcm.c
-	$(CC) $(CFLAGS) -o clw2pcm clw2pcm.c
+WHITE.raw: WHITE.dat
+	xxd -r $< $@
+
+BLACK.raw: BLACK.dat
+	xxd -r $< $@
+
+BLACK.frm: BLACK.raw WHITE.raw
+	./raw2frm WHITE.raw BLACK.raw $@

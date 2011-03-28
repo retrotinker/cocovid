@@ -35,6 +35,7 @@ void usage(char *prg)
 	printf("Usage: %s infile outfile\n", prg);
 }
 
+#if 0
 inline uint8_t add_clamp(uint8_t a, int16_t b)
 {
 	int16_t tmp = a + b;
@@ -48,7 +49,6 @@ inline uint8_t add_clamp(uint8_t a, int16_t b)
 	return tmp;
 }
 
-#if 0
 void dither(int h, int v, uint8_t color)
 {
 	int16_t r_error, g_error, b_error;

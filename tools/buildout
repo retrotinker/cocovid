@@ -1,19 +1,23 @@
 #!/bin/sh
 
 FRAMESTEP=1
-SAMPLES=736
+#SAMPLES=736
+SAMPLES=184
 
-MAXSCORE=960
+#MAXSCORE=960
+#MAXSCORE=2048
+
+#MAXSCORE=3072
+MAXSCORE=832
 
 NICE=2
 
 BINDIR=$(dirname $0)
 
 PPM2RAW=${BINDIR}/ppm2raw
-RAW2DRW=${BINDIR}/raw2drw
-DRW2DRL=${BINDIR}/drw2drl
-DRLPRUNE=${BINDIR}/drlprune
-DRL2RAW=${BINDIR}/drl2raw
+RAW2FRM=${BINDIR}/raw2frm
+FRMPRUNE=${BINDIR}/frmprune
+FRM2RAW=${BINDIR}/frm2raw
 WATCHOUT=${BINDIR}/watchout
 
 PPMBASE=../ppm/"$2"
@@ -43,7 +47,7 @@ mkdir -p $RAWBASE
 mkdir -p $PCMBASE
 
 echo Transcoding $(basename "$1")...
-nice -n $NICE ffmpeg -i "$1" -r 15 -ar 11040 -ac 1 -b 200000 -acodec pcm_u8 \
+nice -n $NICE ffmpeg -i "$1" -r 60 -ar 11040 -ac 1 -b 200000 -acodec pcm_u8 \
 	-f mov -y ../mov/"$2".mov
 nice -n $NICE ffmpeg -i ../mov/"$2".mov -vn -acodec pcm_u8 -y ../mov/"$2".wav
 nice -n $NICE normalize ../mov/"$2".wav
@@ -70,32 +74,46 @@ echo Building final output file...
 
 $WATCHOUT "$2" &
 
-cat ${BINDIR}/BLACK.drl > "$2".out
+cat ${BINDIR}/START.frm > "$2".out
 dd if=/dev/zero bs=$SAMPLES count=1 2>/dev/null >> "$2".out
 
 mkfifo buildout.$$
 
 for i in $(seq 1 $FRAMESTEP $FRAMES)
 do
-	if [ $(($i % $((10 * 15)))) -eq 1 ]
+	if [ $(($i % $((10 * 60)))) -eq 1 ]
 	then
-		echo Processing frame ${i}... >&2
+		echo Processing frame ${i}... \($(date)\) >&2
 	fi
 	PPM=${PPMBASE}/$i.ppm
-	DRL=${DRLBASE}/${i}.drl
 	PCM=${PCMBASE}/"$2".$(printf "%010d" $(($i / $FRAMESTEP)))
 
-	$DRL2RAW $CURRAW buildout.$$ $TMPRAW &
+	$FRM2RAW $CURRAW buildout.$$ $TMPRAW &
 	CURUPDATE=$!
+# Image conversion for error correcting dither option
+#	convert -resize 110x200%! -resize 80x120 \
+#			-quantize YIQ -dither FloydSteinberg \
+#			-map ${BINDIR}/colormap.ppm \
+#			-background black -gravity center -extent 128x192 \
+#			$PPM ppm:- | \
+# Image conversion for posterization option
+#	convert -resize 110x200%! -resize 128x192 \
+#			-quantize YIQ +dither -map ${BINDIR}/colormap.ppm \
+#			-background black -gravity center -extent 128x192 \
+#			$PPM ppm:- | \
+# Image conversion for monochrome option
+#	convert -resize 110x200%! -resize 128x192 \
+#			-channel All -random-threshold 30x80% \
+#			-background black -gravity center -extent 128x192 \
+#			$PPM ppm:- | \
+# Image conversion for ordered dither option
 	convert -resize 110x200%! -resize 128x192 \
-			-ordered-dither o2x2,3,3,3 \
-			-quantize YIQ +dither -map ${BINDIR}/colormap.ppm \
+			-ordered-dither o8x8,4,4,4 \
 			-background black -gravity center -extent 128x192 \
 			$PPM ppm:- | \
 		$PPM2RAW - -|\
-		$RAW2DRW $CURRAW - - | \
-		$DRW2DRL - - | \
-		$DRLPRUNE $CURRAW - - $MAXSCORE | \
+		$RAW2FRM $CURRAW - - | \
+		$FRMPRUNE $CURRAW - - $MAXSCORE | \
 		tee buildout.$$
 	wait $CURUPDATE
 	mv $TMPRAW $CURRAW

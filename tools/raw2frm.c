@@ -15,34 +15,17 @@ unsigned char prevbuf[RAW_VERT_PIXELS][RAW_HORIZ_PIXELS/2];
 unsigned char curbuf[RAW_VERT_PIXELS][RAW_HORIZ_PIXELS/2];
 
 /* Quintuple the output buffer in case of degenerate worst case */
-unsigned char outbuf[RAW_VERT_PIXELS*(RAW_HORIZ_PIXELS/2)*5 + 3];
+unsigned char outbuf[RAW_VERT_PIXELS*(RAW_HORIZ_PIXELS/2)*2 + 2];
 
 void usage(char *prg)
 {
 	printf("Usage: %s prevfile curfile outfile\n", prg);
 }
 
-int badmatch(unsigned char *prev, unsigned char *cur, int offset)
-{
-	int i;
-
-	for (i=0; i<4; i++)
-		if (prev[i] != cur[i])
-			break;
-
-	if (i == 4 && offset + 5 < SCREENEND)
-		return 0;
-	else if (i == 3 && cur[3] != 0xf0 &&
-	         offset + 4 < SCREENEND)
-		return 0;
-
-	return 1;
-}
-
 int main(int argc, char *argv[])
 {
 	int prevfd, curfd, outfd;
-	int i, j, matching = 0, outsize = 0;
+	int i, j, emitwords = 0, outsize = 0, emit = 0;
 
 	if (argc < 4) {
 		usage(argv[0]);
@@ -72,32 +55,49 @@ int main(int argc, char *argv[])
 		perror("cur read");
 
 	for (i = 0; i < RAW_VERT_PIXELS; i++)
-		for (j = 0; j < (RAW_HORIZ_PIXELS/2); j++) {
+		for (j = 0; j < (RAW_HORIZ_PIXELS/2); j+=2) {
 			int offset = (i * (RAW_HORIZ_PIXELS/2)) + j;
+			int diff;
 
-			if (!matching && prevbuf[i][j] == curbuf[i][j] &&
-			    !badmatch(&prevbuf[i][j], &curbuf[i][j], offset))
-				matching = 1;
-			else if (matching && prevbuf[i][j] != curbuf[i][j]) {
-				outbuf[outsize++] = 0xf0;
-				outbuf[outsize++] =
-					(offset & 0xff00) >> 8;
-				outbuf[outsize++] =
-					offset & 0x00ff;
-				matching = 0;
+			diff = prevbuf[i][j] != curbuf[i][j] ||
+				prevbuf[i][j+1] != curbuf[i][j+1];
+			if (emit && (!diff || emitwords == 8)) {
+				int jumpoff = outsize - 2 - emitwords * 2;
+
+				/* fixup jump marker */
+				outbuf[jumpoff] |= emitwords - 1;
+				/* stop this run */
+				emit = 0; emitwords = 0;
 			}
-			if (!matching) {
-				if ((curbuf[i][j] == 0xf0) ||
-				    (curbuf[i][j] == 0xf1))
-					outbuf[outsize++] = 0xf1;
+			if (!emit && diff) {
+				/* emit jump marker */
+				outbuf[outsize++] |= 
+					(offset & 0x3e00) >> 6;
+				outbuf[outsize++] |=
+					(offset & 0x01fe) >> 1;
+				/* start emitting data words */
+				emit = 1;
+			}
+			if (emit) {
+				/* emit video data */
 				outbuf[outsize++] = curbuf[i][j];
+				outbuf[outsize++] = curbuf[i][j+1];
+				/* bump word count */
+				emitwords++;
 			}
 		}
 
+	/* fixup last jump marker, if appropriate */
+	if (emit) {
+		int jumpoff = outsize - 2 - emitwords * 2;
+
+		/* fixup jump marker */
+		outbuf[jumpoff] |= emitwords - 1;
+	}
+
 	/* Always have at least a frame delimeter... */
-	outbuf[outsize++] = 0xf0;
 	outbuf[outsize++] = 0xff;
-	outbuf[outsize++] = 0xff;
+	outbuf[outsize++] = 0x00;
 
 	if (write(outfd, &outbuf, outsize) != outsize)
 		perror("pixel write");

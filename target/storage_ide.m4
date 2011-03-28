@@ -2,48 +2,56 @@ dnl
 dnl Initialize storage driver
 dnl
 define(`init_storage',`
+IDEDATL	equ	$ff50
+IDEERR	equ	$ff51
+IDECNT	equ	$ff52
+IDELSNL	equ	$ff53
+IDELSNM	equ	$ff54
+IDELSNH	equ	$ff55
+IDEDRVH	equ	$ff56
+IDESTAT	equ	$ff57
+IDEDATH	equ	$ff58
+
 * Init IDE drive
-	ldu	#$ff50
-	clrb
 * Clear pending data transfers
-ideclr	lda	7,u
+ideclr	lda	IDESTAT
 	anda	#8
 	beq	idecal
-	lda	,u
-	lda	8,u
+	lda	IDEDATL
+	lda	IDEDATH
 	bra	ideclr
 * Issue recalibrate command
-idecal	clr	1,u
-	clr	2,u
-	clr	3,u
-	clr	4,u
-	clr	5,u
+idecal	clr	IDEERR
+	clr	IDECNT
+	clr	IDELSNL
+	clr	IDELSNM
+	clr	IDELSNH
 	lda	#160
-	sta	6,u
+	sta	IDEDRVH
 	lda	#16	
-	sta	7,u
-iderec1	lda	7,u
+	sta	IDESTAT
+iderec1	lda	IDESTAT
 	anda	#128
 	bne	iderec1
 * Assume it worked -- what else would we do?
 
 * Now issue first read command
-	clr	1,u
+	clr	IDEERR
 * For now, presume 256-sector padding
-	clr	2,u
+	clr	IDECNT
 	ldx	#VIDSTRT
 	lda	3,x
-	sta	3,u
+	sta	IDELSNL
 	lda	2,x
-	sta	4,u
+	sta	IDELSNM
 	lda	1,x
-	sta	5,u
+	sta	IDELSNH
 	lda	,x
 	ora	#224
-	sta	6,u
+	sta	IDEDRVH
 	lda	#32	
-	sta	7,u
-ideread	lda	7,u
+	sta	IDESTAT
+ideread	lda	IDESTAT
 	anda	#128
 	bne	ideread
 ')dnl
@@ -59,11 +67,11 @@ define(`datrdcont', `datrdcntlbl(datrditer)')dnl
 define(`data_read',`
 * Read next byte from IDE device
 datrdentry(datrditer)	ldb	#08
-	bitb	7,u
+	bitb	IDESTAT
 	bne	datrdcont(datrditer)
-	lbsr	DATREQ
-datrdcont(datrditer)	lda	,u
-	ldb	8,u
+	bsr	DATREQ
+datrdcont(datrditer)	lda	IDEDATL
+	ldb	IDEDATH
 ')dnl
 dnl
 dnl Single instance body of storage driver
@@ -72,20 +80,20 @@ dnl    -- Also checks keyboard input
 dnl
 define(`storage_handler',`
 * Increment LBA and request next sector
-DATREQ	clr	2,u
-	clr	3,u
-	inc	4,u
+DATREQ	clr	IDECNT
+	clr	IDELSNL
+	inc	IDELSNM
 	bne	DATCMD
-	inc	5,u
+	inc	IDELSNH
 	bne	DATCMD
-	ldb	6,u
+	ldb	IDEDRVH
 	incb
 	andb	#15
 	orb	#224
-	stb	6,u
+	stb	IDEDRVH
 DATCMD	ldb	#32
-	stb	7,u
-DATWAIT ldb	7,u
+	stb	IDESTAT
+DATWAIT ldb	IDESTAT
 	andb	#128
 	bne	DATWAIT
 * Is this really the best time to check

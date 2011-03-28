@@ -2,29 +2,34 @@ dnl
 dnl Initialize storage driver
 dnl
 define(`init_storage',`
-	ldu	#$ff80
+VHDRECH	equ	$ff80
+VHDRECM	equ	$ff81
+VHDRECL	equ	$ff82
+VHDCMDS	equ	$ff83
+VHDBUFH	equ	$ff84
+VHDBUFL	equ	$ff85
+
 	ldx	#VIDSTRT
-	lda	3,x
-	sta	>VHDLRNH
-	sta	,u
-	lda	2,x
-	sta	>VHDLRNM
-	sta	1,u
 	lda	1,x
-	sta	>VHDLRNH
-	sta	2,u
+	sta	VHDLRNH
+	sta	VHDRECH
+	lda	2,x
+	sta	VHDLRNM
+	sta	VHDRECM
+	lda	3,x
+	sta	VHDLRNL
+	sta	VHDRECL
 	ldd	#VHDBUF
-	sta	4,u
-	stb	5,u
+	sta	VHDBUFH
+	stb	VHDBUFL
 * Read first sector
-	clr	3,u
+	clr	VHDCMDS
 * Check status
-	lda	3,u
+	lda	VHDCMDS
 * Exit on error
-	lbne	EXIT
+	bne	EXIT
 * Point at buffer base
 	ldu	#VHDBUF
-	clrb
 ')dnl
 dnl
 dnl Read next 2 bytes from storage into D accumulator
@@ -39,7 +44,7 @@ define(`data_read',`
 datrdentry(datrditer)	ldd	,u++
 	cmpu	#VHDBEND
 	bne	datrdexit(datrditer)
-	lbsr	DATREQ
+	bsr	DATREQ
 datrdexit(datrditer)	equ	*')dnl
 dnl
 dnl Single instance body of storage driver
@@ -48,24 +53,23 @@ dnl    -- Also checks keyboard input
 dnl
 define(`storage_handler',`
 * Increment LBA and request next sector
-DATREQ	ldu	#$ff80
-	inc	>VHDLRNL
-	pshs	b
-	ldb	>VHDLRNL
-	stb	2,u
+DATREQ	pshs	b
+	inc	VHDLRNL
+	ldb	VHDLRNL
+	stb	VHDRECL
 	bne	DATCMD
-	inc	>VHDLRNM
-	ldb	>VHDLRNM
-	stb	1,u
+	inc	VHDLRNM
+	ldb	VHDLRNM
+	stb	VHDRECM
 	bne	DATCMD
-	inc	>VHDLRNH
-	ldb	>VHDLRNH
-	stb	,u
-DATCMD	clr	3,u
-	ldb	3,u
-	puls	b
+	inc	VHDLRNH
+	ldb	VHDLRNH
+	stb	VHDRECH
+DATCMD	clr	VHDCMDS
+	ldb	VHDCMDS
 * Abort on error...ick...
 	bne	EXIT
+	puls	b
 	ldu	#VHDBUF
 * Is this really the best time to check
 * the keyboard??

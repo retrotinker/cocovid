@@ -13,27 +13,19 @@
 #define RAW_HORIZ_PIXELS	128
 #define RAW_VERT_PIXELS		192
 
-unsigned char inbuf[RAW_VERT_PIXELS * RAW_HORIZ_PIXELS/2 * 5 + 3];
+unsigned char inbuf[RAW_VERT_PIXELS * RAW_HORIZ_PIXELS/2 * 2 + 2];
 unsigned char outbuf[RAW_VERT_PIXELS * RAW_HORIZ_PIXELS/2];
 
 void usage(char *prg)
 {
-	printf("Usage: %s inraw indrl outfile\n", prg);
-}
-
-void writerun(unsigned char buffer[], unsigned char val, int len)
-{
-	int i;
-
-	for (i=0; i<len; i++)
-		buffer[i] = val;
+	printf("Usage: %s inraw infrm outfile\n", prg);
 }
 
 int main(int argc, char *argv[])
 {
 	int prevfd, curfd, outfd;
 	unsigned char *inptr, *outptr;
-	int insize, runsize;
+	int insize;
 	int rc;
 
 	if (argc < 4) {
@@ -74,30 +66,23 @@ int main(int argc, char *argv[])
 	} while (rc != 0);
 
 	/* strip end of frame marker */
-	insize -= 3;
+	insize -= 2;
 
 	inptr = inbuf;
 	outptr = outbuf;
 
-	for (inptr = inbuf; inptr < inbuf + insize; inptr++) {
-		if (outptr - outbuf > sizeof(outbuf)) {
-			printf("Frame offset out of bounds: %s %zd\n",
-				argv[2], (size_t)outptr - (size_t)outbuf);
-			break;
+	while (inptr < inbuf + insize) {
+		int i, count = (*inptr & 0x07) + 1;
+
+		/* jump to proper output offset */
+		outptr = outbuf + ((*inptr & 0xf8) << 6) + (*(inptr + 1) << 1);
+		inptr += 2;
+
+		/* emit count words of video data */
+		for (i = 0; i < count; i++) {
+			*outptr++ = *inptr++;
+			*outptr++ = *inptr++;
 		}
-		if (*inptr == 0xf0) {
-			outptr = &outbuf[(*(inptr + 1) << 8) + *(inptr + 2)];
-			inptr += 2;
-			continue;
-		}
-		if ((*inptr & 0xf0) == 0xf0) {
-			runsize = *inptr & 0x0f;
-			writerun(outptr, *(inptr + 1), runsize);
-			inptr += 1;
-			outptr += runsize;
-			continue;
-		}
-		*outptr++ = *inptr;
 	}
 
 	if (write(outfd, outbuf, sizeof(outbuf)) != sizeof(outbuf))

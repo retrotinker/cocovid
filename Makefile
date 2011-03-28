@@ -2,8 +2,8 @@
 
 all:
 	make -C tools all
-	make -C src all
+	make -C target all
 
 clean:
 	make -C tools clean
-	make -C src clean
+	make -C target clean
