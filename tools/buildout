@@ -1,13 +1,7 @@
 #!/bin/sh
 
-FRAMESTEP=1
-#SAMPLES=736
 SAMPLES=184
 
-#MAXSCORE=960
-#MAXSCORE=2048
-
-#MAXSCORE=3072
 MAXSCORE=832
 
 NICE=2
@@ -52,12 +46,6 @@ nice -n $NICE ffmpeg -i "$1" -r 60 -ar 11040 -ac 1 -b 200000 -acodec pcm_u8 \
 nice -n $NICE ffmpeg -i ../mov/"$2".mov -vn -acodec pcm_u8 -y ../mov/"$2".wav
 nice -n $NICE normalize ../mov/"$2".wav
 
-echo Converting .mov file to a sequence of .ppm files...
-cd $PPMBASE
-nice -n $NICE ffmpeg -i ../../mov/"$2".mov %d.ppm >/dev/null 2>&1
-FRAMES=$(ls | wc -l)
-cd - >/dev/null
-
 echo Converting .wav file to .pcm file and split into appropriately sized chunks...
 cd $PCMBASE
 dd if=../../mov/"$2".wav bs=44 skip=1 2>/dev/null | \
@@ -79,59 +67,84 @@ dd if=/dev/zero bs=$SAMPLES count=1 2>/dev/null >> "$2".out
 
 mkfifo buildout.$$
 
-for i in $(seq 1 $FRAMESTEP $FRAMES)
+# should use ffmpeg to determing video length, for now use 4 hour max
+for start in $(seq 0 60 14400)
 do
-	if [ $(($i % $((10 * 60)))) -eq 1 ]
-	then
-		echo Processing frame ${i}... \($(date)\) >&2
-	fi
-	PPM=${PPMBASE}/$i.ppm
-	PCM=${PCMBASE}/"$2".$(printf "%010d" $(($i / $FRAMESTEP)))
+# divide movie into 60 second chunks to decrease disk usage during conversion
 
-	$FRM2RAW $CURRAW buildout.$$ $TMPRAW &
-	CURUPDATE=$!
-# Image conversion for error correcting dither option
-#	convert -resize 110x200%! -resize 80x120 \
-#			-quantize YIQ -dither FloydSteinberg \
-#			-map ${BINDIR}/colormap.ppm \
-#			-background black -gravity center -extent 128x192 \
-#			$PPM ppm:- | \
-# Image conversion for posterization option
-#	convert -resize 110x200%! -resize 128x192 \
-#			-quantize YIQ +dither -map ${BINDIR}/colormap.ppm \
-#			-background black -gravity center -extent 128x192 \
-#			$PPM ppm:- | \
-# Image conversion for monochrome option
-#	convert -resize 110x200%! -resize 128x192 \
-#			-channel All -random-threshold 30x80% \
-#			-background black -gravity center -extent 128x192 \
-#			$PPM ppm:- | \
-# Image conversion for ordered dither option
-	convert -resize 110x200%! -resize 128x192 \
-			-ordered-dither o8x8,4,4,4 \
-			-background black -gravity center -extent 128x192 \
-			$PPM ppm:- | \
-		$PPM2RAW - -|\
-		$RAW2FRM $CURRAW - - | \
-		$FRMPRUNE $CURRAW - - $MAXSCORE | \
-		tee buildout.$$
-	wait $CURUPDATE
-	mv $TMPRAW $CURRAW
-	if [ -f $PCM ]
+	cd $PPMBASE
+	rm -f *
+	nice -n $NICE ffmpeg -ss $start -t $(($start + 60)) \
+		-i ../../mov/"$2".mov %d.ppm >/dev/null 2>&1
+	FRAMES=$(ls | wc -l)
+	cd - >/dev/null
+
+	if [ x$FRAMES = x0 ]
 	then
-		cat $PCM
-		PCMSIZE=$(stat -c '%s' $PCM)
-		if [ $PCMSIZE -lt $SAMPLES ]
-		then
-			dd if=/dev/zero bs=$(($SAMPLES - $PCMSIZE)) \
-				count=1 2>/dev/null
-		fi
-	else
-		# This actually holds DAC at lowest value...
-		# ...should output 0x88 ("CoCo Law" virtual zero) instead?
-		dd if=/dev/zero bs=$SAMPLES count=1 2>/dev/null
+		break
 	fi
-done >> "$2".out
+
+	for i in $(seq 1 $FRAMES)
+	do
+		if [ $(($i % $((10 * 60)))) -eq 1 ]
+		then
+			echo Processing frame $((($start * 60) + ${i}))... \
+				\($(date)\) >&2
+		fi
+		PPM=${PPMBASE}/$i.ppm
+		PCM=${PCMBASE}/"$2".$(printf "%010d" $((($start * 60) + $i)))
+
+		$FRM2RAW $CURRAW buildout.$$ $TMPRAW &
+		CURUPDATE=$!
+# Image conversion for error correcting dither option
+#		convert -resize 110x200%! -resize 80x120 \
+#				-quantize YIQ -dither FloydSteinberg \
+#				-map ${BINDIR}/colormap.ppm \
+#				-gravity center -extent 128x192 \
+#				-background black \
+#				$PPM ppm:- | \
+# Image conversion for posterization option
+#		convert -resize 110x200%! -resize 128x192 \
+#				-quantize YIQ +dither \
+#				-map ${BINDIR}/colormap.ppm \
+#				-gravity center -extent 128x192 \
+#				-background black \
+#				$PPM ppm:- | \
+# Image conversion for monochrome option
+#		convert -resize 110x200%! -resize 128x192 \
+#				-channel All -random-threshold 30x80% \
+#				-gravity center -extent 128x192 \
+#				-background black \
+#				$PPM ppm:- | \
+# Image conversion for ordered dither option
+		convert -resize 110x200%! -resize 128x192 \
+				-ordered-dither o8x8,4,4,4 \
+				-gravity center -extent 128x192 \
+				-background black \
+				$PPM ppm:- | \
+			$PPM2RAW - -|\
+			$RAW2FRM $CURRAW - - | \
+			$FRMPRUNE $CURRAW - - $MAXSCORE | \
+			tee buildout.$$
+		wait $CURUPDATE
+		mv $TMPRAW $CURRAW
+		if [ -f $PCM ]
+		then
+			cat $PCM
+			PCMSIZE=$(stat -c '%s' $PCM)
+			if [ $PCMSIZE -lt $SAMPLES ]
+			then
+				dd if=/dev/zero bs=$(($SAMPLES - $PCMSIZE)) \
+					count=1 2>/dev/null
+			fi
+		else
+			# This actually holds DAC at lowest value...
+			# ...should output 0x80 instead?
+			dd if=/dev/zero bs=$SAMPLES count=1 2>/dev/null
+		fi
+	done >> "$2".out
+
+done
 
 echo Done!
 
