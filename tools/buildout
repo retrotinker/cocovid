@@ -68,31 +68,31 @@ dd if=/dev/zero bs=$SAMPLES count=1 2>/dev/null >> "$2".out
 mkfifo buildout.$$
 
 # should use ffmpeg to determing video length, for now use 4 hour max
-for start in $(seq 0 60 14400)
+for start in $(seq 0 10 14400)
 do
-# divide movie into 60 second chunks to decrease disk usage during conversion
+# divide movie into 10 second chunks to decrease disk usage during conversion
 
 	cd $PPMBASE
 	rm -f *
-	nice -n $NICE ffmpeg -ss $start -t $(($start + 60)) \
+	nice -n $NICE ffmpeg -ss $start -vframes 600 \
 		-i ../../mov/"$2".mov %d.ppm >/dev/null 2>&1
-	FRAMES=$(ls | wc -l)
 	cd - >/dev/null
 
-	if [ x$FRAMES = x0 ]
-	then
-		break
-	fi
-
-	for i in $(seq 1 $FRAMES)
+	for i in $(seq 1 600)
 	do
-		if [ $(($i % $((10 * 60)))) -eq 1 ]
+		PPM=${PPMBASE}/$i.ppm
+		PCM=${PCMBASE}/"$2".$(printf "%010d" $((($start * 60) + $i)))
+
+		if [ ! -f $PPM ]
+		then
+			break
+		fi
+
+		if [ $i -eq 1 ]
 		then
 			echo Processing frame $((($start * 60) + ${i}))... \
 				\($(date)\) >&2
 		fi
-		PPM=${PPMBASE}/$i.ppm
-		PCM=${PCMBASE}/"$2".$(printf "%010d" $((($start * 60) + $i)))
 
 		$FRM2RAW $CURRAW buildout.$$ $TMPRAW &
 		CURUPDATE=$!
