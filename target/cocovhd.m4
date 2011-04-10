@@ -205,15 +205,17 @@ SYNC	lda	FRAMCNT
 	orcc	#$50
 * Decrement data pump semaphore
 	dec	FRAMCNT
-* Switch to next audio frame
+* Save pointer to current playback frame
 	ldd	AUDRPTR
+* Switch to next audio frame for playback
 	ldy	AUDWPTR		; old write ptr becomes new read ptr
 	sty	AUDRPTR
+* Enable Vsync and (audio) timer interrupts ASAP
+	andcc	#$af
+* Switch to next audio frame for loading samples
 	std	AUDWPTR		; old readptr becomes new write ptr
 	addd	#AUBUFSZ
 	std	AUDWSTP		; store new write buffer end ptr
-* Enable Vsync and (audio) timer interrupts
-	andcc	#$af
 	bra	VIDLOOP
 
 * Execute reset vector
