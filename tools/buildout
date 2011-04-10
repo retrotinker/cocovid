@@ -8,9 +8,7 @@ NICE=2
 
 BINDIR=$(dirname $0)
 
-PPM2RAW=${BINDIR}/ppm2raw
-RAW2FRM=${BINDIR}/raw2frm
-FRMPRUNE=${BINDIR}/frmprune
+PPM2FRM=${BINDIR}/ppm2frm
 FRM2RAW=${BINDIR}/frm2raw
 WATCHOUT=${BINDIR}/watchout
 
@@ -122,9 +120,7 @@ do
 				-gravity center -extent 128x192 \
 				-background black \
 				$PPM ppm:- | \
-			$PPM2RAW - -|\
-			$RAW2FRM $CURRAW - - | \
-			$FRMPRUNE $CURRAW - - $MAXSCORE | \
+			$PPM2FRM - $CURRAW $MAXSCORE - | \
 			tee buildout.$$
 		wait $CURUPDATE
 		mv $TMPRAW $CURRAW
