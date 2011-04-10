@@ -12,10 +12,10 @@ all: $(TARGETS)
 clean:
 	rm -f $(TARGETS) $(GENERATED)
 
-cocovhd.asm: cocovhd.m4 $(BASE_MACROS) $(VHD_MACROS)
+cocovhd.asm: cocovid.m4 $(BASE_MACROS) $(VHD_MACROS)
 	if ! m4 -D storage=vhd $< > $@; then rm -f $@; exit 1; fi
 
-cocoide.asm: cocovhd.m4 $(BASE_MACROS) $(IDE_MACROS)
+cocoide.asm: cocovid.m4 $(BASE_MACROS) $(IDE_MACROS)
 	if ! m4 -D storage=ide $< > $@; then rm -f $@; exit 1; fi
 
 cocovhd.bin: cocovhd.asm
