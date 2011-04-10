@@ -10,9 +10,6 @@
 #include <errno.h>
 #include <stdint.h>
 
-#if 0
-#include "palette.h"
-#endif
 #include "colors.h"
 
 #define PPM_HORIZ_PIXELS	128

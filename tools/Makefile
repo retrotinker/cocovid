@@ -6,7 +6,7 @@ TARGETS=ppm2frm frm2raw raw2ppm \
 	ppm2raw raw2frm frmprune \
 	colormap.ppm START.frm END.frm BLACK.frm
 
-OTHERS=gencolors genmap
+OTHERS=gencolors genmap colors.h distance.h
 
 all: $(TARGETS)
 
@@ -43,7 +43,7 @@ frmprune: frmprune.c distance.h
 frm2raw: frm2raw.c
 	$(CC) $(CFLAGS) -o frm2raw frm2raw.c
 
-ppm2frm: ppm2frm.c
+ppm2frm: ppm2frm.c colors.h distance.h
 	$(CC) $(CFLAGS) -o ppm2frm ppm2frm.c
 
 START.frm: START.dat
