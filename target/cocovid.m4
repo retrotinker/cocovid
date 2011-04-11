@@ -201,19 +201,19 @@ AUDLOOP	data_read
 * Synchronize!  Wait for data pump semaphore...
 SYNC	lda	FRAMCNT
 	beq	SYNC
+* Save pointer to current frames for playback
+	ldd	AUDRPTR
 * Disable Vsync and (audio) timer interrupts
 	orcc	#$50
 * Decrement data pump semaphore
 	dec	FRAMCNT
-* Save pointer to current playback frame
-	ldd	AUDRPTR
 * Switch to next audio frame for playback
-	ldy	AUDWPTR		; old write ptr becomes new read ptr
-	sty	AUDRPTR
+	ldy	AUDWPTR		; y is used as actual ptr for playback
+	sty	AUDRPTR		; old write ptr becomes new read ptr
 * Enable Vsync and (audio) timer interrupts ASAP
 	andcc	#$af
 * Switch to next audio frame for loading samples
-	std	AUDWPTR		; old readptr becomes new write ptr
+	std	AUDWPTR		; old read ptr becomes new write ptr
 	addd	#AUBUFSZ
 	std	AUDWSTP		; store new write buffer end ptr
 	bra	VIDLOOP
