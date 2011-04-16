@@ -42,8 +42,5 @@ START.frm: START.dat
 END.frm: END.dat
 	xxd -r $< $@
 
-WHITE.raw: WHITE.dat
-	xxd -r $< $@
-
 BLACK.raw: BLACK.dat
 	xxd -r $< $@
