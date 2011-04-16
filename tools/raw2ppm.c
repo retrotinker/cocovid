@@ -11,10 +11,20 @@
 #include "palette.h"
 
 #define RAW_HORIZ_PIXELS	128
-#define RAW_VERT_PIXELS		192
 
+#if defined(MODE)
+#if MODE == 0
+#define RAW_VERT_PIXELS		192
 #define PPM_HEADER	"P6\n128 192\n255\n"
 #define PPM_HEADER_SIZE	15
+#elif MODE == 1
+#define RAW_VERT_PIXELS		96
+#define PPM_HEADER	"P6\n128 96\n255\n"
+#define PPM_HEADER_SIZE	14
+#endif
+#else
+#error "Unknown MODE value!"
+#endif
 
 unsigned char inbuf[RAW_VERT_PIXELS][RAW_HORIZ_PIXELS/2];
 struct rgb outbuf[RAW_VERT_PIXELS][RAW_HORIZ_PIXELS];

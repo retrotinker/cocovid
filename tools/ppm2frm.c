@@ -14,7 +14,17 @@
 #include "distance.h"
 
 #define RAW_HORIZ_PIXELS	128
+
+#if defined(MODE)
+#if MODE == 0
 #define RAW_VERT_PIXELS		192
+#elif MODE == 1
+#define RAW_VERT_PIXELS		96
+#endif
+#else
+#error "Unknown MODE value!"
+#endif
+
 #define PIXELS_PER_BYTE		2
 
 #define BYTES_PER_READ		2

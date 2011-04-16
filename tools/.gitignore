@@ -3,9 +3,12 @@ colors.h
 distance.h
 genmap
 colormap.ppm
-ppm2frm
-raw2ppm
-frm2raw
+ppm2frm0
+raw2ppm0
+frm2raw0
+ppm2frm1
+raw2ppm1
+frm2raw1
 START.frm
 END.frm
 BLACK.raw

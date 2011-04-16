@@ -6,10 +6,30 @@ MAXSCORE=832
 
 NICE=2
 
+if [ -z "$3" ]
+then
+	MODE=0
+else
+	MODE=$3
+fi
+
+if [ x$MODE == x0 ]
+then
+	RESIZE_OPTS="110x200%!"
+	RESOLUTION="128x192"
+elif [ x$MODE == x1 ]
+then
+	RESIZE_OPTS="110x100%!"
+	RESOLUTION="128x96"
+else
+	echo "Unknown video mode ${MODE}!"
+	exit 1
+fi
+
 BINDIR=$(dirname $0)
 
-PPM2FRM=${BINDIR}/ppm2frm
-FRM2RAW=${BINDIR}/frm2raw
+PPM2FRM=${BINDIR}/ppm2frm${MODE}
+FRM2RAW=${BINDIR}/frm2raw${MODE}
 WATCHOUT=${BINDIR}/watchout
 
 PPMBASE=../ppm/"$2"
@@ -58,7 +78,7 @@ cp ${BINDIR}/BLACK.raw $CURRAW
 
 echo Building final output file...
 
-$WATCHOUT "$2" &
+$WATCHOUT "$2" $MODE &
 
 cat ${BINDIR}/START.frm > "$2".out
 dd if=/dev/zero bs=$SAMPLES count=1 2>/dev/null >> "$2".out
@@ -95,29 +115,29 @@ do
 		$FRM2RAW $CURRAW buildout.$$ $TMPRAW &
 		CURUPDATE=$!
 # Image conversion for error correcting dither option
-#		convert -resize 110x200%! -resize 80x120 \
+#		convert -resize ${RESIZE_OPTS} -resize 80x120 \
 #				-quantize YIQ -dither FloydSteinberg \
 #				-map ${BINDIR}/colormap.ppm \
-#				-gravity center -extent 128x192 \
+#				-gravity center -extent ${RESOLUTION} \
 #				-background black \
 #				$PPM ppm:- | \
 # Image conversion for posterization option
-#		convert -resize 110x200%! -resize 128x192 \
+#		convert -resize ${RESIZE_OPTS} -resize ${RESOLUTION} \
 #				-quantize YIQ +dither \
 #				-map ${BINDIR}/colormap.ppm \
-#				-gravity center -extent 128x192 \
+#				-gravity center -extent ${RESOLUTION} \
 #				-background black \
 #				$PPM ppm:- | \
 # Image conversion for monochrome option
-#		convert -resize 110x200%! -resize 128x192 \
+#		convert -resize ${RESIZE_OPTS} -resize ${RESOLUTION} \
 #				-channel All -random-threshold 30x80% \
-#				-gravity center -extent 128x192 \
+#				-gravity center -extent ${RESOLUTION} \
 #				-background black \
 #				$PPM ppm:- | \
 # Image conversion for ordered dither option
-		convert -resize 110x200%! -resize 128x192 \
+		convert -resize ${RESIZE_OPTS} -resize ${RESOLUTION} \
 				-ordered-dither o8x8,4,4,4 \
-				-gravity center -extent 128x192 \
+				-gravity center -extent ${RESOLUTION} \
 				-background black \
 				$PPM ppm:- | \
 			$PPM2FRM - $CURRAW $MAXSCORE - | \

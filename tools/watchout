@@ -1,6 +1,24 @@
 #!/bin/sh
 
-RAW2PPM=$(dirname $0)/raw2ppm
+if [ -z "$2" ]
+then
+	MODE=0
+else
+	MODE=$2
+fi
+
+if [ x$MODE == x0 ]
+then
+	RESIZE_OPTS="180x100%!"
+elif [ x$MODE == x1 ]
+then
+	RESIZE_OPTS="90x100%!"
+else
+	echo "Unknown video mode ${MODE}!"
+	exit 1
+fi
+
+RAW2PPM=$(dirname $0)/raw2ppm${MODE}
 
 cleanup()
 {
@@ -27,7 +45,7 @@ done
 
 LASTMOD=$(stat -c '%Y' current.raw)
 $RAW2PPM current.raw current.ppm >/dev/null 2>&1
-while ! convert -resize 180x100%! current.ppm view.ppm >/dev/null 2>&1
+while ! convert -resize ${RESIZE_OPTS} current.ppm view.ppm >/dev/null 2>&1
 do
 	sleep 1
 done
@@ -54,7 +72,7 @@ do
 	then
 		LASTMOD=$CURMOD
 		$RAW2PPM current.raw current.ppm >/dev/null 2>&1
-		while ! convert -resize 180x100%! current.ppm view.ppm >/dev/null 2>&1
+		while ! convert -resize ${RESIZE_OPTS} current.ppm view.ppm >/dev/null 2>&1
 		do
 			sleep 1
 		done
