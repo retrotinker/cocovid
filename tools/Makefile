@@ -3,7 +3,6 @@
 CFLAGS=-Wall
 
 TARGETS=ppm2frm frm2raw raw2ppm \
-	ppm2raw \
 	colormap.ppm START.frm END.frm
 
 OTHERS=gencolors genmap colors.h distance.h
@@ -27,9 +26,6 @@ colormap.ppm: genmap
 
 genmap: genmap.c palette.h
 	$(CC) $(CFLAGS) -o genmap genmap.c
-
-ppm2raw: ppm2raw.c colors.h
-	$(CC) $(CFLAGS) -o ppm2raw ppm2raw.c
 
 raw2ppm: raw2ppm.c palette.h
 	$(CC) $(CFLAGS) -o raw2ppm raw2ppm.c

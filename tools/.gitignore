@@ -4,7 +4,6 @@ distance.h
 genmap
 colormap.ppm
 ppm2frm
-ppm2raw
 raw2ppm
 frm2raw
 START.frm
