@@ -42,7 +42,7 @@ echo Transcoding $(basename "$1")...
 nice -n $NICE ffmpeg -i "$1" -r 60 -ar 11040 -ac 1 -b 200000 -acodec pcm_u8 \
 	-f mov -y ../mov/"$2".mov
 nice -n $NICE ffmpeg -i ../mov/"$2".mov -vn -acodec pcm_u8 -y ../mov/"$2".wav
-nice -n $NICE normalize ../mov/"$2".wav
+nice -n $NICE normalize -a 0.7 ../mov/"$2".wav
 
 echo Converting .wav file to .pcm file and split into appropriately sized chunks...
 cd $PCMBASE
