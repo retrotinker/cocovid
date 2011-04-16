@@ -8,7 +8,6 @@ ppm2raw
 raw2ppm
 raw2frm
 frm2raw
-frmprune
 START.frm
 END.frm
 WHITE.raw
