@@ -39,6 +39,7 @@ PIA1D1	equ	$ff22
 PIA1C1	equ	$ff23
 
 GIMECFG	equ	$ff90
+GIMECSZ	equ	$10
 GIMEIRQ	equ	$ff92
 GIMEFRQ	equ	$ff93
 
@@ -52,6 +53,8 @@ AUBUFSZ	equ	$00b8
 VIDBASE	equ	$1c00
 VIDSIZE	equ	$3000
 
+VMODEMX	equ	1
+
 * Frame step value should be 2x actual frame step for 30fps source video
 * FRAMSTP	equ	1
 
@@ -64,6 +67,7 @@ TVL	equ	TIMEVAL%256
 
 * Loader can poke start sector for video data here
 VIDSTRT	fcb	$00,$00,$00,$00
+VIDMODE	fcb	$00
 
 EXEC	equ	*
 
@@ -117,11 +121,22 @@ CLRSCN	sta	,x+
 
 * ...and setup GIME registers
 	ldx	#GIMEINI
+	lda	VIDMODE
+	cmpa	#VMODEMX	; avoid unsupported video modes
+	lbgt	EXIT
+	lsla			; multiply VIDMODE by size of GIME config
+	lsla
+	lsla
+	lsla
+	leax	a,x		; load offset to desired GIME config
+	lda	#GIMECSZ
+	pshs	a
 	ldy	#GIMECFG
 GINLOOP	lda	,x+
 	sta	,y+
-	cmpx	#(GIMEINI+16)
+	dec	,s
 	bne	GINLOOP
+	leas	1,s
 
 * Clear audio buffer
 	ldx	#AUBUFST
@@ -235,8 +250,11 @@ EXIT	orcc	#$50
 
 * Init for video mode, set video buffer to VIDBASE
 * (Assumes default MMU setup...)
-GIMEINI	fcb	$7C,$20,$08,$20,TVH,TVL,$00,$00
+GIMEINI	equ	*
+MODE0	fcb	$7C,$20,$08,$20,TVH,TVL,$00,$00
 	fcb	$80,$12,$00,$00,$0F,$E3,$80,$00
+MODE1	fcb	$7C,$20,$08,$20,TVH,TVL,$00,$00
+	fcb	$82,$12,$00,$00,$0F,$E3,$80,$00
 
 * Init for palette regs
 RPALETE	fcb	$00,$09,$12,$1b,$24,$2d,$36,$3f
