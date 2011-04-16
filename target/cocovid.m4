@@ -44,6 +44,7 @@ GIMEIRQ	equ	$ff92
 GIMEFRQ	equ	$ff93
 
 PALBASE	equ	$ffb0
+PALETSZ	equ	$10
 
 SAMR1CL	equ	$ffd8
 SAMR1ST	equ	$ffd9
@@ -54,6 +55,7 @@ VIDBASE	equ	$1c00
 VIDSIZE	equ	$3000
 
 VMODEMX	equ	1
+PALETMX	equ	1
 
 * Frame step value should be 2x actual frame step for 30fps source video
 * FRAMSTP	equ	1
@@ -68,6 +70,7 @@ TVL	equ	TIMEVAL%256
 * Loader can poke start sector for video data here
 VIDSTRT	fcb	$00,$00,$00,$00
 VIDMODE	fcb	$00
+PALETTE	fcb	$00
 
 EXEC	equ	*
 
@@ -105,12 +108,23 @@ EXEC	equ	*
 	sta	SAMR1ST
 
 * Setup palette...
-	ldx	#RPALETE
+	ldx	#PALINIT
+	lda	PALETTE
+	cmpa	#PALETMX	; avoid unknown palettes
+	lbgt	EXIT
+	lsla			; multiply PALETTE by size of palette regs
+	lsla
+	lsla
+	lsla
+	leax	a,x		; load offset to desired palette
+	lda	#PALETSZ
+	pshs	a
 	ldy	#PALBASE
 PINLOOP	lda	,x+
 	sta	,y+
-	cmpx	#(RPALETE+16)
+	dec	,s
 	bne	PINLOOP
+	leas	1,s
 
 * ...clear screen...
 	ldx	#VIDBASE
@@ -257,9 +271,10 @@ MODE1	fcb	$7C,$20,$08,$20,TVH,TVL,$00,$00
 	fcb	$82,$12,$00,$00,$0F,$E3,$80,$00
 
 * Init for palette regs
-RPALETE	fcb	$00,$09,$12,$1b,$24,$2d,$36,$3f
+PALINIT	equ	*
+RGB	fcb	$00,$09,$12,$1b,$24,$2d,$36,$3f
 	fcb	$07,$0e,$15,$1c,$23,$2a,$31,$38
-CPALETE	fcb	$00,$2c,$12,$2e,$27,$29,$24,$30
+CMP	fcb	$00,$2c,$12,$2e,$27,$29,$24,$30
 	fcb	$10,$0a,$01,$0f,$06,$1a,$04,$20
 
 * STEPCNT	rmb	1
