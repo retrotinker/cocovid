@@ -6,6 +6,7 @@ TARGETS=ppm2frm0 frm2raw0 raw2ppm0 \
 	ppm2frm1 frm2raw1 raw2ppm1 \
 	ppm2frm2 frm2raw2 raw2ppm2 \
 	ppm2frm3 frm2raw3 raw2ppm3 \
+	ppm2frm4 frm2raw4 raw2ppm4 \
 	START.frm END.frm \
 	colormap16.ppm colormap256.ppm
 
@@ -100,3 +101,12 @@ frm2raw3: frm2raw.c
 
 ppm2frm3: ppm2frm.c distance2.h
 	$(CC) $(CFLAGS) -DMODE=3 -o $@ ppm2frm.c
+
+raw2ppm4: raw2ppm.c palette2.h
+	$(CC) $(CFLAGS) -DMODE=4 -o $@ raw2ppm.c
+
+frm2raw4: frm2raw.c
+	$(CC) $(CFLAGS) -DMODE=4 -o $@ frm2raw.c
+
+ppm2frm4: ppm2frm.c distance2.h
+	$(CC) $(CFLAGS) -DMODE=4 -o $@ ppm2frm.c

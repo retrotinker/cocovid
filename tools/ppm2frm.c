@@ -14,28 +14,35 @@
 #if MODE == 0
 #include "colors16.h"
 #include "distance16.h"
+#define RAW_HORIZ_PIXELS	128
 #define RAW_VERT_PIXELS		192
 #define PIXELS_PER_BYTE		2
 #elif MODE == 1
 #include "colors16.h"
 #include "distance16.h"
+#define RAW_HORIZ_PIXELS	128
 #define RAW_VERT_PIXELS		96
 #define PIXELS_PER_BYTE		2
 #elif MODE == 2
 #include "colors256.h"
 #include "distance256.h"
+#define RAW_HORIZ_PIXELS	128
 #define RAW_VERT_PIXELS		96
 #define PIXELS_PER_BYTE		1
 #elif MODE == 3
 #include "distance2.h"
+#define RAW_HORIZ_PIXELS	128
+#define RAW_VERT_PIXELS		192
+#define PIXELS_PER_BYTE		8
+#elif MODE == 4
+#include "distance2.h"
+#define RAW_HORIZ_PIXELS	256
 #define RAW_VERT_PIXELS		192
 #define PIXELS_PER_BYTE		8
 #endif
 #else
 #error "Unknown MODE value!"
 #endif
-
-#define RAW_HORIZ_PIXELS	128
 
 #define BYTES_PER_READ		2
 #define MAX_READS_PER_RUN	8

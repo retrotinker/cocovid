@@ -12,23 +12,29 @@
 
 #if defined(MODE)
 #if MODE == 0
+#define RAW_HORIZ_PIXELS	128
 #define RAW_VERT_PIXELS		192
 #define PIXELS_PER_BYTE		2
 #elif MODE == 1
+#define RAW_HORIZ_PIXELS	128
 #define RAW_VERT_PIXELS		96
 #define PIXELS_PER_BYTE		2
 #elif MODE == 2
+#define RAW_HORIZ_PIXELS	128
 #define RAW_VERT_PIXELS		96
 #define PIXELS_PER_BYTE		1
 #elif MODE == 3
+#define RAW_HORIZ_PIXELS	128
+#define RAW_VERT_PIXELS		192
+#define PIXELS_PER_BYTE		8
+#elif MODE == 4
+#define RAW_HORIZ_PIXELS	256
 #define RAW_VERT_PIXELS		192
 #define PIXELS_PER_BYTE		8
 #endif
 #else
 #error "Unknown MODE value!"
 #endif
-
-#define RAW_HORIZ_PIXELS	128
 
 unsigned char inbuf[RAW_VERT_PIXELS * RAW_HORIZ_PIXELS / PIXELS_PER_BYTE * 2 + 2];
 unsigned char outbuf[RAW_VERT_PIXELS * RAW_HORIZ_PIXELS / PIXELS_PER_BYTE];
