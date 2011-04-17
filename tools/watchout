@@ -22,6 +22,9 @@ then
 elif [ x$MODE == x4 ]
 then
 	RESIZE_OPTS="90x100%!"
+elif [ x$MODE == x5 ]
+then
+	RESIZE_OPTS="90x200%!"
 else
 	echo "Unknown video mode ${MODE}!"
 	exit 1

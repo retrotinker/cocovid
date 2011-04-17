@@ -39,6 +39,12 @@
 #define PIXELS_PER_BYTE		8
 #define PPM_HEADER	"P6\n256 192\n255\n"
 #define PPM_HEADER_SIZE	15
+#elif MODE == 5
+#define RAW_HORIZ_PIXELS	512
+#define RAW_VERT_PIXELS		192
+#define PIXELS_PER_BYTE		8
+#define PPM_HEADER	"P6\n512 192\n255\n"
+#define PPM_HEADER_SIZE	15
 #endif
 #else
 #error "Unknown MODE value!"

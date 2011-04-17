@@ -54,13 +54,19 @@ then
 	RESOLUTION="128x192"
 	RESIZE_OPTS="110x200%!"
 	RESIZE_RESOLUTION=$RESOLUTION
-	DITHER_OPTS="-monochrome"
+	DITHER_OPTS="+dither -colors 2 -colorspace gray -normalize"
 elif [ x$MODE == x4 ]
 then
 	RESOLUTION="256x192"
 	RESIZE_OPTS="110x100%!"
 	RESIZE_RESOLUTION=$RESOLUTION
-	DITHER_OPTS="-monochrome"
+	DITHER_OPTS="+dither -colors 2 -colorspace gray -normalize"
+elif [ x$MODE == x5 ]
+then
+	RESOLUTION="512x192"
+	RESIZE_OPTS="220x100%!"
+	RESIZE_RESOLUTION=$RESOLUTION
+	DITHER_OPTS="+dither -colors 2 -colorspace gray -normalize"
 else
 	echo "Unknown video mode ${MODE}!"
 	exit 1

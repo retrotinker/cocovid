@@ -31,6 +31,10 @@
 #define RAW_HORIZ_PIXELS	256
 #define RAW_VERT_PIXELS		192
 #define PIXELS_PER_BYTE		8
+#elif MODE == 5
+#define RAW_HORIZ_PIXELS	512
+#define RAW_VERT_PIXELS		192
+#define PIXELS_PER_BYTE		8
 #endif
 #else
 #error "Unknown MODE value!"
