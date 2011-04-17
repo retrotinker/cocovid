@@ -5,6 +5,7 @@ CFLAGS=-Wall
 TARGETS=ppm2frm0 frm2raw0 raw2ppm0 \
 	ppm2frm1 frm2raw1 raw2ppm1 \
 	ppm2frm2 frm2raw2 raw2ppm2 \
+	ppm2frm3 frm2raw3 raw2ppm3 \
 	START.frm END.frm \
 	colormap16.ppm colormap256.ppm
 
@@ -90,3 +91,12 @@ frm2raw2: frm2raw.c
 
 ppm2frm2: ppm2frm.c colors256.h distance256.h
 	$(CC) $(CFLAGS) -DMODE=2 -o $@ ppm2frm.c
+
+raw2ppm3: raw2ppm.c palette2.h
+	$(CC) $(CFLAGS) -DMODE=3 -o $@ raw2ppm.c
+
+frm2raw3: frm2raw.c
+	$(CC) $(CFLAGS) -DMODE=3 -o $@ frm2raw.c
+
+ppm2frm3: ppm2frm.c distance2.h
+	$(CC) $(CFLAGS) -DMODE=3 -o $@ ppm2frm.c

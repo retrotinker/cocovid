@@ -24,6 +24,11 @@
 #define PIXELS_PER_BYTE		1
 #define PPM_HEADER	"P6\n128 96\n255\n"
 #define PPM_HEADER_SIZE	14
+#elif MODE == 3
+#define RAW_VERT_PIXELS		192
+#define PIXELS_PER_BYTE		8
+#define PPM_HEADER	"P6\n128 192\n255\n"
+#define PPM_HEADER_SIZE	15
 #endif
 #else
 #error "Unknown MODE value!"
@@ -33,6 +38,8 @@
 #include "palette256.h"
 #elif PIXELS_PER_BYTE == 2
 #include "palette16.h"
+#elif PIXELS_PER_BYTE == 8
+#include "palette2.h"
 #else
 #error "Unknown PIXELS_PER_BYTE value!"
 #endif
@@ -90,6 +97,31 @@ int main(int argc, char *argv[])
 			outbuf[j][i].r = palette[inbuf[j][i]].r;
 			outbuf[j][i].g = palette[inbuf[j][i]].g;
 			outbuf[j][i].b = palette[inbuf[j][i]].b;
+#elif PIXELS_PER_BYTE == 8
+			outbuf[j][i*8].r = (inbuf[j][i] & 0x80) ? 0xff : 0x00;
+			outbuf[j][i*8].g = (inbuf[j][i] & 0x80) ? 0xff : 0x00;
+			outbuf[j][i*8].b = (inbuf[j][i] & 0x80) ? 0xff : 0x00;
+			outbuf[j][i*8+1].r = (inbuf[j][i] & 0x40) ? 0xff : 0x00;
+			outbuf[j][i*8+1].g = (inbuf[j][i] & 0x40) ? 0xff : 0x00;
+			outbuf[j][i*8+1].b = (inbuf[j][i] & 0x40) ? 0xff : 0x00;
+			outbuf[j][i*8+2].r = (inbuf[j][i] & 0x20) ? 0xff : 0x00;
+			outbuf[j][i*8+2].g = (inbuf[j][i] & 0x20) ? 0xff : 0x00;
+			outbuf[j][i*8+2].b = (inbuf[j][i] & 0x20) ? 0xff : 0x00;
+			outbuf[j][i*8+3].r = (inbuf[j][i] & 0x10) ? 0xff : 0x00;
+			outbuf[j][i*8+3].g = (inbuf[j][i] & 0x10) ? 0xff : 0x00;
+			outbuf[j][i*8+3].b = (inbuf[j][i] & 0x10) ? 0xff : 0x00;
+			outbuf[j][i*8+4].r = (inbuf[j][i] & 0x08) ? 0xff : 0x00;
+			outbuf[j][i*8+4].g = (inbuf[j][i] & 0x08) ? 0xff : 0x00;
+			outbuf[j][i*8+4].b = (inbuf[j][i] & 0x08) ? 0xff : 0x00;
+			outbuf[j][i*8+5].r = (inbuf[j][i] & 0x04) ? 0xff : 0x00;
+			outbuf[j][i*8+5].g = (inbuf[j][i] & 0x04) ? 0xff : 0x00;
+			outbuf[j][i*8+5].b = (inbuf[j][i] & 0x04) ? 0xff : 0x00;
+			outbuf[j][i*8+6].r = (inbuf[j][i] & 0x02) ? 0xff : 0x00;
+			outbuf[j][i*8+6].g = (inbuf[j][i] & 0x02) ? 0xff : 0x00;
+			outbuf[j][i*8+6].b = (inbuf[j][i] & 0x02) ? 0xff : 0x00;
+			outbuf[j][i*8+7].r = (inbuf[j][i] & 0x01) ? 0xff : 0x00;
+			outbuf[j][i*8+7].g = (inbuf[j][i] & 0x01) ? 0xff : 0x00;
+			outbuf[j][i*8+7].b = (inbuf[j][i] & 0x01) ? 0xff : 0x00;
 #else
 #error "Unknown PIXELS_PER_BYTE value!"
 #endif

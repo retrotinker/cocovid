@@ -17,6 +17,9 @@ frm2raw1
 ppm2frm2
 raw2ppm2
 frm2raw2
+ppm2frm3
+raw2ppm3
+frm2raw3
 START.frm
 END.frm
 BLACK.raw

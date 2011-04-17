@@ -25,7 +25,7 @@ fi
 #	DITHER_OPTS="-quantize YIQ +dither \
 #			-map ${BINDIR}/colormap.ppm"
 # Image conversion for monochrome option
-#	DITHER_OPTS="-channel All -random-threshold 30x80%"
+#	DITHER_OPTS="-monochrome"
 # Image conversion for ordered dither option (16-colors)
 #	DITHER_OPTS="-ordered-dither o8x8,4,4,4"
 # Image conversion for ordered dither option (256-colors)
@@ -49,6 +49,12 @@ then
 	RESIZE_OPTS="110x100%!"
 	RESIZE_RESOLUTION=$RESOLUTION
 	DITHER_OPTS="-ordered-dither o8x8,8,8,8"
+elif [ x$MODE == x3 ]
+then
+	RESOLUTION="128x192"
+	RESIZE_OPTS="110x200%!"
+	RESIZE_RESOLUTION=$RESOLUTION
+	DITHER_OPTS="-monochrome"
 else
 	echo "Unknown video mode ${MODE}!"
 	exit 1

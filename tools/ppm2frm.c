@@ -26,6 +26,10 @@
 #include "distance256.h"
 #define RAW_VERT_PIXELS		96
 #define PIXELS_PER_BYTE		1
+#elif MODE == 3
+#include "distance2.h"
+#define RAW_VERT_PIXELS		192
+#define PIXELS_PER_BYTE		8
 #endif
 #else
 #error "Unknown MODE value!"
@@ -90,6 +94,43 @@ void ppm2raw(void)
 			curraw[i][j] = color[RGB(curmap.pixel[i][j].r,
 							curmap.pixel[i][j].g,
 							curmap.pixel[i][j].b)];
+#elif PIXELS_PER_BYTE == 8
+			unsigned char val = 0;
+
+			if ((curmap.pixel[i][8*j].r) ||
+			    (curmap.pixel[i][8*j].g) ||
+			    (curmap.pixel[i][8*j].g))
+				val |= 0x80;
+			if ((curmap.pixel[i][8*j+1].r) ||
+			    (curmap.pixel[i][8*j+1].g) ||
+			    (curmap.pixel[i][8*j+1].g))
+				val |= 0x40;
+			if ((curmap.pixel[i][8*j+2].r) ||
+			    (curmap.pixel[i][8*j+2].g) ||
+			    (curmap.pixel[i][8*j+2].g))
+				val |= 0x20;
+			if ((curmap.pixel[i][8*j+3].r) ||
+			    (curmap.pixel[i][8*j+3].g) ||
+			    (curmap.pixel[i][8*j+3].g))
+				val |= 0x10;
+			if ((curmap.pixel[i][8*j+4].r) ||
+			    (curmap.pixel[i][8*j+4].g) ||
+			    (curmap.pixel[i][8*j+4].g))
+				val |= 0x08;
+			if ((curmap.pixel[i][8*j+5].r) ||
+			    (curmap.pixel[i][8*j+5].g) ||
+			    (curmap.pixel[i][8*j+5].g))
+				val |= 0x04;
+			if ((curmap.pixel[i][8*j+6].r) ||
+			    (curmap.pixel[i][8*j+6].g) ||
+			    (curmap.pixel[i][8*j+6].g))
+				val |= 0x02;
+			if ((curmap.pixel[i][8*j+7].r) ||
+			    (curmap.pixel[i][8*j+7].g) ||
+			    (curmap.pixel[i][8*j+7].g))
+				val |= 0x01;
+
+			curraw[i][j] = val;
 #else
 #error "Unknown PIXELS_PER_BYTE value!"
 #endif
@@ -137,6 +178,9 @@ void raw2runs(void)
 #elif PIXELS_PER_BYTE == 1
 				runpool[currun].colordiff +=
 					distance[curraw[i][j]][prevraw[i][j]];
+#elif PIXELS_PER_BYTE == 8
+				runpool[currun].colordiff +=
+					distance[curraw[i][j] ^ prevraw[i][j]];
 #else
 #error "Unknown PIXELS_PER_BYTE value!"
 #endif

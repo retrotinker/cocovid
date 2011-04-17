@@ -20,6 +20,9 @@
 #elif MODE == 2
 #define RAW_VERT_PIXELS		96
 #define PIXELS_PER_BYTE		1
+#elif MODE == 3
+#define RAW_VERT_PIXELS		192
+#define PIXELS_PER_BYTE		8
 #endif
 #else
 #error "Unknown MODE value!"

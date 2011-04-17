@@ -54,8 +54,8 @@ AUBUFSZ	equ	$00b8
 VIDBASE	equ	$1c00
 VIDSIZE	equ	$3000
 
-VMODEMX	equ	2
-PALETMX	equ	2
+VMODEMX	equ	3
+PALETMX	equ	4
 
 * Frame step value should be 2x actual frame step for 30fps source video
 * FRAMSTP	equ	1
@@ -271,14 +271,20 @@ MODE1	fcb	$7c,$20,$08,$20,TVH,TVL,$00,$00
 	fcb	$82,$12,$00,$00,$0f,$e3,$80,$00
 MODE2	fcb	$7c,$20,$08,$20,TVH,TVL,$00,$00
 	fcb	$82,$19,$00,$00,$0f,$e3,$80,$00
+MODE3	fcb	$7c,$20,$08,$20,TVH,TVL,$00,$00
+	fcb	$80,$00,$00,$00,$0f,$e3,$80,$00
 
 * Init for palette regs
 PALINIT	equ	*
-RGB	fcb	$00,$09,$12,$1b,$24,$2d,$36,$3f
+RGB16	fcb	$00,$09,$12,$1b,$24,$2d,$36,$3f
 	fcb	$07,$0e,$15,$1c,$23,$2a,$31,$38
-CMP	fcb	$00,$2c,$12,$2e,$27,$29,$24,$30
+CMP16	fcb	$00,$2c,$12,$2e,$27,$29,$24,$30
 	fcb	$10,$0a,$01,$0f,$06,$1a,$04,$20
 CMP256	fcb	$00,$10,$20,$30,$00,$00,$00,$00
+	fcb	$00,$00,$00,$00,$00,$00,$00,$00
+RGB2	fcb	$00,$3f,$00,$00,$00,$00,$00,$00
+	fcb	$00,$00,$00,$00,$00,$00,$00,$00
+CMP2	fcb	$00,$30,$00,$00,$00,$00,$00,$00
 	fcb	$00,$00,$00,$00,$00,$00,$00,$00
 
 * STEPCNT	rmb	1
