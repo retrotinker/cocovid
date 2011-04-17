@@ -1,11 +1,16 @@
+gencolors4
 gencolors16
 gencolors256
+colors4.h
 colors16.h
 colors256.h
+distance4.h
 distance16.h
 distance256.h
+genmap4
 genmap16
 genmap256
+colormap4.ppm
 colormap16.ppm
 colormap256.ppm
 ppm2frm0
@@ -26,6 +31,9 @@ frm2raw4
 ppm2frm5
 raw2ppm5
 frm2raw5
+ppm2frm6
+raw2ppm6
+frm2raw6
 START.frm
 END.frm
 BLACK.raw

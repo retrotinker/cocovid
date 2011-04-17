@@ -12,6 +12,11 @@
 #define MAXR	64
 #define MAXG	64
 #define MAXB	64
+#elif COLORS == 4
+#include "palette4.h"
+#define MAXR	2
+#define MAXG	2
+#define MAXB	2
 #else
 #error "Unknown value for COLORS!"
 #endif

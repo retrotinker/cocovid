@@ -15,6 +15,10 @@
 #include "palette256.h"
 #define PPM_HEADER	"P6\n256 1\n255\n"
 #define PPM_HEADER_SIZE	13
+#elif COLORS == 4
+#include "palette4.h"
+#define PPM_HEADER	"P6\n4 1\n255\n"
+#define PPM_HEADER_SIZE	11
 #else
 #error "Unknown value for COLORS!"
 #endif

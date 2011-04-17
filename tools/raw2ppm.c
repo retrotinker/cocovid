@@ -45,6 +45,12 @@
 #define PIXELS_PER_BYTE		8
 #define PPM_HEADER	"P6\n512 192\n255\n"
 #define PPM_HEADER_SIZE	15
+#elif MODE == 6
+#define RAW_HORIZ_PIXELS	128
+#define RAW_VERT_PIXELS		96
+#define PIXELS_PER_BYTE		4
+#define PPM_HEADER	"P6\n128 96\n255\n"
+#define PPM_HEADER_SIZE	14
 #endif
 #else
 #error "Unknown MODE value!"
@@ -56,6 +62,8 @@
 #include "palette16.h"
 #elif PIXELS_PER_BYTE == 8
 #include "palette2.h"
+#elif PIXELS_PER_BYTE == 4
+#include "palette4.h"
 #else
 #error "Unknown PIXELS_PER_BYTE value!"
 #endif
@@ -136,6 +144,19 @@ int main(int argc, char *argv[])
 			outbuf[j][i*8+7].r = (inbuf[j][i] & 0x01) ? 0xff : 0x00;
 			outbuf[j][i*8+7].g = (inbuf[j][i] & 0x01) ? 0xff : 0x00;
 			outbuf[j][i*8+7].b = (inbuf[j][i] & 0x01) ? 0xff : 0x00;
+#elif PIXELS_PER_BYTE == 4
+			outbuf[j][i*4].r = palette[(inbuf[j][i] & 0xc0) >> 6].r;
+			outbuf[j][i*4].g = palette[(inbuf[j][i] & 0xc0) >> 6].g;
+			outbuf[j][i*4].b = palette[(inbuf[j][i] & 0xc0) >> 6].b;
+			outbuf[j][i*4+1].r = palette[(inbuf[j][i] & 0x30) >> 4].r;
+			outbuf[j][i*4+1].g = palette[(inbuf[j][i] & 0x30) >> 4].g;
+			outbuf[j][i*4+1].b = palette[(inbuf[j][i] & 0x30) >> 4].b;
+			outbuf[j][i*4+2].r = palette[(inbuf[j][i] & 0x0c) >> 2].r;
+			outbuf[j][i*4+2].g = palette[(inbuf[j][i] & 0x0c) >> 2].g;
+			outbuf[j][i*4+2].b = palette[(inbuf[j][i] & 0x0c) >> 2].b;
+			outbuf[j][i*4+3].r = palette[inbuf[j][i] & 0x03].r;
+			outbuf[j][i*4+3].g = palette[inbuf[j][i] & 0x03].g;
+			outbuf[j][i*4+3].b = palette[inbuf[j][i] & 0x03].b;
 #else
 #error "Unknown PIXELS_PER_BYTE value!"
 #endif

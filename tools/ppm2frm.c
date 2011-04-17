@@ -44,6 +44,12 @@
 #define RAW_HORIZ_PIXELS	512
 #define RAW_VERT_PIXELS		192
 #define PIXELS_PER_BYTE		8
+#elif MODE == 6
+#include "colors4.h"
+#include "distance4.h"
+#define RAW_HORIZ_PIXELS	128
+#define RAW_VERT_PIXELS		96
+#define PIXELS_PER_BYTE		4
 #endif
 #else
 #error "Unknown MODE value!"
@@ -143,6 +149,26 @@ void ppm2raw(void)
 				val |= 0x01;
 
 			curraw[i][j] = val;
+#elif PIXELS_PER_BYTE == 4
+			unsigned char val;
+
+			val = color[RGB(curmap.pixel[i][4*j].r,
+					curmap.pixel[i][4*j].g,
+					curmap.pixel[i][4*j].b)];
+			val <<= 2;
+			val |= color[RGB(curmap.pixel[i][4*j+1].r,
+					 curmap.pixel[i][4*j+1].g,
+					 curmap.pixel[i][4*j+1].b)];
+			val <<= 2;
+			val |= color[RGB(curmap.pixel[i][4*j+2].r,
+					 curmap.pixel[i][4*j+2].g,
+					 curmap.pixel[i][4*j+2].b)];
+			val <<= 2;
+			val |= color[RGB(curmap.pixel[i][4*j+3].r,
+					 curmap.pixel[i][4*j+3].g,
+					 curmap.pixel[i][4*j+3].b)];
+
+			curraw[i][j] = val;
 #else
 #error "Unknown PIXELS_PER_BYTE value!"
 #endif
@@ -193,6 +219,15 @@ void raw2runs(void)
 #elif PIXELS_PER_BYTE == 8
 				runpool[currun].colordiff +=
 					distance[curraw[i][j] ^ prevraw[i][j]];
+#elif PIXELS_PER_BYTE == 4
+				runpool[currun].colordiff +=
+					distance[(curraw[i][j] & 0xc0) >> 6][(prevraw[i][j] & 0xc0) >> 6];
+				runpool[currun].colordiff +=
+					distance[(curraw[i][j] & 0x30) >> 4][(prevraw[i][j] & 0x30) >> 4];
+				runpool[currun].colordiff +=
+					distance[(curraw[i][j] & 0x0c) >> 2][(prevraw[i][j] & 0x0c) >> 2];
+				runpool[currun].colordiff +=
+					distance[curraw[i][j] & 0x03][prevraw[i][j] & 0x03];
 #else
 #error "Unknown PIXELS_PER_BYTE value!"
 #endif
