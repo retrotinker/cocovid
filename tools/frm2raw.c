@@ -10,20 +10,25 @@
 
 #include <stdint.h>
 
-#define RAW_HORIZ_PIXELS	128
-
 #if defined(MODE)
 #if MODE == 0
 #define RAW_VERT_PIXELS		192
+#define PIXELS_PER_BYTE		2
 #elif MODE == 1
 #define RAW_VERT_PIXELS		96
+#define PIXELS_PER_BYTE		2
+#elif MODE == 2
+#define RAW_VERT_PIXELS		96
+#define PIXELS_PER_BYTE		1
 #endif
 #else
 #error "Unknown MODE value!"
 #endif
 
-unsigned char inbuf[RAW_VERT_PIXELS * RAW_HORIZ_PIXELS/2 * 2 + 2];
-unsigned char outbuf[RAW_VERT_PIXELS * RAW_HORIZ_PIXELS/2];
+#define RAW_HORIZ_PIXELS	128
+
+unsigned char inbuf[RAW_VERT_PIXELS * RAW_HORIZ_PIXELS / PIXELS_PER_BYTE * 2 + 2];
+unsigned char outbuf[RAW_VERT_PIXELS * RAW_HORIZ_PIXELS / PIXELS_PER_BYTE];
 
 void usage(char *prg)
 {

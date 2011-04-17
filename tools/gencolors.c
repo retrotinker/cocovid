@@ -1,11 +1,21 @@
 #include <stdio.h>
 #include <math.h>
 
-#include "palette.h"
-
+#if defined(COLORS)
+#if COLORS == 16
+#include "palette16.h"
 #define MAXR	8
 #define MAXG	8
 #define MAXB	8
+#elif COLORS == 256
+#include "palette256.h"
+#define MAXR	64
+#define MAXG	64
+#define MAXB	64
+#else
+#error "Unknown value for COLORS!"
+#endif
+#endif
 
 #define RGB(r, g, b)	((r * MAXG * MAXB) + (g * MAXB) + b)
 
@@ -18,8 +28,11 @@ uint8_t color_table[MAXR * MAXG * MAXB];
 /*
  * distance_table is indexed by two palette colors and
  * returns the distance between them in the YIQ cube.
+ *
+ * (NOTE: uint16_t is OK due to fractional multipliers in
+ *        conversion to YIQ colorspace.)
  */
-uint16_t distance_table[16][16];
+uint16_t distance_table[COLORS][COLORS];
 
 struct yiq {
         float y, i, q;
@@ -98,8 +111,8 @@ void init_distance()
 {
 	int i, j;
 
-	for (i = 0; i < 16; i++)
-		for (j = 0; j < 16; j++) {
+	for (i = 0; i < COLORS; i++)
+		for (j = 0; j < COLORS; j++) {
 			distance_table[i][j] =
 				(uint16_t)(yiq_distance(palette[i],
 							palette[j]) + 0.5);
@@ -157,12 +170,12 @@ void gen_distance()
 	printf("\n");
 	printf("#include <stdint.h>\n");
 	printf("\n");
-	printf("uint16_t distance[16][16] = {\n");
+	printf("uint16_t distance[%d][%d] = {\n", COLORS, COLORS);
 
 
-	for (i = 0; i < 16; i++) {
+	for (i = 0; i < COLORS; i++) {
 		printf("\t{\n");
-		for (j = 0; j < 16; j++) {
+		for (j = 0; j < COLORS; j++) {
 			if (j % 8 == 0)
 				printf("\t\t0x%04x,", distance_table[i][j]);
 			else

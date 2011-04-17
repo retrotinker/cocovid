@@ -10,22 +10,28 @@
 #include <errno.h>
 #include <stdint.h>
 
-#include "colors.h"
-#include "distance.h"
-
-#define RAW_HORIZ_PIXELS	128
-
 #if defined(MODE)
 #if MODE == 0
+#include "colors16.h"
+#include "distance16.h"
 #define RAW_VERT_PIXELS		192
+#define PIXELS_PER_BYTE		2
 #elif MODE == 1
+#include "colors16.h"
+#include "distance16.h"
 #define RAW_VERT_PIXELS		96
+#define PIXELS_PER_BYTE		2
+#elif MODE == 2
+#include "colors256.h"
+#include "distance256.h"
+#define RAW_VERT_PIXELS		96
+#define PIXELS_PER_BYTE		1
 #endif
 #else
 #error "Unknown MODE value!"
 #endif
 
-#define PIXELS_PER_BYTE		2
+#define RAW_HORIZ_PIXELS	128
 
 #define BYTES_PER_READ		2
 #define MAX_READS_PER_RUN	8
@@ -68,9 +74,9 @@ void ppm2raw(void)
 
 	for (i = 0; i < RAW_VERT_PIXELS; i++)
 		for (j = 0; j < RAW_HORIZ_PIXELS / PIXELS_PER_BYTE; j++) {
+#if PIXELS_PER_BYTE == 2
 			unsigned char val;
 
-#if (PIXELS_PER_BYTE == 2)
 			val = color[RGB(curmap.pixel[i][2*j].r,
 					curmap.pixel[i][2*j].g,
 					curmap.pixel[i][2*j].b)];
@@ -78,11 +84,15 @@ void ppm2raw(void)
 			val |= color[RGB(curmap.pixel[i][2*j+1].r,
 					 curmap.pixel[i][2*j+1].g,
 					 curmap.pixel[i][2*j+1].b)];
+
+			curraw[i][j] = val;
+#elif PIXELS_PER_BYTE == 1
+			curraw[i][j] = color[RGB(curmap.pixel[i][j].r,
+							curmap.pixel[i][j].g,
+							curmap.pixel[i][j].b)];
 #else
 #error "Unknown PIXELS_PER_BYTE value!"
 #endif
-
-			curraw[i][j] = val;
 		}
 }
 
@@ -119,10 +129,17 @@ void raw2runs(void)
 
 			if (active) {
 				/* update colordiff accumulation and data length */
+#if PIXELS_PER_BYTE == 2
 				runpool[currun].colordiff +=
 					distance[curraw[i][j] >> 4][prevraw[i][j] >> 4];
 				runpool[currun].colordiff +=
 					distance[curraw[i][j] & 0x0f][prevraw[i][j] & 0x0f];
+#elif PIXELS_PER_BYTE == 1
+				runpool[currun].colordiff +=
+					distance[curraw[i][j]][prevraw[i][j]];
+#else
+#error "Unknown PIXELS_PER_BYTE value!"
+#endif
 				runpool[currun].datalen += 2;
 			}
 		}
@@ -243,7 +260,8 @@ int main(int argc, char *argv[])
 				maxscore - 2) {
 			outbuf[outsize++] =
 				(((runpool[i].offset >> 1) & 0x1f00) >> 5) |
-					(((runpool[i].datalen - 2) / 2) - 1);
+					(((runpool[i].datalen - 2) /
+						BYTES_PER_READ) - 1);
 			outbuf[outsize++] = ((runpool[i].offset >> 1) & 0x00ff);
 			for (j = 0; j < runpool[i].datalen - 2; j++) {
 				outbuf[outsize++] = runpool[i].data[j];

@@ -13,14 +13,42 @@ else
 	MODE=$3
 fi
 
+#
+# Image conversion for error correcting dither option
+#	# for 128x192
+#	RESIZE_RESOLUTION="80x120"
+#	# for 128x96
+#	RESIZE_RESOLUTION="80x60"
+#	DITHER_OPTS="-quantize YIQ -dither FloydSteinberg \
+#			-map ${BINDIR}/colormap.ppm"
+# Image conversion for posterization option
+#	DITHER_OPTS="-quantize YIQ +dither \
+#			-map ${BINDIR}/colormap.ppm"
+# Image conversion for monochrome option
+#	DITHER_OPTS="-channel All -random-threshold 30x80%"
+# Image conversion for ordered dither option (16-colors)
+#	DITHER_OPTS="-ordered-dither o8x8,4,4,4"
+# Image conversion for ordered dither option (256-colors)
+#	DITHER_OPTS="-ordered-dither o8x8,8,8,8"
+#
 if [ x$MODE == x0 ]
 then
-	RESIZE_OPTS="110x200%!"
 	RESOLUTION="128x192"
+	RESIZE_OPTS="110x200%!"
+	RESIZE_RESOLUTION=$RESOLUTION
+	DITHER_OPTS="-ordered-dither o8x8,4,4,4"
 elif [ x$MODE == x1 ]
 then
-	RESIZE_OPTS="110x100%!"
 	RESOLUTION="128x96"
+	RESIZE_OPTS="110x100%!"
+	RESIZE_RESOLUTION=$RESOLUTION
+	DITHER_OPTS="-ordered-dither o8x8,4,4,4"
+elif [ x$MODE == x2 ]
+then
+	RESOLUTION="128x96"
+	RESIZE_OPTS="110x100%!"
+	RESIZE_RESOLUTION=$RESOLUTION
+	DITHER_OPTS="-ordered-dither o8x8,8,8,8"
 else
 	echo "Unknown video mode ${MODE}!"
 	exit 1
@@ -114,29 +142,8 @@ do
 
 		$FRM2RAW $CURRAW buildout.$$ $TMPRAW &
 		CURUPDATE=$!
-# Image conversion for error correcting dither option
-#		convert -resize ${RESIZE_OPTS} -resize 80x120 \
-#				-quantize YIQ -dither FloydSteinberg \
-#				-map ${BINDIR}/colormap.ppm \
-#				-gravity center -extent ${RESOLUTION} \
-#				-background black \
-#				$PPM ppm:- | \
-# Image conversion for posterization option
-#		convert -resize ${RESIZE_OPTS} -resize ${RESOLUTION} \
-#				-quantize YIQ +dither \
-#				-map ${BINDIR}/colormap.ppm \
-#				-gravity center -extent ${RESOLUTION} \
-#				-background black \
-#				$PPM ppm:- | \
-# Image conversion for monochrome option
-#		convert -resize ${RESIZE_OPTS} -resize ${RESOLUTION} \
-#				-channel All -random-threshold 30x80% \
-#				-gravity center -extent ${RESOLUTION} \
-#				-background black \
-#				$PPM ppm:- | \
-# Image conversion for ordered dither option
-		convert -resize ${RESIZE_OPTS} -resize ${RESOLUTION} \
-				-ordered-dither o8x8,4,4,4 \
+		convert -resize ${RESIZE_OPTS} -resize ${RESIZE_RESOLUTION} \
+				${DITHER_OPTS} \
 				-gravity center -extent ${RESOLUTION} \
 				-background black \
 				$PPM ppm:- | \

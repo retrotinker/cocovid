@@ -8,17 +8,20 @@
 #include <unistd.h>
 #include <errno.h>
 
-#include "palette.h"
-
-#define RAW_HORIZ_PIXELS	128
-
 #if defined(MODE)
 #if MODE == 0
 #define RAW_VERT_PIXELS		192
+#define PIXELS_PER_BYTE		2
 #define PPM_HEADER	"P6\n128 192\n255\n"
 #define PPM_HEADER_SIZE	15
 #elif MODE == 1
 #define RAW_VERT_PIXELS		96
+#define PIXELS_PER_BYTE		2
+#define PPM_HEADER	"P6\n128 96\n255\n"
+#define PPM_HEADER_SIZE	14
+#elif MODE == 2
+#define RAW_VERT_PIXELS		96
+#define PIXELS_PER_BYTE		1
 #define PPM_HEADER	"P6\n128 96\n255\n"
 #define PPM_HEADER_SIZE	14
 #endif
@@ -26,7 +29,17 @@
 #error "Unknown MODE value!"
 #endif
 
-unsigned char inbuf[RAW_VERT_PIXELS][RAW_HORIZ_PIXELS/2];
+#if PIXELS_PER_BYTE == 1
+#include "palette256.h"
+#elif PIXELS_PER_BYTE == 2
+#include "palette16.h"
+#else
+#error "Unknown PIXELS_PER_BYTE value!"
+#endif
+
+#define RAW_HORIZ_PIXELS	128
+
+unsigned char inbuf[RAW_VERT_PIXELS][RAW_HORIZ_PIXELS / PIXELS_PER_BYTE];
 struct rgb outbuf[RAW_VERT_PIXELS][RAW_HORIZ_PIXELS];
 
 void usage(char *prg)
@@ -65,13 +78,21 @@ int main(int argc, char *argv[])
 
 	/* process image data */
 	for (j=0; j<RAW_VERT_PIXELS; j++)
-		for (i=0; i<RAW_HORIZ_PIXELS/2; i++) {
+		for (i=0; i<RAW_HORIZ_PIXELS / PIXELS_PER_BYTE; i++) {
+#if PIXELS_PER_BYTE == 2
 			outbuf[j][i*2].r = palette[(inbuf[j][i] & 0xf0) >> 4].r;
 			outbuf[j][i*2].g = palette[(inbuf[j][i] & 0xf0) >> 4].g;
 			outbuf[j][i*2].b = palette[(inbuf[j][i] & 0xf0) >> 4].b;
 			outbuf[j][i*2+1].r = palette[inbuf[j][i] & 0x0f].r;
 			outbuf[j][i*2+1].g = palette[inbuf[j][i] & 0x0f].g;
 			outbuf[j][i*2+1].b = palette[inbuf[j][i] & 0x0f].b;
+#elif PIXELS_PER_BYTE == 1
+			outbuf[j][i].r = palette[inbuf[j][i]].r;
+			outbuf[j][i].g = palette[inbuf[j][i]].g;
+			outbuf[j][i].b = palette[inbuf[j][i]].b;
+#else
+#error "Unknown PIXELS_PER_BYTE value!"
+#endif
 		}
 
 	/* output PPM header */

@@ -6,10 +6,19 @@
 #include <sys/stat.h>
 #include <fcntl.h>
 
-#include "palette.h"
-
+#if defined(COLORS)
+#if COLORS == 16
+#include "palette16.h"
 #define PPM_HEADER	"P6\n16 1\n255\n"
 #define PPM_HEADER_SIZE	12
+#elif COLORS == 256
+#include "palette256.h"
+#define PPM_HEADER	"P6\n256 1\n255\n"
+#define PPM_HEADER_SIZE	13
+#else
+#error "Unknown value for COLORS!"
+#endif
+#endif
 
 void usage(char *prg)
 {

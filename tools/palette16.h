@@ -26,6 +26,6 @@ struct rgb palette[] = {
 	{ 170, 170, 170, },
 };
 
-#define PALETTE_SIZE	(sizeof(palette) / sizeof (palette[0]))
+#define PALETTE_SIZE	(sizeof(palette) / sizeof(palette[0]))
 
 #endif /* _PALETTE_H_ */
