@@ -88,6 +88,7 @@ cleanup()
 
 	rm -f ../mov/"$2".mov
 	rm -f ../mov/"$2".wav
+	rm -f ../move/filtered.wav
 
 	rm -rf $PPMBASE
 	rm -rf $RAWBASE
@@ -105,10 +106,12 @@ mkdir -p $RAWBASE
 mkdir -p $PCMBASE
 
 echo Transcoding $(basename "$1")...
-nice -n $NICE ffmpeg -i "$1" -r 60 -ar 11040 -ac 1 -b 200000 -acodec pcm_u8 \
+nice -n $NICE ffmpeg -i "$1" -r 60 -b 200000 -ac 1 -acodec pcm_u8 \
 	-f mov -y ../mov/"$2".mov
 nice -n $NICE ffmpeg -i ../mov/"$2".mov -vn -acodec pcm_u8 -y ../mov/"$2".wav
-nice -n $NICE normalize -a 0.7 ../mov/"$2".wav
+nice -n $NICE sox ../mov/"$2".wav ../mov/filtered.wav lowpass 5000
+nice -n $NICE sox ../mov/filtered.wav -r 11040 ../mov/"$2".wav
+nice -n $NICE normalize -a 0.6 ../mov/"$2".wav
 
 echo Converting .wav file to .pcm file and split into appropriately sized chunks...
 cd $PCMBASE
