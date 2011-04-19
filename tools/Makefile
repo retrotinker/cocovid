@@ -10,7 +10,6 @@ TARGETS=ppm2frm0 frm2raw0 raw2ppm0 \
 	ppm2frm5 frm2raw5 raw2ppm5 \
 	ppm2frm6 frm2raw6 raw2ppm6 \
 	ppm2frm7 frm2raw7 raw2ppm7 \
-	ppm2frm8 frm2raw8 raw2ppm8 \
 	START.frm END.frm \
 	colormap16.ppm colormap256.ppm \
 	colormap4s0.ppm colormap4s1.ppm colormap4a.ppm
@@ -164,38 +163,29 @@ frm2raw4: frm2raw.c
 ppm2frm4: ppm2frm.c distance2.h
 	$(CC) $(CFLAGS) -DMODE=4 -o $@ ppm2frm.c
 
-raw2ppm5: raw2ppm.c palette2.h
-	$(CC) $(CFLAGS) -DMODE=5 -o $@ raw2ppm.c
-
-frm2raw5: frm2raw.c
-	$(CC) $(CFLAGS) -DMODE=5 -o $@ frm2raw.c
-
-ppm2frm5: ppm2frm.c distance2.h
-	$(CC) $(CFLAGS) -DMODE=5 -o $@ ppm2frm.c
-
 raw2ppm6: raw2ppm.c palette4.h
-	$(CC) $(CFLAGS) -DMODE=6 -DCOLORSET=0 -o $@ raw2ppm.c
+	$(CC) $(CFLAGS) -DMODE=5 -DCOLORSET=0 -o $@ raw2ppm.c
 
 frm2raw6: frm2raw.c
-	$(CC) $(CFLAGS) -DMODE=6 -o $@ frm2raw.c
+	$(CC) $(CFLAGS) -DMODE=5 -o $@ frm2raw.c
 
 ppm2frm6: ppm2frm.c colors4.h distance4.h
-	$(CC) $(CFLAGS) -DMODE=6 -o $@ ppm2frm.c
+	$(CC) $(CFLAGS) -DMODE=5 -o $@ ppm2frm.c
 
 raw2ppm7: raw2ppm.c palette4.h
-	$(CC) $(CFLAGS) -DMODE=7 -DCOLORSET=1 -o $@ raw2ppm.c
+	$(CC) $(CFLAGS) -DMODE=6 -DCOLORSET=1 -o $@ raw2ppm.c
 
 frm2raw7: frm2raw.c
-	$(CC) $(CFLAGS) -DMODE=7 -o $@ frm2raw.c
+	$(CC) $(CFLAGS) -DMODE=6 -o $@ frm2raw.c
 
 ppm2frm7: ppm2frm.c colors4.h distance4.h
-	$(CC) $(CFLAGS) -DMODE=7 -o $@ ppm2frm.c
+	$(CC) $(CFLAGS) -DMODE=6 -o $@ ppm2frm.c
 
 raw2ppm8: raw2ppm.c palette4.h
-	$(CC) $(CFLAGS) -DMODE=8 -DCOLORSET=2 -o $@ raw2ppm.c
+	$(CC) $(CFLAGS) -DMODE=7 -DCOLORSET=2 -o $@ raw2ppm.c
 
 frm2raw8: frm2raw.c
-	$(CC) $(CFLAGS) -DMODE=8 -o $@ frm2raw.c
+	$(CC) $(CFLAGS) -DMODE=7 -o $@ frm2raw.c
 
 ppm2frm8: ppm2frm.c colors4.h distance4.h
-	$(CC) $(CFLAGS) -DMODE=8 -o $@ ppm2frm.c
+	$(CC) $(CFLAGS) -DMODE=7 -o $@ ppm2frm.c

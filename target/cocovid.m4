@@ -275,14 +275,12 @@ MODE3	fcb	$7c,$20,$08,$20,TVH,TVL,$00,$00
 	fcb	$80,$00,$00,$00,$0f,$e3,$80,$00
 MODE4	fcb	$7c,$20,$08,$20,TVH,TVL,$00,$00
 	fcb	$80,$08,$00,$00,$0f,$e3,$80,$00
+* Modes 5-6 are identical on the CoCo3, replicated for simplicity...
 MODE5	fcb	$7c,$20,$08,$20,TVH,TVL,$00,$00
-	fcb	$80,$10,$00,$00,$0f,$e3,$80,$00
-* Modes 6-7 are identical on the CoCo3, replicated for simplicity...
+	fcb	$82,$09,$00,$00,$0f,$e3,$80,$00
 MODE6	fcb	$7c,$20,$08,$20,TVH,TVL,$00,$00
 	fcb	$82,$09,$00,$00,$0f,$e3,$80,$00
 MODE7	fcb	$7c,$20,$08,$20,TVH,TVL,$00,$00
-	fcb	$82,$09,$00,$00,$0f,$e3,$80,$00
-MODE8	fcb	$7c,$20,$08,$20,TVH,TVL,$00,$00
 	fcb	$80,$09,$00,$00,$0f,$e3,$80,$00
 
 * Init for palette regs

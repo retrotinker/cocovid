@@ -24,14 +24,11 @@ then
 	RESIZE_OPTS="90x100%!"
 elif [ x$MODE == x5 ]
 then
-	RESIZE_OPTS="90x200%!"
+	RESIZE_OPTS="90x100%!"
 elif [ x$MODE == x6 ]
 then
 	RESIZE_OPTS="90x100%!"
 elif [ x$MODE == x7 ]
-then
-	RESIZE_OPTS="90x100%!"
-elif [ x$MODE == x8 ]
 then
 	RESIZE_OPTS="180x100%!"
 else
