@@ -1,10 +1,7 @@
 #!/bin/sh
 
 SAMPLES=184
-
 MAXSCORE=832
-
-NICE=2
 
 if [ -z "$3" ]
 then
@@ -12,6 +9,8 @@ then
 else
 	MODE=$3
 fi
+
+BINDIR=$(dirname $0)
 
 #
 # Image conversion for error correcting dither option
@@ -30,6 +29,8 @@ fi
 #	DITHER_OPTS="-ordered-dither o8x8,4,4,4"
 # Image conversion for ordered dither option (256-colors)
 #	DITHER_OPTS="-ordered-dither o8x8,8,8,8"
+# Image conversion for ordered dither option (4-colors)
+#	DITHER_OPTS="-ordered-dither o2x2,2,2,2"
 #
 if [ x$MODE == x0 ]
 then
@@ -72,13 +73,12 @@ then
 	RESOLUTION="128x96"
 	RESIZE_OPTS="110x100%!"
 	RESIZE_RESOLUTION=$RESOLUTION
-	DITHER_OPTS="+dither"
+	DITHER_OPTS="-quantize YIQ +dither \
+			-map ${BINDIR}/colormap4.ppm"
 else
 	echo "Unknown video mode ${MODE}!"
 	exit 1
 fi
-
-BINDIR=$(dirname $0)
 
 PPM2FRM=${BINDIR}/ppm2frm${MODE}
 FRM2RAW=${BINDIR}/frm2raw${MODE}
@@ -94,7 +94,6 @@ cleanup()
 
 	rm -f ../mov/"$2".mov
 	rm -f ../mov/"$2".wav
-	rm -f ../move/filtered.wav
 
 	rm -rf $PPMBASE
 	rm -rf $RAWBASE
@@ -112,18 +111,12 @@ mkdir -p $RAWBASE
 mkdir -p $PCMBASE
 
 echo Transcoding $(basename "$1")...
-nice -n $NICE ffmpeg -i "$1" -r 60 -b 200000 -ac 1 -acodec pcm_u8 \
-	-f mov -y ../mov/"$2".mov
-nice -n $NICE ffmpeg -i ../mov/"$2".mov -vn -acodec pcm_u8 -y ../mov/"$2".wav
-nice -n $NICE sox ../mov/"$2".wav ../mov/filtered.wav lowpass 5000
-nice -n $NICE sox ../mov/filtered.wav -r 11040 ../mov/"$2".wav
-nice -n $NICE normalize -a 0.6 ../mov/"$2".wav
-
-echo Converting .wav file to .pcm file and split into appropriately sized chunks...
-cd $PCMBASE
-dd if=../../mov/"$2".wav bs=44 skip=1 2>/dev/null | \
-	nice -n $NICE split -d -b $SAMPLES -a 10 - "$2".
-cd - >/dev/null
+ffmpeg -i "$1" -r 60 -b 200000 -f mov -y ../mov/"$2".mov
+ffmpeg -i ../mov/"$2".mov -vn -ac 1 -acodec pcm_u8 -y ../mov/"$2".wav
+echo Preparing audio data...
+sox ../mov/"$2".wav -t raw -r 22050 - norm lowpass 5000 2>/dev/null | \
+	sox -t raw -r 22050 -b 8 -c 1 -e unsigned - -t raw - rate 11040 2>/dev/null | \
+	split -d -b $SAMPLES -a 10 - ${PCMBASE}/"$2". 2>/dev/null
 
 CURRAW=${RAWBASE}/current.raw
 TMPRAW=${RAWBASE}/tmp.raw
@@ -147,7 +140,7 @@ do
 
 	cd $PPMBASE
 	rm -f *
-	nice -n $NICE ffmpeg -ss $start -vframes 600 \
+	ffmpeg -ss $start -vframes 600 \
 		-i ../../mov/"$2".mov %d.ppm >/dev/null 2>&1
 	cd - >/dev/null
 

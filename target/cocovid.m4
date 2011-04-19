@@ -19,7 +19,7 @@ include(`input.m4')
 * and it cannot overlap with the video buffer, or ROM, or anything BASIC
 * needs if you want to be able to return to it...
 *
-LOAD	equ	$1700		Actual load address for binary
+LOAD	equ	$1600		Actual load address for binary
 
 RSTFLG	equ	$0071
 
@@ -49,7 +49,7 @@ PALETSZ	equ	$10
 SAMR1CL	equ	$ffd8
 SAMR1ST	equ	$ffd9
 
-AUBUFSZ	equ	$00b8
+AUBUFSZ	equ	$00b8	; this needs to be an even number...
 
 VIDBASE	equ	$1c00
 VIDSIZE	equ	$3000
