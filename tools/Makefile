@@ -163,29 +163,29 @@ frm2raw4: frm2raw.c
 ppm2frm4: ppm2frm.c distance2.h
 	$(CC) $(CFLAGS) -DMODE=4 -o $@ ppm2frm.c
 
-raw2ppm6: raw2ppm.c palette4.h
+raw2ppm5: raw2ppm.c palette4.h
 	$(CC) $(CFLAGS) -DMODE=5 -DCOLORSET=0 -o $@ raw2ppm.c
 
-frm2raw6: frm2raw.c
+frm2raw5: frm2raw.c
 	$(CC) $(CFLAGS) -DMODE=5 -o $@ frm2raw.c
 
-ppm2frm6: ppm2frm.c colors4.h distance4.h
+ppm2frm5: ppm2frm.c colors4s0.h distance4s0.h
 	$(CC) $(CFLAGS) -DMODE=5 -o $@ ppm2frm.c
 
-raw2ppm7: raw2ppm.c palette4.h
+raw2ppm6: raw2ppm.c palette4.h
 	$(CC) $(CFLAGS) -DMODE=6 -DCOLORSET=1 -o $@ raw2ppm.c
 
-frm2raw7: frm2raw.c
+frm2raw6: frm2raw.c
 	$(CC) $(CFLAGS) -DMODE=6 -o $@ frm2raw.c
 
-ppm2frm7: ppm2frm.c colors4.h distance4.h
+ppm2frm6: ppm2frm.c colors4s1.h distance4s1.h
 	$(CC) $(CFLAGS) -DMODE=6 -o $@ ppm2frm.c
 
-raw2ppm8: raw2ppm.c palette4.h
+raw2ppm7: raw2ppm.c palette4.h
 	$(CC) $(CFLAGS) -DMODE=7 -DCOLORSET=2 -o $@ raw2ppm.c
 
-frm2raw8: frm2raw.c
+frm2raw7: frm2raw.c
 	$(CC) $(CFLAGS) -DMODE=7 -o $@ frm2raw.c
 
-ppm2frm8: ppm2frm.c colors4.h distance4.h
+ppm2frm7: ppm2frm.c colors4a.h distance4a.h
 	$(CC) $(CFLAGS) -DMODE=7 -o $@ ppm2frm.c

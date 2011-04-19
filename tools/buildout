@@ -1,7 +1,7 @@
 #!/bin/sh
 
 SAMPLES=184
-MAXSCORE=896
+MAXSCORE=832
 
 if [ -z "$3" ]
 then

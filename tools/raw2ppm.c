@@ -69,15 +69,7 @@
 #elif PIXELS_PER_BYTE == 8
 #include "palette2.h"
 #elif PIXELS_PER_BYTE == 4
-#if MODE == 5
-#include "palette4s0.h"
-#elif MODE == 6
-#include "palette4s1.h"
-#elif MODE == 7
-#include "palette4a.h"
-#else
-#error "Unknown 4-color mode!"
-#endif
+#include "palette4.h"
 #else
 #error "Unknown PIXELS_PER_BYTE value!"
 #endif
