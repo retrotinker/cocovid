@@ -9,12 +9,17 @@ TARGETS=ppm2frm0 frm2raw0 raw2ppm0 \
 	ppm2frm4 frm2raw4 raw2ppm4 \
 	ppm2frm5 frm2raw5 raw2ppm5 \
 	ppm2frm6 frm2raw6 raw2ppm6 \
+	ppm2frm7 frm2raw7 raw2ppm7 \
+	ppm2frm8 frm2raw8 raw2ppm8 \
 	START.frm END.frm \
-	colormap16.ppm colormap256.ppm colormap4.ppm
+	colormap16.ppm colormap256.ppm \
+	colormap4s0.ppm colormap4s1.ppm colormap4a.ppm
 
 OTHERS=gencolors16 genmap16 colors16.h distance16.h \
 	gencolors256 genmap256 colors256.h distance256.h \
-	gencolors4 genmap4 colors4.h distance4.h
+	gencolors4s0 genmap4s0 colors4s0.h distance4s0.h \
+	gencolors4s1 genmap4s1 colors4s1.h distance4s1.h \
+	gencolors4a  genmap4a  colors4a.h  distance4a.h
 
 all: $(TARGETS)
 
@@ -45,8 +50,14 @@ gencolors16: gencolors.c palette16.h
 gencolors256: gencolors.c palette256.h
 	$(CC) $(CFLAGS) -o $@ -DCOLORS=256 gencolors.c -lm
 
-gencolors4: gencolors.c palette4.h
+gencolors4s0: gencolors.c palette4.h
 	$(CC) $(CFLAGS) -o $@ -DCOLORS=4 -DCOLORSET=0 gencolors.c -lm
+
+gencolors4s1: gencolors.c palette4.h
+	$(CC) $(CFLAGS) -o $@ -DCOLORS=4 -DCOLORSET=1 gencolors.c -lm
+
+gencolors4a: gencolors.c palette4.h
+	$(CC) $(CFLAGS) -o $@ -DCOLORS=4 -DCOLORSET=2 gencolors.c -lm
 
 colors16.h: gencolors16
 	./gencolors16 > $@
@@ -54,8 +65,14 @@ colors16.h: gencolors16
 colors256.h: gencolors256
 	./gencolors256 > $@
 
-colors4.h: gencolors4
-	./gencolors4 > $@
+colors4s0.h: gencolors4s0
+	./gencolors4s0 > $@
+
+colors4s1.h: gencolors4s1
+	./gencolors4s1 > $@
+
+colors4a.h: gencolors4a
+	./gencolors4a > $@
 
 distance16.h: gencolors16
 	./gencolors16 -d > $@
@@ -63,8 +80,14 @@ distance16.h: gencolors16
 distance256.h: gencolors256
 	./gencolors256 -d > $@
 
-distance4.h: gencolors4
-	./gencolors4 -d > $@
+distance4s0.h: gencolors4s0
+	./gencolors4s0 -d > $@
+
+distance4s1.h: gencolors4s1
+	./gencolors4s1 -d > $@
+
+distance4a.h: gencolors4a
+	./gencolors4a -d > $@
 
 colormap16.ppm: genmap16
 	./genmap16 > $@
@@ -72,8 +95,14 @@ colormap16.ppm: genmap16
 colormap256.ppm: genmap256
 	./genmap256 > $@
 
-colormap4.ppm: genmap4
-	./genmap4 > $@
+colormap4s0.ppm: genmap4s0
+	./genmap4s0 > $@
+
+colormap4s1.ppm: genmap4s1
+	./genmap4s1 > $@
+
+colormap4a.ppm: genmap4a
+	./genmap4a > $@
 
 genmap16: genmap.c palette16.h
 	$(CC) $(CFLAGS) -DCOLORS=16 -o $@ genmap.c
@@ -81,8 +110,14 @@ genmap16: genmap.c palette16.h
 genmap256: genmap.c palette256.h
 	$(CC) $(CFLAGS) -DCOLORS=256 -o $@ genmap.c
 
-genmap4: genmap.c palette4.h
+genmap4s0: genmap.c palette4.h
 	$(CC) $(CFLAGS) -DCOLORS=4 -DCOLORSET=0 -o $@ genmap.c
+
+genmap4s1: genmap.c palette4.h
+	$(CC) $(CFLAGS) -DCOLORS=4 -DCOLORSET=1 -o $@ genmap.c
+
+genmap4a: genmap.c palette4.h
+	$(CC) $(CFLAGS) -DCOLORS=4 -DCOLORSET=2 -o $@ genmap.c
 
 raw2ppm0: raw2ppm.c palette16.h
 	$(CC) $(CFLAGS) -DMODE=0 -o $@ raw2ppm.c
@@ -146,3 +181,21 @@ frm2raw6: frm2raw.c
 
 ppm2frm6: ppm2frm.c colors4.h distance4.h
 	$(CC) $(CFLAGS) -DMODE=6 -o $@ ppm2frm.c
+
+raw2ppm7: raw2ppm.c palette4.h
+	$(CC) $(CFLAGS) -DMODE=7 -DCOLORSET=1 -o $@ raw2ppm.c
+
+frm2raw7: frm2raw.c
+	$(CC) $(CFLAGS) -DMODE=7 -o $@ frm2raw.c
+
+ppm2frm7: ppm2frm.c colors4.h distance4.h
+	$(CC) $(CFLAGS) -DMODE=7 -o $@ ppm2frm.c
+
+raw2ppm8: raw2ppm.c palette4.h
+	$(CC) $(CFLAGS) -DMODE=8 -DCOLORSET=2 -o $@ raw2ppm.c
+
+frm2raw8: frm2raw.c
+	$(CC) $(CFLAGS) -DMODE=8 -o $@ frm2raw.c
+
+ppm2frm8: ppm2frm.c colors4.h distance4.h
+	$(CC) $(CFLAGS) -DMODE=8 -o $@ ppm2frm.c

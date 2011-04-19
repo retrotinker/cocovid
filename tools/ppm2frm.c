@@ -45,10 +45,22 @@
 #define RAW_VERT_PIXELS		192
 #define PIXELS_PER_BYTE		8
 #elif MODE == 6
-#include "colors4.h"
-#include "distance4.h"
+#include "colors4s0.h"
+#include "distance4s0.h"
 #define RAW_HORIZ_PIXELS	128
 #define RAW_VERT_PIXELS		96
+#define PIXELS_PER_BYTE		4
+#elif MODE == 7
+#include "colors4s1.h"
+#include "distance4s1.h"
+#define RAW_HORIZ_PIXELS	128
+#define RAW_VERT_PIXELS		96
+#define PIXELS_PER_BYTE		4
+#elif MODE == 8
+#include "colors4a.h"
+#include "distance4a.h"
+#define RAW_HORIZ_PIXELS	128
+#define RAW_VERT_PIXELS		192
 #define PIXELS_PER_BYTE		4
 #endif
 #else

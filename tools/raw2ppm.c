@@ -51,6 +51,18 @@
 #define PIXELS_PER_BYTE		4
 #define PPM_HEADER	"P6\n128 96\n255\n"
 #define PPM_HEADER_SIZE	14
+#elif MODE == 7
+#define RAW_HORIZ_PIXELS	128
+#define RAW_VERT_PIXELS		96
+#define PIXELS_PER_BYTE		4
+#define PPM_HEADER	"P6\n128 96\n255\n"
+#define PPM_HEADER_SIZE	14
+#elif MODE == 8
+#define RAW_HORIZ_PIXELS	128
+#define RAW_VERT_PIXELS		192
+#define PIXELS_PER_BYTE		4
+#define PPM_HEADER	"P6\n128 192\n255\n"
+#define PPM_HEADER_SIZE	15
 #endif
 #else
 #error "Unknown MODE value!"
@@ -63,7 +75,15 @@
 #elif PIXELS_PER_BYTE == 8
 #include "palette2.h"
 #elif PIXELS_PER_BYTE == 4
-#include "palette4.h"
+#if MODE == 6
+#include "palette4s0.h"
+#elif MODE == 7
+#include "palette4s1.h"
+#elif MODE == 8
+#include "palette4a.h"
+#else
+#error "Unknown 4-color mode!"
+#endif
 #else
 #error "Unknown PIXELS_PER_BYTE value!"
 #endif

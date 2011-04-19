@@ -1,7 +1,7 @@
 #!/bin/sh
 
 SAMPLES=184
-MAXSCORE=832
+MAXSCORE=896
 
 if [ -z "$3" ]
 then
@@ -74,7 +74,21 @@ then
 	RESIZE_OPTS="110x100%!"
 	RESIZE_RESOLUTION=$RESOLUTION
 	DITHER_OPTS="-quantize YIQ +dither \
-			-map ${BINDIR}/colormap4.ppm"
+			-map ${BINDIR}/colormap4s0.ppm"
+elif [ x$MODE == x7 ]
+then
+	RESOLUTION="128x96"
+	RESIZE_OPTS="110x100%!"
+	RESIZE_RESOLUTION=$RESOLUTION
+	DITHER_OPTS="-quantize YIQ +dither \
+			-map ${BINDIR}/colormap4s1.ppm"
+elif [ x$MODE == x8 ]
+then
+	RESOLUTION="128x96"
+	RESIZE_OPTS="110x100%!"
+	RESIZE_RESOLUTION=$RESOLUTION
+	DITHER_OPTS="-quantize YIQ +dither \
+			-map ${BINDIR}/colormap4a.ppm"
 else
 	echo "Unknown video mode ${MODE}!"
 	exit 1

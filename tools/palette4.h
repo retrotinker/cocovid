@@ -22,6 +22,11 @@ struct rgb palette[] = {
 	{ 0, 255, 170, },
 	{ 170, 85, 255, },
 	{ 255, 85, 0, },
+#elif COLORSET == 2
+	{ 0, 0, 0, },
+	{ 0, 0, 255, },
+	{ 170, 85, 0, },
+	{ 255, 255, 255, },
 #else
 #error "Unknown COLORSET value!"
 #endif
