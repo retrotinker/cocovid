@@ -1,10 +1,6 @@
 #ifndef _PALETTE_H_
 #define _PALETTE_H_
 
-#if !defined(COLORSET)
-#define COLORSET	0
-#endif
-
 #include <stdint.h>
 
 struct rgb {
@@ -24,7 +20,7 @@ struct rgb palette[] = {
 	{ 255, 85, 0, },
 #elif COLORSET == 2
 	{ 0, 0, 0, },
-	{ 0, 0, 255, },
+	{ 0, 85, 170, },
 	{ 170, 85, 0, },
 	{ 255, 255, 255, },
 #else

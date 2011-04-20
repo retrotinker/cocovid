@@ -25,12 +25,10 @@ BINDIR=$(dirname $0)
 #			-map ${BINDIR}/colormap.ppm"
 # Image conversion for monochrome option
 #	DITHER_OPTS="-monochrome"
-# Image conversion for ordered dither option (16-colors)
+# Image conversion for ordered dither option (4- or 16-colors)
 #	DITHER_OPTS="-ordered-dither o8x8,4,4,4"
 # Image conversion for ordered dither option (256-colors)
 #	DITHER_OPTS="-ordered-dither o8x8,8,8,8"
-# Image conversion for ordered dither option (4-colors)
-#	DITHER_OPTS="-ordered-dither o2x2,2,2,2"
 #
 if [ x$MODE == x0 ]
 then
@@ -67,22 +65,19 @@ then
 	RESOLUTION="128x96"
 	RESIZE_OPTS="110x100%!"
 	RESIZE_RESOLUTION=$RESOLUTION
-	DITHER_OPTS="-quantize YIQ +dither \
-			-map ${BINDIR}/colormap4s0.ppm"
+	DITHER_OPTS="-ordered-dither o8x8,4,4,4"
 elif [ x$MODE == x6 ]
 then
 	RESOLUTION="128x96"
 	RESIZE_OPTS="110x100%!"
 	RESIZE_RESOLUTION=$RESOLUTION
-	DITHER_OPTS="-quantize YIQ +dither \
-			-map ${BINDIR}/colormap4s1.ppm"
+	DITHER_OPTS="-ordered-dither o8x8,4,4,4"
 elif [ x$MODE == x7 ]
 then
-	RESOLUTION="128x96"
-	RESIZE_OPTS="110x100%!"
+	RESOLUTION="128x192"
+	RESIZE_OPTS="110x200%!"
 	RESIZE_RESOLUTION=$RESOLUTION
-	DITHER_OPTS="-quantize YIQ +dither \
-			-map ${BINDIR}/colormap4a.ppm"
+	DITHER_OPTS="-ordered-dither o8x8,4,4,4"
 else
 	echo "Unknown video mode ${MODE}!"
 	exit 1
@@ -119,11 +114,12 @@ mkdir -p $RAWBASE
 mkdir -p $PCMBASE
 
 echo Transcoding $(basename "$1")...
-ffmpeg -i "$1" -r 60 -b 200000 -f mov -y ../mov/"$2".mov
+ffmpeg -i "$1" -r 60 -b 200000 -ac 1 -acodec pcm_u8 -f mov -y ../mov/"$2".mov
 ffmpeg -i ../mov/"$2".mov -vn -ac 1 -acodec pcm_u8 -y ../mov/"$2".wav
 echo Preparing audio data...
-sox ../mov/"$2".wav -t raw -r 22050 - norm lowpass 5000 2>/dev/null | \
-	sox -t raw -r 22050 -b 8 -c 1 -e unsigned - -t raw - rate 11040 2>/dev/null | \
+sox ../mov/"$2".wav -t raw -r 22050 - -D norm lowpass 5000 2>/dev/null | \
+	sox -t raw -r 22050 -b 8 -c 1 -e unsigned - -t raw - -D \
+		rate 11040 2>/dev/null | \
 	split -d -b $SAMPLES -a 10 - ${PCMBASE}/"$2". 2>/dev/null
 
 CURRAW=${RAWBASE}/current.raw

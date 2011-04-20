@@ -54,8 +54,8 @@ AUBUFSZ	equ	$00b8	; this needs to be an even number...
 VIDBASE	equ	$1c00
 VIDSIZE	equ	$3000
 
-VMODEMX	equ	6
-PALETMX	equ	5
+VMODEMX	equ	$07
+PALETMX	equ	$0a
 
 * Frame step value should be 2x actual frame step for 30fps source video
 * FRAMSTP	equ	1
@@ -109,14 +109,19 @@ EXEC	equ	*
 
 * Setup palette...
 	ldx	#PALINIT
-	lda	PALETTE
-	cmpa	#PALETMX	; avoid unknown palettes
+	ldb	PALETTE
+	cmpb	#PALETMX	; avoid unknown palettes
 	lbgt	EXIT
-	lsla			; multiply PALETTE by size of palette regs
-	lsla
-	lsla
-	lsla
-	leax	a,x		; load offset to desired palette
+	clra
+	lslb			; multiply PALETTE by size of palette regs
+	rola
+	lslb
+	rola
+	lslb
+	rola
+	lslb
+	rola
+	leax	d,x		; load offset to desired palette
 	lda	#PALETSZ
 	pshs	a
 	ldy	#PALBASE
@@ -135,14 +140,18 @@ CLRSCN	sta	,x+
 
 * ...and setup GIME registers
 	ldx	#GIMEINI
-	lda	VIDMODE
-	cmpa	#VMODEMX	; avoid unsupported video modes
+	ldb	VIDMODE
+	cmpb	#VMODEMX	; avoid unsupported video modes
 	lbgt	EXIT
-	lsla			; multiply VIDMODE by size of GIME config
-	lsla
-	lsla
-	lsla
-	leax	a,x		; load offset to desired GIME config
+	lslb			; multiply VIDMODE by size of GIME config
+	rola
+	lslb
+	rola
+	lslb
+	rola
+	lslb
+	rola
+	leax	b,x		; load offset to desired GIME config
 	lda	#GIMECSZ
 	pshs	a
 	ldy	#GIMECFG
@@ -275,7 +284,7 @@ MODE3	fcb	$7c,$20,$08,$20,TVH,TVL,$00,$00
 	fcb	$80,$00,$00,$00,$0f,$e3,$80,$00
 MODE4	fcb	$7c,$20,$08,$20,TVH,TVL,$00,$00
 	fcb	$80,$08,$00,$00,$0f,$e3,$80,$00
-* Modes 5-6 are identical on the CoCo3, replicated for simplicity...
+* Modes 5-7 are identical on the CoCo3, replicated for simplicity...
 MODE5	fcb	$7c,$20,$08,$20,TVH,TVL,$00,$00
 	fcb	$82,$09,$00,$00,$0f,$e3,$80,$00
 MODE6	fcb	$7c,$20,$08,$20,TVH,TVL,$00,$00
@@ -303,9 +312,9 @@ RGB4S1	fcb	$3f,$1a,$2b,$26,$00,$00,$00,$00
 	fcb	$00,$00,$00,$00,$00,$00,$00,$00
 CMP4S1	fcb	$30,$1f,$3a,$26,$00,$00,$00,$00
 	fcb	$00,$00,$00,$00,$00,$00,$00,$00
-RGB4A	fcb	$00,$09,$24,$3f,$00,$00,$00,$00
+RGB4A	fcb	$00,$0a,$22,$3f,$00,$00,$00,$00
 	fcb	$00,$00,$00,$00,$00,$00,$00,$00
-CMP4A	fcb	$00,$2c,$27,$30,$00,$00,$00,$00
+CMP4A	fcb	$00,$0d,$26,$30,$00,$00,$00,$00
 	fcb	$00,$00,$00,$00,$00,$00,$00,$00
 
 * STEPCNT	rmb	1
