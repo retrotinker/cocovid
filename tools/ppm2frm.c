@@ -197,7 +197,7 @@ void raw2runs(void)
                                 prevraw[i][j+1] != curraw[i][j+1];
 
 			if ((active && !diff) ||
-			    runpool[currun].datalen == MAX_BYTES_PER_RUN)
+			    runpool[currun].datalen == 2 + MAX_BYTES_PER_RUN)
 				active = 0;
 
 			if (!active && diff) {
