@@ -1,11 +1,6 @@
 #!/bin/sh
 
-if [ -z "$2" ]
-then
-	MODE=0
-else
-	MODE=$2
-fi
+MODE=$1
 
 if [ x$MODE == x0 ]
 then
@@ -49,12 +44,7 @@ trap cleanup 1 2 3 15
 
 FEH_ARGS='-Z -F'
 
-while [ ! -d ../raw/$1 ]
-do
-	sleep 1
-done
-
-cd ../raw/$1
+cd $2
 
 while [ ! -f current.raw ]
 do

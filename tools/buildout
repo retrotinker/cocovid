@@ -1,13 +1,14 @@
 #!/bin/sh
 
 SAMPLES=184
-MAXSCORE=832
 
-if [ -z "$3" ]
+MODE=$3
+
+if [ -z "$4" ]
 then
-	MODE=0
+	MAXSCORE=832
 else
-	MODE=$3
+	MAXSCORE=$4
 fi
 
 BINDIR=$(dirname $0)
@@ -87,20 +88,11 @@ PPM2FRM=${BINDIR}/ppm2frm${MODE}
 FRM2RAW=${BINDIR}/frm2raw${MODE}
 WATCHOUT=${BINDIR}/watchout
 
-PPMBASE=../ppm/"$2"
-RAWBASE=../raw/"$2"
-PCMBASE=../pcm/"$2"
+TMPDIR=$(mktemp -d)
 
 cleanup()
 {
-	rm -f buildout.$$
-
-	rm -f ../mov/"$2".mov
-	rm -f ../mov/"$2".wav
-
-	rm -rf $PPMBASE
-	rm -rf $RAWBASE
-	rm -rf $PCMBASE
+	rm -rf $TMPDIR
 
 	exit 0
 }
@@ -109,49 +101,47 @@ cleanup()
 
 trap "cleanup \"$1\" \"$2\"" 1 2 3 15
 
-mkdir -p $PPMBASE
-mkdir -p $RAWBASE
-mkdir -p $PCMBASE
-
 echo Transcoding $(basename "$1")...
-ffmpeg -i "$1" -r 60 -b 200000 -ac 1 -acodec pcm_u8 -f mov -y ../mov/"$2".mov
-ffmpeg -i ../mov/"$2".mov -vn -ac 1 -acodec pcm_u8 -y ../mov/"$2".wav
+ffmpeg -i "$1" -r 60 -b 200000 -ac 1 -acodec pcm_u8 -f mov \
+	-y ${TMPDIR}/"$2".mov 2>/dev/null
+ffmpeg -i ${TMPDIR}/"$2".mov -vn -ac 1 -acodec pcm_u8 \
+	-y ${TMPDIR}/"$2".wav 2>/dev/null
 echo Preparing audio data...
-sox ../mov/"$2".wav -t raw -r 22050 - -D norm lowpass 5000 2>/dev/null | \
+sox ${TMPDIR}/"$2".wav -t raw -r 22050 - -D norm lowpass 5000 2>/dev/null | \
 	sox -t raw -r 22050 -b 8 -c 1 -e unsigned - -t raw - -D \
 		rate 11040 2>/dev/null | \
-	split -d -b $SAMPLES -a 10 - ${PCMBASE}/"$2". 2>/dev/null
+	split -d -b $SAMPLES -a 10 - ${TMPDIR}/"$2"-pcm. 2>/dev/null
 
-CURRAW=${RAWBASE}/current.raw
-TMPRAW=${RAWBASE}/tmp.raw
+CURRAW=${TMPDIR}/current.raw
+TMPRAW=${TMPDIR}/tmp.raw
 
 # Start with all-black frame...
 cp ${BINDIR}/BLACK.raw $CURRAW
 
 echo Building final output file...
 
-$WATCHOUT "$2" $MODE &
+$WATCHOUT $MODE $TMPDIR &
 
 cat ${BINDIR}/START.frm > "$2".out
 dd if=/dev/zero bs=$SAMPLES count=1 2>/dev/null >> "$2".out
 
-mkfifo buildout.$$
+mkfifo ${TMPDIR}/buildout.$$
 
 # should use ffmpeg to determing video length, for now use 4 hour max
 for start in $(seq 0 10 14400)
 do
 # divide movie into 10 second chunks to decrease disk usage during conversion
 
-	cd $PPMBASE
-	rm -f *
+	cd $TMPDIR
+	rm -f *.ppm
 	ffmpeg -ss $start -vframes 600 \
-		-i ../../mov/"$2".mov %d.ppm >/dev/null 2>&1
+		-i "$2".mov %d.ppm >/dev/null 2>&1
 	cd - >/dev/null
 
 	for i in $(seq 1 600)
 	do
-		PPM=${PPMBASE}/$i.ppm
-		PCM=${PCMBASE}/"$2".$(printf "%010d" $((($start * 60) + $i)))
+		PPM=${TMPDIR}/$i.ppm
+		PCM=${TMPDIR}/"$2"-pcm.$(printf "%010d" $((($start * 60) + $i)))
 
 		if [ ! -f $PPM ]
 		then
@@ -164,7 +154,7 @@ do
 				\($(date)\) >&2
 		fi
 
-		$FRM2RAW $CURRAW buildout.$$ $TMPRAW &
+		$FRM2RAW $CURRAW ${TMPDIR}/buildout.$$ $TMPRAW &
 		CURUPDATE=$!
 		convert -resize ${RESIZE_OPTS} -resize ${RESIZE_RESOLUTION} \
 				${DITHER_OPTS} \
@@ -172,7 +162,7 @@ do
 				-background black \
 				$PPM ppm:- | \
 			$PPM2FRM - $CURRAW $MAXSCORE - | \
-			tee buildout.$$
+			tee ${TMPDIR}/buildout.$$
 		wait $CURUPDATE
 		mv $TMPRAW $CURRAW
 		if [ -f $PCM ]
