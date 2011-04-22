@@ -107,10 +107,11 @@ int main(int argc, char *argv[])
 	outptr = outbuf;
 
 	while (inptr < inbuf + insize) {
-		int i, count = (*inptr & 0x07) + 1;
+		int i, count = (*(inptr + 1) & 0x07) + 1;
 
 		/* jump to proper output offset */
-		outptr = outbuf + ((*inptr & 0xf8) << 6) + (*(inptr + 1) << 1);
+		outptr = outbuf +
+			(((*inptr << 8) + (*(inptr + 1) & 0xf8)) >> 2);
 		inptr += 2;
 
 		/* emit count words of video data */

@@ -357,10 +357,11 @@ int main(int argc, char *argv[])
 		if (curscore + runpool[i].datalen + runpool[i].adjscore <
 				maxscore - 2) {
 			outbuf[outsize++] =
-				(((runpool[i].offset >> 1) & 0x1f00) >> 5) |
+				((runpool[i].offset >> 1) & 0x1fe0) >> 5;
+			outbuf[outsize++] =
+				(((runpool[i].offset >> 1) & 0x001f) << 3) |
 					(((runpool[i].datalen - 2) /
 						BYTES_PER_READ) - 1);
-			outbuf[outsize++] = ((runpool[i].offset >> 1) & 0x00ff);
 			for (j = 0; j < runpool[i].datalen - 2; j++) {
 				outbuf[outsize++] = runpool[i].data[j];
 			}

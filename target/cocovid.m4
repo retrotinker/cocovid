@@ -197,15 +197,14 @@ VIDLOOP	data_read
 * check for jump
 	cmpa	#$ff
 	beq	VIDEOF
-* save first byte of control word
-	pshs	a
+* save second byte of control word
+	pshs	b
 * mask/shift d to retrieve offset
-	anda	#$f8
+	andb	#$f8
 	lsra
+	rorb
 	lsra
-	lslb
-	bcc	VIDJUMP
-	ora	#$01
+	rorb
 * load x w/ start of video buffer
 VIDJUMP	ldx	#VIDBASE
 * adjust x to correct offset
