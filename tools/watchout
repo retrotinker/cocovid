@@ -44,6 +44,11 @@ trap cleanup 1 2 3 15
 
 FEH_ARGS='-Z -F'
 
+while [ ! -d $2 ]
+do
+	sleep 1
+done
+
 cd $2
 
 while [ ! -f current.raw ]
@@ -56,12 +61,17 @@ $RAW2PPM current.raw current.ppm >/dev/null 2>&1
 while ! convert -resize ${RESIZE_OPTS} current.ppm view.ppm >/dev/null 2>&1
 do
 	sleep 1
+	$RAW2PPM current.raw current.ppm >/dev/null 2>&1
 done
 feh $FEH_ARGS view.ppm >/dev/null 2>&1 &
 OLDPID=$!
 
 while true
 do
+	if [ ! -d $2 ]
+	then
+		break
+	fi
 	if [ ! -d /proc/$OLDPID ]
 	then
 		break
@@ -83,6 +93,7 @@ do
 		while ! convert -resize ${RESIZE_OPTS} current.ppm view.ppm >/dev/null 2>&1
 		do
 			sleep 1
+			$RAW2PPM current.raw current.ppm >/dev/null 2>&1
 		done
 		feh $FEH_ARGS view.ppm >/dev/null 2>&1 &
 		PID=$!
