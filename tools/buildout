@@ -1,6 +1,17 @@
 #!/bin/sh
 
-SAMPLES=184
+AUDIORATE=11040
+VIDEORATE=60
+
+cleanup()
+{
+	rm -rf $TMPDIR >/dev/null 2>&1
+	kill -HUP $PPMPID >/dev/null 2>&1
+	kill -HUP $PCMPID >/dev/null 2>&1
+	kill -HUP $WATCHPID >/dev/null 2>&1
+
+	exit 0
+}
 
 MODE=$3
 
@@ -11,7 +22,23 @@ else
 	MAXSCORE=$4
 fi
 
+SAMPLES=$(($AUDIORATE / $VIDEORATE))
+
 BINDIR=$(dirname $0)
+
+PPM2FRM=${BINDIR}/ppm2frm${MODE}
+FRM2RAW=${BINDIR}/frm2raw${MODE}
+WATCHOUT=${BINDIR}/watchout
+
+TMPDIR=$(mktemp -d)
+
+# Designate storage for "status" frame...
+CURRAW=${TMPDIR}/current.raw
+TMPRAW=${TMPDIR}/tmp.raw
+
+# START HERE
+
+trap cleanup 1 2 3 15
 
 #
 # Image conversion for error correcting dither option
@@ -84,105 +111,106 @@ else
 	exit 1
 fi
 
-PPM2FRM=${BINDIR}/ppm2frm${MODE}
-FRM2RAW=${BINDIR}/frm2raw${MODE}
-WATCHOUT=${BINDIR}/watchout
-
-TMPDIR=$(mktemp -d)
-
-cleanup()
-{
-	rm -rf $TMPDIR
-
-	exit 0
-}
-
-# START HERE
-
-trap "cleanup \"$1\" \"$2\"" 1 2 3 15
-
-echo Transcoding $(basename "$1")...
-ffmpeg -i "$1" -r 60 -b 200000 -ac 1 -acodec pcm_u8 -f mov \
-	-y ${TMPDIR}/"$2".mov 2>/dev/null
-ffmpeg -i ${TMPDIR}/"$2".mov -vn -ac 1 -acodec pcm_u8 \
-	-y ${TMPDIR}/"$2".wav 2>/dev/null
-echo Preparing audio data...
-sox ${TMPDIR}/"$2".wav -t raw -r 22050 - -D norm lowpass 5000 2>/dev/null | \
-	sox -t raw -r 22050 -b 8 -c 1 -e unsigned - -t raw - -D \
-		rate 11040 2>/dev/null | \
-	split -d -b $SAMPLES -a 10 - ${TMPDIR}/"$2"-pcm. 2>/dev/null
-
-CURRAW=${TMPDIR}/current.raw
-TMPRAW=${TMPDIR}/tmp.raw
-
 # Start with all-black frame...
 cp ${BINDIR}/BLACK.raw $CURRAW
+
+# Determine size of each PPM file...
+ffmpeg -i "$1" -r $VIDEORATE -b 200000 -ss 0 -vframes 1 \
+	-y ${TMPDIR}/input.ppm 2>/dev/null
+
+PPMSIZE=$(stat -c %s ${TMPDIR}/input.ppm)
+
+# Make FIFO used for PPM data source and feed it from ffmpeg...
+mkfifo ${TMPDIR}/ppmfifo
+
+ffmpeg -i "$1" -r $VIDEORATE -b 200000 -an -vcodec ppm \
+	-f image2pipe - 2>/dev/null > ${TMPDIR}/ppmfifo &
+PPMPID=$!
+PPMBLOCKSIZE=$(stat -c '%o' ${TMPDIR}/ppmfifo)
+exec 3< ${TMPDIR}/ppmfifo
+
+# Make FIFO used for PCM data source and feed it from ffmpeg...
+mkfifo ${TMPDIR}/pcmfifo
+
+ffmpeg -i "$1" -vn -ar 44100 -ac 1 -acodec pcm_u8 \
+		-f u8 - 2>/dev/null | \
+	sox -t raw -r 44100 -c 1 -b 8 -e unsigned - \
+		-t raw - -D norm lowpass 5500 2>/dev/null | \
+	sox -t raw -r 44100 -c 1 -b 8 -e unsigned - \
+		-t raw - -D rate $AUDIORATE 2>/dev/null \
+		> ${TMPDIR}/pcmfifo &
+PCMPID=$!
+PCMBLOCKSIZE=$(stat -c '%o' ${TMPDIR}/pcmfifo)
+if [ $SAMPLES -gt $PCMBLOCKSIZE ]
+then
+	# If this message fires, than the dd command for the PCM audio data
+	# needs to be refactored to look like the one for the video data...
+	echo "PCM sample size \($SAMPLES\) is greater than the PCM data" >&2
+	echo "FIFO block size!  Script may not run correctly..." >&2
+fi
+exec 4< ${TMPDIR}/pcmfifo
+
+# Make FIFO used for feedback of frame update to "status" frame...
+mkfifo ${TMPDIR}/frmfifo
 
 echo Building final output file...
 
 $WATCHOUT $MODE $TMPDIR &
+WATCHPID=$!
 
 cat ${BINDIR}/START.frm > "$2".out
 dd if=/dev/zero bs=$SAMPLES count=1 2>/dev/null >> "$2".out
 
-mkfifo ${TMPDIR}/buildout.$$
+i=1
 
-# should use ffmpeg to determing video length, for now use 4 hour max
-for start in $(seq 0 10 14400)
+while true
 do
-# divide movie into 10 second chunks to decrease disk usage during conversion
+	if [ $(($i % ($VIDEORATE *10))) -eq 1 ]
+	then
+		echo Processing frame ${i}... \($(date)\) >&2
+	fi
 
-	cd $TMPDIR
-	rm -f *.ppm
-	ffmpeg -ss $start -vframes 600 \
-		-i "$2".mov %d.ppm >/dev/null 2>&1
-	cd - >/dev/null
+	dd of=${TMPDIR}/input.ppm count=$(($PPMSIZE / $PPMBLOCKSIZE)) \
+		bs=$PPMBLOCKSIZE <&3 2>/dev/null
+	dd count=1 bs=$(($PPMSIZE % $PPMBLOCKSIZE)) \
+		<&3 >> ${TMPDIR}/input.ppm 2>/dev/null
+	if [ $(stat -c '%s' ${TMPDIR}/input.ppm) -lt $PPMSIZE ]
+	then
+		break
+	fi
 
-	for i in $(seq 1 600)
-	do
-		PPM=${TMPDIR}/$i.ppm
-		PCM=${TMPDIR}/"$2"-pcm.$(printf "%010d" $((($start * 60) + $i)))
+	$FRM2RAW $CURRAW ${TMPDIR}/frmfifo $TMPRAW &
+	CURUPDATE=$!
+	convert -resize ${RESIZE_OPTS} \
+			-resize ${RESIZE_RESOLUTION} \
+			${DITHER_OPTS} \
+			-gravity center -extent ${RESOLUTION} \
+			-background black \
+			${TMPDIR}/input.ppm ppm:- | \
+		$PPM2FRM - $CURRAW $MAXSCORE - | \
+		tee ${TMPDIR}/frmfifo
+	wait $CURUPDATE
+	mv $TMPRAW $CURRAW
 
-		if [ ! -f $PPM ]
-		then
-			break
-		fi
+# Alternative method for reading/slicing PCM stream...
+#	dd of=${TMPDIR}/input.pcm count=$(($SAMPLES / $PCMBLOCKSIZE)) \
+#		bs=$PCMBLOCKSIZE <&4 2>/dev/null
+#	dd count=1 bs=$(($SAMPLES % $PCMBLOCKSIZE)) \
+#		<&4 >> ${TMPDIR}/input.pcm 2>/dev/null
+# Above is more "correct" but this will be slightly faster, provided that
+# ${SAMPLES} is less than ${PCMBLOCKSIZE}...
+	dd bs=$SAMPLES count=1 of=${TMPDIR}/input.pcm <&4 2>/dev/null
+	cat ${TMPDIR}/input.pcm
+	PCMSIZE=$(stat -c '%s' ${TMPDIR}/input.pcm)
+	if [ $PCMSIZE -lt $SAMPLES ]
+	then
+		dd if=/dev/zero bs=$(($SAMPLES - $PCMSIZE)) \
+			count=1 2>/dev/null
+	fi
 
-		if [ $i -eq 1 ]
-		then
-			echo Processing frame $((($start * 60) + ${i}))... \
-				\($(date)\) >&2
-		fi
-
-		$FRM2RAW $CURRAW ${TMPDIR}/buildout.$$ $TMPRAW &
-		CURUPDATE=$!
-		convert -resize ${RESIZE_OPTS} -resize ${RESIZE_RESOLUTION} \
-				${DITHER_OPTS} \
-				-gravity center -extent ${RESOLUTION} \
-				-background black \
-				$PPM ppm:- | \
-			$PPM2FRM - $CURRAW $MAXSCORE - | \
-			tee ${TMPDIR}/buildout.$$
-		wait $CURUPDATE
-		mv $TMPRAW $CURRAW
-		if [ -f $PCM ]
-		then
-			cat $PCM
-			PCMSIZE=$(stat -c '%s' $PCM)
-			if [ $PCMSIZE -lt $SAMPLES ]
-			then
-				dd if=/dev/zero bs=$(($SAMPLES - $PCMSIZE)) \
-					count=1 2>/dev/null
-			fi
-		else
-			# This actually holds DAC at lowest value...
-			# ...should output 0x80 instead?
-			dd if=/dev/zero bs=$SAMPLES count=1 2>/dev/null
-		fi
-	done >> "$2".out
-
-done
+	i=$((i+1))
+done >> "$2".out
 
 echo Done!
 
-cleanup "$1" "$2"
+cleanup
