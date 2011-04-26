@@ -3,6 +3,9 @@
 AUDIORATE=11040
 VIDEORATE=60
 
+INPUTVBR=200000
+INPUTAR=44100
+
 cleanup()
 {
 	rm -rf $TMPDIR >/dev/null 2>&1
@@ -115,7 +118,7 @@ fi
 cp ${BINDIR}/BLACK.raw $CURRAW
 
 # Determine size of each PPM file...
-ffmpeg -i "$1" -r $VIDEORATE -b 200000 -ss 0 -vframes 1 \
+ffmpeg -i "$1" -r $VIDEORATE -b $INPUTVBR -ss 0 -vframes 1 \
 	-y ${TMPDIR}/input.ppm 2>/dev/null
 
 PPMSIZE=$(stat -c %s ${TMPDIR}/input.ppm)
@@ -123,7 +126,7 @@ PPMSIZE=$(stat -c %s ${TMPDIR}/input.ppm)
 # Make FIFO used for PPM data source and feed it from ffmpeg...
 mkfifo ${TMPDIR}/ppmfifo
 
-ffmpeg -i "$1" -r $VIDEORATE -b 200000 -an -vcodec ppm \
+ffmpeg -i "$1" -r $VIDEORATE -b $INPUTVBR -an -vcodec ppm \
 	-f image2pipe - 2>/dev/null > ${TMPDIR}/ppmfifo &
 PPMPID=$!
 PPMBLOCKSIZE=$(stat -c '%o' ${TMPDIR}/ppmfifo)
@@ -132,11 +135,11 @@ exec 3< ${TMPDIR}/ppmfifo
 # Make FIFO used for PCM data source and feed it from ffmpeg...
 mkfifo ${TMPDIR}/pcmfifo
 
-ffmpeg -i "$1" -vn -ar 44100 -ac 1 -acodec pcm_u8 \
+ffmpeg -i "$1" -vn -ar $INPUTAR -ac 1 -acodec pcm_u8 \
 		-f u8 - 2>/dev/null | \
-	sox -t raw -r 44100 -c 1 -b 8 -e unsigned - \
-		-t raw - -D norm lowpass 5500 2>/dev/null | \
-	sox -t raw -r 44100 -c 1 -b 8 -e unsigned - \
+	sox -t raw -r $INPUTAR -c 1 -b 8 -e unsigned - \
+		-t raw - -D norm lowpass $((AUDIORATE / 2)) 2>/dev/null | \
+	sox -t raw -r $INPUTAR -c 1 -b 8 -e unsigned - \
 		-t raw - -D rate $AUDIORATE 2>/dev/null \
 		> ${TMPDIR}/pcmfifo &
 PCMPID=$!
@@ -153,7 +156,7 @@ exec 4< ${TMPDIR}/pcmfifo
 # Make FIFO used for feedback of frame update to "status" frame...
 mkfifo ${TMPDIR}/frmfifo
 
-echo Building final output file...
+echo Transcoding ${1}...
 
 $WATCHOUT $MODE $TMPDIR &
 WATCHPID=$!
