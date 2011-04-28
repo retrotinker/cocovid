@@ -256,7 +256,8 @@ SYNC	lda	FRAMCNT
 	bra	VIDLOOP
 
 * Execute reset vector
-* (needs work -- makes it back to RSDOS prompt, but still in high-speed mode)
+* (needs work -- makes it back to RSDOS prompt, but still in high-speed mode;
+*  maybe Super Extended BASIC Unraveled II around page 57 can help?)
 EXIT	orcc	#$50
 	clr	RSTFLG
 	jmp	[$fffe]
@@ -305,11 +306,11 @@ CMP2	fcb	$00,$30,$00,$00,$00,$00,$00,$00
 	fcb	$00,$00,$00,$00,$00,$00,$00,$00
 RGB4S0	fcb	$12,$36,$09,$24,$00,$00,$00,$00
 	fcb	$00,$00,$00,$00,$00,$00,$00,$00
-CMP4S0	fcb	$12,$24,$2e,$27,$00,$00,$00,$00
+CMP4S0	fcb	$12,$24,$0b,$07,$00,$00,$00,$00
 	fcb	$00,$00,$00,$00,$00,$00,$00,$00
-RGB4S1	fcb	$3f,$1a,$2b,$26,$00,$00,$00,$00
+RGB4S1	fcb	$3f,$1b,$2d,$26,$00,$00,$00,$00
 	fcb	$00,$00,$00,$00,$00,$00,$00,$00
-CMP4S1	fcb	$30,$1f,$3a,$26,$00,$00,$00,$00
+CMP4S1	fcb	$3f,$1f,$09,$26,$00,$00,$00,$00
 	fcb	$00,$00,$00,$00,$00,$00,$00,$00
 RGB4A	fcb	$00,$0a,$22,$3f,$00,$00,$00,$00
 	fcb	$00,$00,$00,$00,$00,$00,$00,$00
