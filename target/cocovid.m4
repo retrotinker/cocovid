@@ -19,7 +19,7 @@ include(`input.m4')
 * and it cannot overlap with the video buffer, or ROM, or anything BASIC
 * needs if you want to be able to return to it...
 *
-LOAD	equ	$1600		Actual load address for binary
+LOAD	equ	$4800		Actual load address for binary
 
 RSTFLG	equ	$0071
 
@@ -51,7 +51,7 @@ SAMR1ST	equ	$ffd9
 
 AUBUFSZ	equ	$00b8	; this needs to be an even number...
 
-VIDBASE	equ	$1c00
+VIDBASE	equ	$5000
 VIDSIZE	equ	$3000
 
 VMODEMX	equ	$07
@@ -275,22 +275,22 @@ EXIT	orcc	#$50
 * (Assumes default MMU setup...)
 GIMEINI	equ	*
 MODE0	fcb	$7c,$20,$08,$20,TVH,TVL,$00,$00
-	fcb	$80,$12,$00,$00,$0f,$e3,$80,$00
+	fcb	$80,$12,$00,$00,$0f,$ea,$00,$00
 MODE1	fcb	$7c,$20,$08,$20,TVH,TVL,$00,$00
-	fcb	$82,$12,$00,$00,$0f,$e3,$80,$00
+	fcb	$82,$12,$00,$00,$0f,$ea,$00,$00
 MODE2	fcb	$7c,$20,$08,$20,TVH,TVL,$00,$00
-	fcb	$82,$19,$00,$00,$0f,$e3,$80,$00
+	fcb	$82,$19,$00,$00,$0f,$ea,$00,$00
 MODE3	fcb	$7c,$20,$08,$20,TVH,TVL,$00,$00
-	fcb	$80,$00,$00,$00,$0f,$e3,$80,$00
+	fcb	$80,$00,$00,$00,$0f,$ea,$00,$00
 MODE4	fcb	$7c,$20,$08,$20,TVH,TVL,$00,$00
-	fcb	$80,$08,$00,$00,$0f,$e3,$80,$00
+	fcb	$80,$08,$00,$00,$0f,$ea,$00,$00
 * Modes 5-7 are identical on the CoCo3, replicated for simplicity...
 MODE5	fcb	$7c,$20,$08,$20,TVH,TVL,$00,$00
-	fcb	$82,$09,$00,$00,$0f,$e3,$80,$00
+	fcb	$82,$09,$00,$00,$0f,$ea,$00,$00
 MODE6	fcb	$7c,$20,$08,$20,TVH,TVL,$00,$00
-	fcb	$82,$09,$00,$00,$0f,$e3,$80,$00
+	fcb	$82,$09,$00,$00,$0f,$ea,$00,$00
 MODE7	fcb	$7c,$20,$08,$20,TVH,TVL,$00,$00
-	fcb	$80,$09,$00,$00,$0f,$e3,$80,$00
+	fcb	$80,$09,$00,$00,$0f,$ea,$00,$00
 
 * Init for palette regs
 PALINIT	equ	*
