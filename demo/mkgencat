@@ -1,0 +1,16 @@
+#!/bin/sh
+
+line=20
+record=1
+
+echo "10 OPEN \"D\",#1,\"CATEGORY/DAT\",16"
+
+while read category
+do
+	echo "${line} WRITE #1,${category}"
+	echo "$((${line} + 10)) PUT #1,${record}"
+	line=$((${line} + 20))
+	record=$((${record} + 1))
+done < $1
+
+echo "${line} CLOSE #1"

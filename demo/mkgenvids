@@ -1,0 +1,51 @@
+#!/bin/sh
+
+image=$2
+
+# This math is for generating VHD images -- IDE needs different math!!
+compute()
+{
+	size=$(stat -c '%s' $image)
+	if [ ! $(($size % 256)) -eq 0 ];
+	then
+		extra=$((256 - ($size % 256)));
+	else
+		extra=0;
+	fi;
+	total=$(($size + $extra));
+	s3=$((($total / 256) % 256));
+	s2=$((($total / (256*256)) % 256));
+	s1=$((($total / (256*256*256)) % 256))
+	seek=$(($total / 256))
+}
+
+video()
+{
+	file=$1
+	name=$2
+	mode=$3
+	category=$4
+
+	echo "$line WRITE #1,\"${name}\",${mode},${category},${s0},${s1},${s2},${s3}"
+	echo "$(($line + 10)) PUT #1,$record"
+	line=$(($line + 20))
+	record=$(($record + 1))
+
+	dd if=$file seek=$seek bs=256 of=$image >/dev/null 2>&1
+	cat ../tools/END.frm >> $image
+
+	compute
+}
+
+echo "10 OPEN \"D\",#1,\"VIDEOS/DAT\",64"
+line=20
+record=1
+s0=0
+s1=0
+s2=0
+s3=0
+seek=0
+
+. $1
+
+echo "${line} CLOSE #1"

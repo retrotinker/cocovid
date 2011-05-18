@@ -1,0 +1,54 @@
+Variables
+---------
+md	mode number
+md$	mode description
+pr	rgb palette for mode
+pc	cmp palette for mode
+pl	palette number
+mn$	monitor type (rgb or cmp)
+ct	category
+ct$	category description
+vd	video to play
+sv	start of video list for filtering
+ev	last video filtered
+nv	number of videos filtered in current list (max 8)
+vf$()	array of filtered video names
+vf()	matching list of video record numbers
+
+Subsections
+-----------
+frame		1000
+main menu	1100
+setup menu	1200
+monitor	menu	1300
+video mode menu	1400
+palette mapping	1600
+video category	1700
+video select	1900
+video filter	2200
+play video	2400
+
+Sample modes file
+-----------------
+"128X192-16",0,1
+"128X96-16",0,1
+"128X96-256",-1,2
+"128X192-2",3,4
+"256X192-2",3,4
+"128X96-4 GYBR",5,6
+"128X96-4 BCMO",7,8
+"128X192-4 BWRB",9,10
+
+Sample categories file
+----------------------
+"MUSIC VIDEOS"
+"FUNNY/COMEDY"
+"MOVIE CLIPS"
+"ANIMATION"
+"MISCELLANEOUS"
+
+Sample videos file
+------------------
+video 8-bit-trip-128x192-16.out "8-BIT TRIP" 0 1
+video FreshHare-128x192-16.out "FRESH HARE" 0 4
+video mathematicious-128x192-16.out "MATHMATICIOUS" 0 1
