@@ -80,38 +80,12 @@ EXEC	equ	*
 	pshs	cc,a,b,dp,x,y,u
 	sts	>SAVESTK
 * - save PIA0/1 state
-	lda	PIA0D0
-	sta	>SAVP0D0
-	lda	PIA0C0
-	sta	>SAVP0C0
-	anda	#$fb
-	sta	PIA0C0
-	lda	PIA0D0
-	sta	>SAVP0I0
-	lda	PIA0D1
-	sta	>SAVP0D1
-	lda	PIA0C1
-	sta	>SAVP0C1
-	anda	#$fb
-	sta	PIA0C1
-	lda	PIA0D1
-	sta	>SAVP0I1
-	lda	PIA1D0
-	sta	>SAVP1D0
-	lda	PIA1C0
-	sta	>SAVP1C0
-	anda	#$fb
-	sta	PIA1C0
-	lda	PIA1D0
-	sta	>SAVP1I0
-	lda	PIA1D1
-	sta	>SAVP1D1
-	lda	PIA1C1
-	sta	>SAVP1C1
-	anda	#$fb
-	sta	PIA1C1
-	lda	PIA1D1
-	sta	>SAVP1I1
+	ldx	#$ff00
+	ldy	#SAVPIA0
+	lbsr	SAVPIA
+	ldx	#$ff20
+	ldy	#SAVPIA1
+	lbsr	SAVPIA
 * - save IRQ/FIRQ handlers
 	ldd	IRQADR
 	std	>SAVIRQH
@@ -318,6 +292,56 @@ SYNC	lda	FRAMCNT
 * Handle (audio) timer interrupt
 	audio_timer_handler
 
+* Routine to save PIA state (X is PIA base, Y is save buffer)
+SAVPIA	lda	1,x
+	sta	,y
+	anda	#$fb
+	sta	1,x	; select direction register
+	ldb	,x
+	stb	1,y
+	ora	#$04
+	sta	1,x	; select output register
+	ldb	,x
+	stb	2,y
+* Second half, just like the first...
+	lda	3,x
+	sta	3,y
+	anda	#$fb
+	sta	3,x	; select direction register
+	ldb	2,x
+	stb	4,y
+	ora	#$04
+	sta	3,x	; select output register
+	ldb	2,x
+	stb	5,y
+	rts
+
+* Routine to restore PIA state (X is PIA base, Y is save buffer)
+RSTPIA	lda	1,x
+	anda	#$fb
+	sta	1,x	; select direction register
+	ldb	1,y
+	stb	,x
+	ora	#$04
+	sta	1,x	; select output register
+	ldb	2,y
+	stb	,x
+	lda	,y
+	sta	1,x
+* Second half, just like the first...
+	lda	3,x
+	anda	#$fb
+	sta	3,x	; select direction register
+	ldb	4,y
+	stb	2,x
+	ora	#$04
+	sta	3,x	; select output register
+	ldb	5,y
+	stb	2,x
+	lda	3,y
+	sta	3,x
+	rts
+
 * Restore machine state for clean exit
 EXIT	orcc	#$50
 * - hit low-speed poke
@@ -348,42 +372,12 @@ PRSTLOP	lda	,x+
 	ldd	SAVFRQH
 	std	FIRQADR
 * - restore PIA0/1 state
-	lda	PIA0C0
-	anda	#$fb
-	sta	PIA0C0
-	lda	SAVP0I0
-	sta	PIA0D0
-	lda	SAVP0C0
-	sta	PIA0C0
-	lda	SAVP0D0
-	sta	PIA0D0
-	lda	PIA0C1
-	anda	#$fb
-	sta	PIA0C1
-	lda	SAVP0I1
-	sta	PIA0D1
-	lda	SAVP0C1
-	sta	PIA0C1
-	lda	SAVP0D1
-	sta	PIA0D1
-	lda	PIA1C0
-	anda	#$fb
-	sta	PIA1C0
-	lda	SAVP1I0
-	sta	PIA1D0
-	lda	SAVP1C0
-	sta	PIA1C0
-	lda	SAVP1D0
-	sta	PIA1D0
-	lda	PIA1C1
-	anda	#$fb
-	sta	PIA1C1
-	lda	SAVP1I1
-	sta	PIA1D1
-	lda	SAVP1C1
-	sta	PIA1C1
-	lda	SAVP1D1
-	sta	PIA1D1
+	ldx	#$ff00
+	ldy	#SAVPIA0
+	bsr	RSTPIA
+	ldx	#$ff20
+	ldy	#SAVPIA1
+	bsr	RSTPIA
 * - restore stack pointer
 * - restore registers
 	lds	SAVESTK
@@ -440,18 +434,8 @@ GIMEDEF	fcb	$c4,$00,$00,$00,$ff,$ff,$00,$00
 	fcb	$00,$00,$00,$00,$0f,$e0,$00,$00
 
 SAVESTK	rmb	2
-SAVP0D0	rmb	1
-SAVP0I0	rmb	1
-SAVP0C0	rmb	1
-SAVP0D1	rmb	1
-SAVP0I1	rmb	1
-SAVP0C1	rmb	1
-SAVP1D0	rmb	1
-SAVP1I0	rmb	1
-SAVP1C0	rmb	1
-SAVP1D1	rmb	1
-SAVP1I1	rmb	1
-SAVP1C1	rmb	1
+SAVPIA0	rmb	6
+SAVPIA1	rmb	6
 SAVIRQH	rmb	2
 SAVFRQH	rmb	2
 SAVEPAL	rmb	16

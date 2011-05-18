@@ -4,7 +4,7 @@ KEYCHK	pshs	a
 	jsr	[$A000]
 	beq	KEYCHK1
 	cmpa	#03
-	beq	EXIT
+	lbeq	EXIT
 * Check for pause
 	cmpa	#32
 	beq	KEYCHK2

@@ -68,7 +68,7 @@ DATREQ	pshs	b
 DATCMD	clr	VHDCMDS
 	ldb	VHDCMDS
 * Abort on error...ick...
-	bne	EXIT
+	lbne	EXIT
 	puls	b
 	ldu	#VHDBUF
 * Is this really the best time to check
