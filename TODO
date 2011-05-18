@@ -1,21 +1,13 @@
 -- player
-	-- frame number marker (?)
+	-- frame number marker embedded in video data (?)
 	-- display message (possibly frame number) while paused
-	-- video header to select parameters (colors, fps, etc)
-	-- encode video length in header (enable skipping video) (?)
-	   (using a directory gives same function)
+	-- video header to select player parameters (colors, fps, etc)
 	-- read fewer extra sectors at a time (maybe none)
-	-- TC^3 SCSI driver (and driver/filesystem API?)
-	-- drop excessive frames
-	-- exit more gracefully (e.g. restore interrupt handlers, etc)
+	-- TC^3 SCSI driver (and/or driver/filesystem API?)
+	-- drop excessive frames (how?)
 
--- integrated video conversion utility to process ppm/pcm data (?)
-	-- dithering optional
-	-- variable bitrate
-	-- select resolution
-	-- alternatively, clean-up buildout
-		-- better use of mktemp for temporary files/directories
-	-- account for pixel aspect ratio (CMP 10:11?, RGB 1:1? or 5:6?)
+-- video conversion tools
+	-- more flexible options (dithering, bitrate, etc)
 	-- use ffmpeg and/or ImageMagick libraries instead of exec'ing utilities
 	-- re-implement toolchain as codec and container support for ffmpeg
 		-- http://wiki.multimedia.cx/index.php?title=FFmpeg_codec_howto
@@ -24,8 +16,10 @@
 -- misc
 	-- capture actual composite palette examples and pick better(?)
 	   equivalents for RGB palette
+	-- audio option for playing canned music over PSG in S/S Pak
+	-- CoCo2 support
 
 -- applications
 	-- "laser disc"-style game
-	-- vnc-like remote desktop
+	-- vnc-like remote desktop (slow...)
 	-- DVD "emulator" (i.e. rip/translate DVD menus as well as A/V)
