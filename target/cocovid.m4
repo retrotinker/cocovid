@@ -74,6 +74,60 @@ PALETTE	fcb	$00
 
 EXEC	equ	*
 
+* Save machine state for clean exit
+* - save registers
+* - save stack pointer
+	pshs	cc,a,b,dp,x,y,u
+	sts	>SAVESTK
+* - save PIA0/1 state
+	lda	PIA0D0
+	sta	>SAVP0D0
+	lda	PIA0C0
+	sta	>SAVP0C0
+	anda	#$fb
+	sta	PIA0C0
+	lda	PIA0D0
+	sta	>SAVP0I0
+	lda	PIA0D1
+	sta	>SAVP0D1
+	lda	PIA0C1
+	sta	>SAVP0C1
+	anda	#$fb
+	sta	PIA0C1
+	lda	PIA0D1
+	sta	>SAVP0I1
+	lda	PIA1D0
+	sta	>SAVP1D0
+	lda	PIA1C0
+	sta	>SAVP1C0
+	anda	#$fb
+	sta	PIA1C0
+	lda	PIA1D0
+	sta	>SAVP1I0
+	lda	PIA1D1
+	sta	>SAVP1D1
+	lda	PIA1C1
+	sta	>SAVP1C1
+	anda	#$fb
+	sta	PIA1C1
+	lda	PIA1D1
+	sta	>SAVP1I1
+* - save IRQ/FIRQ handlers
+	ldd	IRQADR
+	std	>SAVIRQH
+	ldd	FIRQADR
+	std	>SAVFRQH
+* - save palette values
+	lda	#PALETSZ
+	pshs	a
+	ldx	#PALBASE
+	ldy	#SAVEPAL
+PSVLOOP	lda	,x+
+	sta	,y+
+	dec	,s
+	bne	PSVLOOP
+	leas	1,s
+
 * Set direct page register
 	lda	#$ff
 	tfr	a,dp
@@ -96,7 +150,7 @@ EXEC	equ	*
 	sta	PIA1D0
 	lda	#$34
 	sta	PIA1C0
-	lda	#$38
+	lda	#$3c
 	sta	PIA1C1
 * Bleed-off PIA[01] interrupts
 	lda	PIA0D0
@@ -224,7 +278,7 @@ VIDSTOR	data_read
 
 * check for end of video
 VIDEOF	cmpb	#$ff
-	beq	EXIT
+	lbeq	EXIT
 * else, fall-through to audio processing
 
 * Audio data movement goes here
@@ -255,13 +309,6 @@ SYNC	lda	FRAMCNT
 	std	AUDWSTP		; store new write buffer end ptr
 	bra	VIDLOOP
 
-* Execute reset vector
-* (needs work -- makes it back to RSDOS prompt, but still in high-speed mode;
-*  maybe Super Extended BASIC Unraveled II around page 57 can help?)
-EXIT	orcc	#$50
-	clr	RSTFLG
-	jmp	[$fffe]
-
 * Instantiate body of storage driver
 	storage_handler
 
@@ -270,6 +317,78 @@ EXIT	orcc	#$50
 
 * Handle (audio) timer interrupt
 	audio_timer_handler
+
+* Restore machine state for clean exit
+EXIT	orcc	#$50
+* - hit low-speed poke
+	sta	SAMR1CL
+* - load default GIME config
+	lda	#GIMECSZ
+	pshs	a
+	ldx	#GIMEDEF
+	ldy	#GIMECFG
+GDEFLOP	lda	,x+
+	sta	,y+
+	dec	,s
+	bne	GDEFLOP
+	leas	1,s
+* - restore palette values
+	lda	#PALETSZ
+	pshs	a
+	ldx	#SAVEPAL
+	ldy	#PALBASE
+PRSTLOP	lda	,x+
+	sta	,y+
+	dec	,s
+	bne	PRSTLOP
+	leas	1,s
+* - restore IRQ/FIRQ handlers
+	ldd	SAVIRQH
+	std	IRQADR
+	ldd	SAVFRQH
+	std	FIRQADR
+* - restore PIA0/1 state
+	lda	PIA0C0
+	anda	#$fb
+	sta	PIA0C0
+	lda	SAVP0I0
+	sta	PIA0D0
+	lda	SAVP0C0
+	sta	PIA0C0
+	lda	SAVP0D0
+	sta	PIA0D0
+	lda	PIA0C1
+	anda	#$fb
+	sta	PIA0C1
+	lda	SAVP0I1
+	sta	PIA0D1
+	lda	SAVP0C1
+	sta	PIA0C1
+	lda	SAVP0D1
+	sta	PIA0D1
+	lda	PIA1C0
+	anda	#$fb
+	sta	PIA1C0
+	lda	SAVP1I0
+	sta	PIA1D0
+	lda	SAVP1C0
+	sta	PIA1C0
+	lda	SAVP1D0
+	sta	PIA1D0
+	lda	PIA1C1
+	anda	#$fb
+	sta	PIA1C1
+	lda	SAVP1I1
+	sta	PIA1D1
+	lda	SAVP1C1
+	sta	PIA1C1
+	lda	SAVP1D1
+	sta	PIA1D1
+* - restore stack pointer
+* - restore registers
+	lds	SAVESTK
+	puls	cc,a,b,dp,x,y,u
+	rts
 
 * Init for video mode, set video buffer to VIDBASE
 * (Assumes default MMU setup...)
@@ -316,6 +435,26 @@ RGB4A	fcb	$00,$0a,$22,$3f,$00,$00,$00,$00
 	fcb	$00,$00,$00,$00,$00,$00,$00,$00
 CMP4A	fcb	$00,$0d,$26,$30,$00,$00,$00,$00
 	fcb	$00,$00,$00,$00,$00,$00,$00,$00
+
+GIMEDEF	fcb	$c4,$00,$00,$00,$ff,$ff,$00,$00
+	fcb	$00,$00,$00,$00,$0f,$e0,$00,$00
+
+SAVESTK	rmb	2
+SAVP0D0	rmb	1
+SAVP0I0	rmb	1
+SAVP0C0	rmb	1
+SAVP0D1	rmb	1
+SAVP0I1	rmb	1
+SAVP0C1	rmb	1
+SAVP1D0	rmb	1
+SAVP1I0	rmb	1
+SAVP1C0	rmb	1
+SAVP1D1	rmb	1
+SAVP1I1	rmb	1
+SAVP1C1	rmb	1
+SAVIRQH	rmb	2
+SAVFRQH	rmb	2
+SAVEPAL	rmb	16
 
 * STEPCNT	rmb	1
 FRAMCNT	rmb	1

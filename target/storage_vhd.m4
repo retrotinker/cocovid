@@ -27,7 +27,7 @@ VHDBUFL	equ	$ff85
 * Check status
 	lda	VHDCMDS
 * Exit on error
-	bne	EXIT
+	lbne	EXIT
 * Point at buffer base
 	ldu	#VHDBUF
 ')dnl
