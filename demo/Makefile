@@ -13,4 +13,4 @@ gencat.bas: mkgencat categories
 	./$< categories > $@
 
 genvids.bas: mkgenvids videos
-	./$< ./videos demo.vhd > $@
+	./$< ./videos demo.img > $@

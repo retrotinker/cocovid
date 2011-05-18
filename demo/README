@@ -28,6 +28,12 @@ video select	1900
 video filter	2200
 play video	2400
 
+mkgenvids symlink
+-----------------
+There are two versions of mkgenvids, one for VHD and one for IDE.
+Create a symlink to the desired one (or simply rename it) before
+using the Makefile.
+
 Sample modes file
 -----------------
 "128X192-16",0,1
