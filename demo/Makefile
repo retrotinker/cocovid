@@ -1,5 +1,5 @@
 DEMO_PARTS=start.bas frame.bas mainmenu.bas setup.bas monitor.bas vidmode.bas \
-	palmap.bas category.bas vidsel.bas vidfilt.bas vidplay.bas
+	palmap.bas category.bas vidsel.bas vidfilt.bas vidplay.bas random.bas
 
 all: demo.bas genmodes.bas gencat.bas genvids.bas
 

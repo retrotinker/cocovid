@@ -79,6 +79,7 @@ EXEC	equ	*
 * - save stack pointer
 	pshs	cc,a,b,dp,x,y,u
 	sts	>SAVESTK
+	lds	#VIDBASE
 * - save PIA0/1 state
 	ldx	#$ff00
 	ldy	#SAVPIA0
@@ -378,6 +379,8 @@ PRSTLOP	lda	,x+
 	ldx	#$ff20
 	ldy	#SAVPIA1
 	bsr	RSTPIA
+* Clean-up pending storage transfers...
+	storage_cleanup
 * - restore stack pointer
 * - restore registers
 	lds	SAVESTK

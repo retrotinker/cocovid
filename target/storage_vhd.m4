@@ -86,3 +86,9 @@ VHDLRNL	rmb	1
 VHDBUF	rmb	256
 VHDBEND	equ	*
 ')dnl
+dnl
+dnl Clean-up any pending data transfers
+dnl
+define(`storage_cleanup',`
+* No storage cleanup necessary for VHD driver
+')dnl

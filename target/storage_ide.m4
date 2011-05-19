@@ -107,3 +107,16 @@ dnl
 define(`storage_variables',`
 * No static allocations for IDE driver
 ')dnl
+dnl
+dnl Clean-up any pending data transfers
+dnl
+define(`storage_cleanup',`
+* Bleed-off pending IDE transfers...
+idecln	lda	IDESTAT
+	anda	#8
+	beq	idedone
+	lda	IDEDATL
+	lda	IDEDATH
+	bra	idecln
+idedone
+')dnl
