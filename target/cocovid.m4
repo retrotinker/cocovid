@@ -391,9 +391,9 @@ PRSTLOP	lda	,x+
 * (Assumes default MMU setup...)
 GIMEINI	equ	*
 MODE0	fcb	$7c,$20,$08,$20,TVH,TVL,$00,$00
-	fcb	$80,$12,$00,$00,$0f,$ea,$00,$00
-MODE1	fcb	$7c,$20,$08,$20,TVH,TVL,$00,$00
 	fcb	$82,$12,$00,$00,$0f,$ea,$00,$00
+MODE1	fcb	$7c,$20,$08,$20,TVH,TVL,$00,$00
+	fcb	$80,$12,$00,$00,$0f,$ea,$00,$00
 MODE2	fcb	$7c,$20,$08,$20,TVH,TVL,$00,$00
 	fcb	$82,$19,$00,$00,$0f,$ea,$00,$00
 MODE3	fcb	$7c,$20,$08,$20,TVH,TVL,$00,$00
