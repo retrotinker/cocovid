@@ -1,0 +1,16 @@
+This repository contains code for the digital video player for the Tandy
+Color Computer, the tools to prepare videos for the player, and a
+demonstration program written for Super Extended Color Basic.
+
+README		This file!
+COPYING		The source code license governing this repository...
+TODO		Some ideas for the future...
+target/		Source code for the machine-language video player...
+tools/		Source code for the video conversion tools...
+demo/		Source code for the SECB demonstration program...
+
+Notice the lack of a documentation/ directory -- sorry!  Feel free to
+contact me if you want to play with this. :-)
+
+John W. Linville
+21 May 2011
