@@ -11,10 +11,10 @@ MODE=$1
 
 if [ x$MODE == x0 ]
 then
-	RESIZE_OPTS="180x100%!"
+	RESIZE_OPTS="90x100%!"
 elif [ x$MODE == x1 ]
 then
-	RESIZE_OPTS="90x100%!"
+	RESIZE_OPTS="180x100%!"
 elif [ x$MODE == x2 ]
 then
 	RESIZE_OPTS="90x100%!"

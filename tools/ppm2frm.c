@@ -31,13 +31,13 @@
 #include "colors16.h"
 #include "distance16.h"
 #define RAW_HORIZ_PIXELS	128
-#define RAW_VERT_PIXELS		192
+#define RAW_VERT_PIXELS		96
 #define PIXELS_PER_BYTE		2
 #elif MODE == 1
 #include "colors16.h"
 #include "distance16.h"
 #define RAW_HORIZ_PIXELS	128
-#define RAW_VERT_PIXELS		96
+#define RAW_VERT_PIXELS		192
 #define PIXELS_PER_BYTE		2
 #elif MODE == 2
 #include "colors256.h"

@@ -27,16 +27,16 @@
 #if defined(MODE)
 #if MODE == 0
 #define RAW_HORIZ_PIXELS	128
-#define RAW_VERT_PIXELS		192
-#define PIXELS_PER_BYTE		2
-#define PPM_HEADER	"P6\n128 192\n255\n"
-#define PPM_HEADER_SIZE	15
-#elif MODE == 1
-#define RAW_HORIZ_PIXELS	128
 #define RAW_VERT_PIXELS		96
 #define PIXELS_PER_BYTE		2
 #define PPM_HEADER	"P6\n128 96\n255\n"
 #define PPM_HEADER_SIZE	14
+#elif MODE == 1
+#define RAW_HORIZ_PIXELS	128
+#define RAW_VERT_PIXELS		192
+#define PIXELS_PER_BYTE		2
+#define PPM_HEADER	"P6\n128 192\n255\n"
+#define PPM_HEADER_SIZE	15
 #elif MODE == 2
 #define RAW_HORIZ_PIXELS	128
 #define RAW_VERT_PIXELS		96
