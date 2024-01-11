@@ -1,5 +1,4 @@
 -- demo
-	-- actually improve entropy by using RND(-TIMER) at the beginning
 	-- change away from using EXEC to using USR0?
 	-- clean-up the return to BASIC (based on above)?
 -- player
